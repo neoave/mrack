@@ -21,46 +21,46 @@ from .errors import ConfigError
 
 
 def get_config_value(config_dict, key, default=None):
-    '''
+    """
     Usable for dictionaries which can also contain attribute 'default'
 
     Order of preference:
     * attribute value
     * value of 'default' attribute
     * value of provided default param
-    '''
+    """
     val = config_dict.get(key)
     if val is None:
-        val = config_dict.get('default', default)
+        val = config_dict.get("default", default)
     return val
 
 
 def validate_dict_attrs(dct, attr_list, dct_name):
-    '''
+    """
     Validate that dictionary contains all atributes from provided attribute
     list.
-    '''
+    """
     missing = [a for a in attr_list if a not in dct]
     if missing:
-        error = f'''
+        error = f"""
         '{dct_name} definition:'
         {dct}
         'Is missing required attributes: {missing}'
-        '''
+        """
         raise ConfigError(error)
 
 
 def json_convertor(obj):
-    '''
+    """
     To be used for json.dumps as value for default= so that given object
     is serializable
-    '''
+    """
 
     if "Binary" in str(obj.__class__):
         return base64.b64encode(obj.data).decode("utf-8")
 
     if "DateTime" in str(obj.__class__):
-        date = datetime.datetime.strptime(str(obj), '%Y%m%dT%H:%M:%S')
+        date = datetime.datetime.strptime(str(obj), "%Y%m%dT%H:%M:%S")
         return date.isoformat() + "Z"
 
     if "Decimal" in str(obj.__class__):
@@ -68,7 +68,7 @@ def json_convertor(obj):
 
 
 def print_obj(obj):
-    '''
+    """
     Print object as JSON
-    '''
+    """
     print(json.dumps(obj, default=json_convertor, sort_keys=True, indent=4))

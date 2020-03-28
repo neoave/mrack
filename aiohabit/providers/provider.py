@@ -14,7 +14,6 @@
 
 
 class Provider:
-
     def __init__(self, provisioning_config, job_config):
         return
 
