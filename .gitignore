@@ -1,3 +1,16 @@
+# python
 *.pyc
+*.pyo
+*.swp
 __pycache__
+
+# packaging folders
+/build/
+/dist/
+*.egg-info
+
+# editors
 .vscode
+
+# tox
+/.tox
