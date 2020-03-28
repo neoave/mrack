@@ -19,5 +19,7 @@ setup(
     author_email="pvoborni@redhat.com",
     url="https://github.com/pvoborni/aiohabit",
     license=license,
-    packages=find_packages(exclude=("tests", "docs")),
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    install_requires=["asyncopenstackclient"],
 )
