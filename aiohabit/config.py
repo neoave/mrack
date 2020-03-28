@@ -13,5 +13,5 @@
 # limitations under the License.
 
 
-class ProvisioningConfig():
+class ProvisioningConfig:
     pass

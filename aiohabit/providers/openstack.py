@@ -52,13 +52,11 @@ class OpenStackProvider(Provider):
 
         login_start = datetime.now()
         await asyncio.gather(
-            self.nova.init_api(),
-            self.glance.init_api(),
-            self.neutron.init_api(),
+            self.nova.init_api(), self.glance.init_api(), self.neutron.init_api(),
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
-        print(f'Login duration {login_duration}')
+        print(f"Login duration {login_duration}")
 
         object_start = datetime.now()
         flavors, images, limits, networks, ips = await asyncio.gather(
@@ -66,28 +64,27 @@ class OpenStackProvider(Provider):
             self.load_images(image_names),
             self.nova.limits.show(),
             self.load_networks(),
-            self.load_ip_availabilities()
+            self.load_ip_availabilities(),
         )
         self.limits = limits
         object_end = datetime.now()
         object_duration = object_end - object_start
-        print(f'Open Stack environment objects '
-              f'load duration: {object_duration}')
+        print(f"Open Stack environment objects " f"load duration: {object_duration}")
 
     def set_flavors(self, flavors):
         for flavor in flavors:
-            self.flavors[flavor['name']] = flavor
-            self.flavors_by_ref[flavor['id']] = flavor
+            self.flavors[flavor["name"]] = flavor
+            self.flavors_by_ref[flavor["id"]] = flavor
 
     def set_images(self, images):
         for image in images:
-            self.images[image['name']] = image
-            self.images_by_ref[image['id']] = image
+            self.images[image["name"]] = image
+            self.images_by_ref[image["id"]] = image
 
     def set_networks(self, networks):
         for network in networks:
-            self.networks[network['name']] = network
-            self.networks_by_ref[network['id']] = network
+            self.networks[network["name"]] = network
+            self.networks_by_ref[network["id"]] = network
 
     def get_flavor(self, name=None, ref=None):
         flavor = self.flavors.get(name)
@@ -109,41 +106,39 @@ class OpenStackProvider(Provider):
 
     async def load_flavors(self):
         resp = await self.nova.flavors.list()
-        flavors = resp['flavors']
+        flavors = resp["flavors"]
         self.set_flavors(flavors)
         return flavors
 
     async def load_images(self, image_names=None):
-        '''
+        """
         Load information about images.
 
         Loads everything if image_names list is not specified.
 
         Specifying list of images to load might improve performance if the
         OpenStack instance contains a lot of images.
-        '''
-        params = {
-            'limit': 1000
-        }
+        """
+        params = {"limit": 1000}
 
         if image_names:
-            image_filter = ','.join(image_names)
-            image_filter = 'in:'+image_filter
-            params['name'] = image_filter
+            image_filter = ",".join(image_names)
+            image_filter = "in:" + image_filter
+            params["name"] = image_filter
 
         images = []
         response = await self.glance.images.list(**params)
-        images.extend(response['images'])
+        images.extend(response["images"])
 
-        while response.get('next'):
-            p_result = urlparse(response.get('next'))
+        while response.get("next"):
+            p_result = urlparse(response.get("next"))
             query = p_result.query
             next_params = parse_qs(query)
             for key, val in next_params.items():
                 if type(val) == list and len(val):
                     next_params[key] = val[0]
             response = await self.glance.images.list(**next_params)
-            images.extend(response['images'])
+            images.extend(response["images"])
 
         self.set_images(images)
 
@@ -151,23 +146,23 @@ class OpenStackProvider(Provider):
 
     async def load_networks(self):
         resp = await self.neutron.network.list()
-        networks = resp['networks']
+        networks = resp["networks"]
         self.set_networks(networks)
         return networks
 
     async def load_ip_availabilities(self):
-        '''
+        """
         Load current networks availabilities
-        '''
+        """
         resp = await self.neutron.ip.list()
-        availabilities = resp['network_ip_availabilities']
+        availabilities = resp["network_ip_availabilities"]
         for availability in availabilities:
-            self.ips[availability['network_id']] = availability
+            self.ips[availability["network_id"]] = availability
         return availabilities
 
     def _translate_flavor(self, req):
-        flavor_spec = req.get('flavor')
-        flavor_ref = req.get('flavorRef')
+        flavor_spec = req.get("flavor")
+        flavor_ref = req.get("flavorRef")
         flavor = None
         if flavor_ref:
             flavor = self.get_flavor(ref=flavor_ref)
@@ -175,41 +170,41 @@ class OpenStackProvider(Provider):
             flavor = self.get_flavor(flavor_spec, flavor_spec)
 
         if not flavor:
-            specs = f'flavor: {flavor_spec}, ref: {flavor_ref}'
-            raise ValidationError(f'Flavor not found: {specs}')
+            specs = f"flavor: {flavor_spec}, ref: {flavor_ref}"
+            raise ValidationError(f"Flavor not found: {specs}")
         return flavor
 
     def _translate_image(self, req):
-        image_spec = req.get('image')
-        image_ref = req.get('imageRef')
+        image_spec = req.get("image")
+        image_ref = req.get("imageRef")
         image = None
         if image_ref:
             image = self.get_image(ref=image_ref)
         if image_spec:
             image = self.get_image(image_spec, image_spec)
         if not image:
-            specs = f'image: {image_spec}, ref: {image_ref}'
-            raise ValidationError(f'Image not found {specs}')
+            specs = f"image: {image_spec}, ref: {image_ref}"
+            raise ValidationError(f"Image not found {specs}")
         return image
 
     def _translate_networks(self, req, spec=False):
-        network_req = req.get('network')
-        network_specs = req.get('networks', [])
+        network_req = req.get("network")
+        network_specs = req.get("networks", [])
         network_specs = deepcopy(network_specs)
         networks = []
         if type(network_specs) != list:
             network_specs = []
         for network_spec in network_specs:
-            uuid = network_spec.get('uuid')
+            uuid = network_spec.get("uuid")
             network = self.get_network(ref=uuid)
             if not network:
-                raise ValidationError(f'Network not found: {network_spec}')
+                raise ValidationError(f"Network not found: {network_spec}")
             networks.append(network)
         if network_req:
             network = self.get_network(name=network_req, ref=network_req)
             if not network:
-                raise ValidationError(f'Network not found: {network_req}')
-            network_specs.append({'uuid': network['id']})
+                raise ValidationError(f"Network not found: {network_req}")
+            network_specs.append({"uuid": network["id"]})
             networks.append(network)
 
         if spec:
@@ -217,9 +212,9 @@ class OpenStackProvider(Provider):
         return networks
 
     def validate_host(self, req):
-        '''
+        """
         Validate if host can be provisioned based on provided requirements
-        '''
+        """
 
         self._translate_flavor(req)
         self._translate_image(req)
@@ -232,16 +227,13 @@ class OpenStackProvider(Provider):
             self.validate_host(req)
 
     def host_requirements(self, req):
-        flavor_spec = req.get('flavor')
-        flavor_ref = req.get('flavorRef')
+        flavor_spec = req.get("flavor")
+        flavor_ref = req.get("flavorRef")
         if flavor_ref:
             flavor = self.get_flavor(ref=flavor_ref)
         if flavor_spec:
             flavor = self.get_flavor(flavor_spec, flavor_spec)
-        return {
-            'ram': flavor['ram'],
-            'vcpus': flavor['vcpus']
-        }
+        return {"ram": flavor["ram"], "vcpus": flavor["vcpus"]}
 
     async def can_provision(self, reqs):
         vcpus = 0
@@ -249,26 +241,25 @@ class OpenStackProvider(Provider):
 
         for req in reqs:
             needs = self.host_requirements(req)
-            vcpus += needs['vcpus']
-            ram += needs['ram']
+            vcpus += needs["vcpus"]
+            ram += needs["ram"]
 
-        limits = self.limits['limits']['absolute']
-        used_vcpus = limits['totalCoresUsed']
-        used_memory = limits['totalRAMUsed']
-        limit_vcpus = limits['maxTotalCores']
-        limit_memory = limits['maxTotalRAMSize']
+        limits = self.limits["limits"]["absolute"]
+        used_vcpus = limits["totalCoresUsed"]
+        used_memory = limits["totalRAMUsed"]
+        limit_vcpus = limits["maxTotalCores"]
+        limit_memory = limits["maxTotalRAMSize"]
 
         req_vcpus = used_vcpus + vcpus
         req_memory = used_memory + ram
 
-        print(f'Required vcpus: {vcpus}, '
-              f'used: {used_vcpus}, max: {limit_vcpus}')
-        print(f'Required ram: {ram}, used: {used_memory}, max: {limit_memory}')
+        print(f"Required vcpus: {vcpus}, " f"used: {used_vcpus}, max: {limit_vcpus}")
+        print(f"Required ram: {ram}, used: {used_memory}, max: {limit_memory}")
 
         return req_vcpus <= limit_vcpus and req_memory <= limit_memory
 
     async def create_server(self, req):
-        '''
+        """
         Issue create of server.
 
         req - dict of server requirements - can contains values defined in
@@ -279,27 +270,27 @@ class OpenStackProvider(Provider):
         * 'flavor': uuid or name of flavor to use
         * 'network': uuid or name of network to use. Will be added to networks
                      list if present
-        '''
+        """
 
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         flavor = self._translate_flavor(req)
-        specs['flavorRef'] = flavor['id']
-        if specs.get('flavor'):
-            del specs['flavor']
+        specs["flavorRef"] = flavor["id"]
+        if specs.get("flavor"):
+            del specs["flavor"]
 
         image = self._translate_image(req)
-        specs['imageRef'] = image['id']
-        if specs.get('image'):
-            del specs['image']
+        specs["imageRef"] = image["id"]
+        if specs.get("image"):
+            del specs["image"]
 
         network_specs = self._translate_networks(req, spec=True)
-        specs['networks'] = network_specs
-        if specs.get('network'):
-            del specs['network']
+        specs["networks"] = network_specs
+        if specs.get("network"):
+            del specs["network"]
 
         response = await self.nova.servers.create(server=specs)
-        return response.get('server')
+        return response.get("server")
 
     async def delete_server(self, uuid):
         try:
@@ -308,8 +299,9 @@ class OpenStackProvider(Provider):
             print("Server not found, probably already deleted")
             pass
 
-    async def wait_till_provisioned(self, uuid, timeout=None, poll_sleep=None,
-                                    poll_sleep_initial=None):
+    async def wait_till_provisioned(
+        self, uuid, timeout=None, poll_sleep=None, poll_sleep_initial=None
+    ):
 
         if not poll_sleep_initial:
             poll_sleep_initial = self.poll_sleep_initial
@@ -320,7 +312,7 @@ class OpenStackProvider(Provider):
 
         start = datetime.now()
         timeout_time = start + timedelta(minutes=timeout)
-        done_states = ['ACTIVE', 'ERROR']
+        done_states = ["ACTIVE", "ERROR"]
 
         # do not check the state immediately, it will take some time
         await asyncio.sleep(poll_sleep_initial)
@@ -330,8 +322,8 @@ class OpenStackProvider(Provider):
                 resp = await self.nova.servers.get(uuid)
             except NotFoundError:
                 raise ServerNotFoundError(uuid)
-            server = resp['server']
-            if server['status'] in done_states:
+            server = resp["server"]
+            if server["status"] in done_states:
                 break
 
             await asyncio.sleep(poll_sleep)
@@ -340,20 +332,19 @@ class OpenStackProvider(Provider):
         prov_duration = (done_time - start).total_seconds()
 
         if datetime.now() >= timeout_time:
-            print(f'{uuid} was not provisioned within a timeout of'
-                  f' {timeout} mins')
+            print(f"{uuid} was not provisioned within a timeout of" f" {timeout} mins")
         else:
-            print(f'{uuid} was provisioned in {prov_duration:.1f}s')
+            print(f"{uuid} was provisioned in {prov_duration:.1f}s")
 
         return server
 
     def get_poll_sleep_times(self, hosts):
-        '''
+        """
         Compute polling slee times based on number of hosts so that we
         don't create unnecessary load on server while still checking
 
         returns (initial_sleep, sleep)
-        '''
+        """
         count = len(hosts)
 
         init_poll = self.poll_sleep_initial
@@ -370,35 +361,35 @@ class OpenStackProvider(Provider):
         return init_poll, poll
 
     async def provision_hosts(self, hosts):
-        print('Validating hosts definitions')
+        print("Validating hosts definitions")
         await self.validate_hosts(hosts)
-        print('Host definitions valid')
+        print("Host definitions valid")
 
-        print('Checking available resources')
+        print("Checking available resources")
         can = await self.can_provision(hosts)
         if not can:
-            raise ValidationError('Not enough resources to provision')
-        print('Resource availability: OK')
+            raise ValidationError("Not enough resources to provision")
+        print("Resource availability: OK")
 
         started = datetime.now()
 
         count = len(hosts)
-        print(f'Issuing provisioning of {count} hosts')
+        print(f"Issuing provisioning of {count} hosts")
         create_aws = []
         for req in hosts:
             aws = self.create_server(req)
             create_aws.append(aws)
         create_resps = await asyncio.gather(*create_aws)
-        print('Provisioning issued')
+        print("Provisioning issued")
 
-        print('Waiting for all hosts to be available')
+        print("Waiting for all hosts to be available")
         init_poll_sleep, poll_sleep = self.get_poll_sleep_times(hosts)
         wait_aws = []
         for create_resp in create_resps:
             aws = self.wait_till_provisioned(
-                create_resp.get('id'),
+                create_resp.get("id"),
                 poll_sleep=poll_sleep,
-                poll_sleep_initial=init_poll_sleep
+                poll_sleep_initial=init_poll_sleep,
             )
             wait_aws.append(aws)
 
@@ -406,15 +397,15 @@ class OpenStackProvider(Provider):
         provisioned = datetime.now()
         provi_duration = provisioned - started
 
-        print('All hosts reached provisioning final state (ACTIVE or ERROR)')
-        print(f'Provisioning duration: {provi_duration}')
+        print("All hosts reached provisioning final state (ACTIVE or ERROR)")
+        print(f"Provisioning duration: {provi_duration}")
 
-        errors = [res for res in server_results if res['status'] == 'ERROR']
+        errors = [res for res in server_results if res["status"] == "ERROR"]
         if errors:
-            print('Some host did not start properly')
+            print("Some host did not start properly")
             for err in errors:
                 self.print_basic_info(err)
-            print('Given the error, will delete all hosts')
+            print("Given the error, will delete all hosts")
             await self.delete_hosts(server_results)
             raise ProvisioningError(errors)
 
@@ -426,22 +417,22 @@ class OpenStackProvider(Provider):
         print("Issuing deletion")
         delete_aws = []
         for server_result in provisioning_results:
-            aws = self.delete_server(server_result.get('id'))
+            aws = self.delete_server(server_result.get("id"))
             delete_aws.append(aws)
         await asyncio.gather(*delete_aws)
         print("All servers issued to be deleted")
 
     def print_basic_info(self, server_results):
-        name = server_results.get('name')
-        uuid = server_results.get('id')
-        status = server_results.get('status')
-        networks = server_results.get('addresses', {})
+        name = server_results.get("name")
+        uuid = server_results.get("id")
+        status = server_results.get("status")
+        networks = server_results.get("addresses", {})
         networks = networks.values()
-        addresses = [ip.get('addr') for n in networks for ip in n]
-        net_str = ' '.join(addresses)
-        print(f'{status} {name} {uuid} {net_str}')
+        addresses = [ip.get("addr") for n in networks for ip in n]
+        net_str = " ".join(addresses)
+        print(f"{status} {name} {uuid} {net_str}")
 
-        fault = server_results.get('fault')
+        fault = server_results.get("fault")
         if fault:
             print("Fault:")
             print_obj(fault)
