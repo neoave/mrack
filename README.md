@@ -92,3 +92,29 @@ Atm there is no CLI and it is implemented as Python library
 import aiohabit
 # TODO
 ```
+
+## Contribute
+
+Projects is using [black](https://github.com/psf/black) formater to keep consistent
+formatting, [flake8](https://flake8.pycqa.org/en/latest/) and
+[pydocstyle](http://pycodestyle.pycqa.org/en/latest/intro.html) to ensure following
+Python good practices.
+
+Contributions (Pull Requests) are welcome. It is expected that they will pass tox tests
+and include unit tests for new code.
+
+### Black formatting
+Expected formatting can be achived by running:
+```
+$ make format
+```
+
+Look into [black](https://github.com/psf/black) documentation for possible integration
+in editors/IDEs.
+
+### Testing
+Just run tox to execute all tests and linters
+
+```
+$ tox
+```
