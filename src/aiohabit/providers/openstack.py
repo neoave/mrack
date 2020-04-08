@@ -268,7 +268,7 @@ class OpenStackProvider(Provider):
 
     async def create_server(self, req):
         """
-        Issue create of server.
+        Issue creation of a server
 
         req - dict of server requirements - can contains values defined in
               POST /servers oficial OpenStack API
@@ -348,8 +348,9 @@ class OpenStackProvider(Provider):
 
     def get_poll_sleep_times(self, hosts):
         """
-        Compute polling slee times based on number of hosts so that we
-        don't create unnecessary load on server while still checking
+        Compute polling sleep times based on number of hosts
+
+        So that we don't create unnecessary load on server while still checking
 
         returns (initial_sleep, sleep)
         """
