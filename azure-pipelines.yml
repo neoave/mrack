@@ -10,8 +10,6 @@ pool:
   vmImage: 'ubuntu-latest'
 strategy:
   matrix:
-    Python36:
-      python.version: '3.6'
     Python37:
       python.version: '3.7'
 
@@ -24,9 +22,25 @@ steps:
 - script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
+    pip install -r test-requirements.txt
+    pip install pytest pytest-azurepipelines flake8 black pydocstyle
   displayName: 'Install dependencies'
 
 - script: |
-    pip install pytest pytest-azurepipelines
-    tox
-  displayName: 'tox'
+    flake8
+  displayName: 'flake8'
+
+- script: |
+    black --check src
+    black --check setup.py
+    black --check tests
+  displayName: 'black'
+
+- script: |
+    pydocstyle src
+  displayName: 'pydocstyle'
+
+- script: |
+    pip install .
+    pytest
+  displayName: 'pytest'
