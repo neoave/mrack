@@ -39,6 +39,7 @@ class OpenStackProvider(Provider):
         self.networks = {}
         self.networks_by_ref = {}
         self.ips = {}
+        self.ips_by_ref = {}
         self.timeout = 60  # minutes
         self.poll_sleep_initial = 15  # seconds
         self.poll_sleep = 7  # seconds
@@ -104,6 +105,12 @@ class OpenStackProvider(Provider):
             network = self.networks_by_ref.get(ref)
         return network
 
+    def get_ips(self, name=None, ref=None):
+        aval = self.ips.get(name)
+        if not aval:
+            aval = self.ips_by_ref.get(ref)
+        return aval
+
     async def load_flavors(self):
         resp = await self.nova.flavors.list()
         flavors = resp["flavors"]
@@ -157,7 +164,8 @@ class OpenStackProvider(Provider):
         resp = await self.neutron.ip.list()
         availabilities = resp["network_ip_availabilities"]
         for availability in availabilities:
-            self.ips[availability["network_id"]] = availability
+            self.ips[availability["network_name"]] = availability
+            self.ips_by_ref[availability["network_id"]] = availability
         return availabilities
 
     def _translate_flavor(self, req):
