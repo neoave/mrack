@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""OpenStack provider."""
 
 import asyncio
 from copy import deepcopy
@@ -30,7 +31,15 @@ from ..errors import ServerNotFoundError, ValidationError, ProvisioningError
 
 
 class OpenStackProvider(Provider):
+    """
+    OpenStack Provider.
+
+    Provisions servers in OpenStack with added logic to check if requested
+    resources are available.
+    """
+
     def __init__(self):
+        """Object initialization."""
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}
@@ -45,6 +54,15 @@ class OpenStackProvider(Provider):
         self.poll_sleep = 7  # seconds
 
     async def init(self, image_names=None):
+        """Initialize provider with data from OpenStack.
+
+        Load:
+        * available flavors
+        * networks
+        * network avalabilities (number of available IPs for networks)
+        * images which were defined in `image_names` option
+        * account limits (max and current usage of vCPUs, memory, ...)
+        """
         # session expects that credentials will be set via env variables
         self.session = AuthPassword()
         self.nova = ExtraNovaClient(session=self.session)
@@ -73,45 +91,53 @@ class OpenStackProvider(Provider):
         print(f"Open Stack environment objects " f"load duration: {object_duration}")
 
     def set_flavors(self, flavors):
+        """Extend provider configuration with list of flavors."""
         for flavor in flavors:
             self.flavors[flavor["name"]] = flavor
             self.flavors_by_ref[flavor["id"]] = flavor
 
     def set_images(self, images):
+        """Extend provider configuration with list of images."""
         for image in images:
             self.images[image["name"]] = image
             self.images_by_ref[image["id"]] = image
 
     def set_networks(self, networks):
+        """Extend provider configuration with list of networks."""
         for network in networks:
             self.networks[network["name"]] = network
             self.networks_by_ref[network["id"]] = network
 
     def get_flavor(self, name=None, ref=None):
+        """Get flavor by name or UUID."""
         flavor = self.flavors.get(name)
         if not flavor:
             flavor = self.flavors_by_ref.get(ref)
         return flavor
 
     def get_image(self, name=None, ref=None):
+        """Get image by name or UUID."""
         image = self.images.get(name)
         if not image:
             image = self.images_by_ref.get(ref)
         return image
 
     def get_network(self, name=None, ref=None):
+        """Get network by name or UUID."""
         network = self.networks.get(name)
         if not network:
             network = self.networks_by_ref.get(ref)
         return network
 
     def get_ips(self, name=None, ref=None):
+        """Get network availibility by network name or network UUID."""
         aval = self.ips.get(name)
         if not aval:
             aval = self.ips_by_ref.get(ref)
         return aval
 
     async def load_flavors(self):
+        """Extend provider configuration by loading all flavors from OpenStack."""
         resp = await self.nova.flavors.list()
         flavors = resp["flavors"]
         self.set_flavors(flavors)
@@ -119,9 +145,9 @@ class OpenStackProvider(Provider):
 
     async def load_images(self, image_names=None):
         """
-        Load information about images.
+        Extend provider configuration by loading information about images.
 
-        Loads everything if image_names list is not specified.
+        Load everything if image_names list is not specified.
 
         Specifying list of images to load might improve performance if the
         OpenStack instance contains a lot of images.
@@ -152,15 +178,14 @@ class OpenStackProvider(Provider):
         return images
 
     async def load_networks(self):
+        """Extend provider configuration by loading all networks from OpenStack."""
         resp = await self.neutron.network.list()
         networks = resp["networks"]
         self.set_networks(networks)
         return networks
 
     async def load_ip_availabilities(self):
-        """
-        Load current networks availabilities
-        """
+        """Extend provider configuration by loading networks avalabilities."""
         resp = await self.neutron.ip.list()
         availabilities = resp["network_ip_availabilities"]
         for availability in availabilities:
@@ -220,10 +245,7 @@ class OpenStackProvider(Provider):
         return networks
 
     def validate_host(self, req):
-        """
-        Validate if host can be provisioned based on provided requirements
-        """
-
+        """Validate that host requirements contains existing required objects."""
         self._translate_flavor(req)
         self._translate_image(req)
         self._translate_networks(req)
@@ -231,10 +253,12 @@ class OpenStackProvider(Provider):
         return True
 
     async def validate_hosts(self, reqs):
+        """Validate that all hosts requirements contains existing required objects."""
         for req in reqs:
             self.validate_host(req)
 
-    def host_requirements(self, req):
+    def get_host_requirements(self, req):
+        """Get vCPU and memory requirements for host requirement."""
         flavor_spec = req.get("flavor")
         flavor_ref = req.get("flavorRef")
         if flavor_ref:
@@ -244,11 +268,17 @@ class OpenStackProvider(Provider):
         return {"ram": flavor["ram"], "vcpus": flavor["vcpus"]}
 
     async def can_provision(self, reqs):
+        """Check that all host can be provisioned.
+
+        Checks:
+        * available vCPUs and memory based on account limits
+        * that all host contain available flavors, images, networks
+        """
         vcpus = 0
         ram = 0
 
         for req in reqs:
-            needs = self.host_requirements(req)
+            needs = self.get_host_requirements(req)
             vcpus += needs["vcpus"]
             ram += needs["ram"]
 
@@ -267,8 +297,7 @@ class OpenStackProvider(Provider):
         return req_vcpus <= limit_vcpus and req_memory <= limit_memory
 
     async def create_server(self, req):
-        """
-        Issue creation of a server
+        """Issue creation of a server.
 
         req - dict of server requirements - can contains values defined in
               POST /servers oficial OpenStack API
@@ -279,7 +308,6 @@ class OpenStackProvider(Provider):
         * 'network': uuid or name of network to use. Will be added to networks
                      list if present
         """
-
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         flavor = self._translate_flavor(req)
@@ -301,6 +329,10 @@ class OpenStackProvider(Provider):
         return response.get("server")
 
     async def delete_server(self, uuid):
+        """Issue deletion of server.
+
+        Doesn't wait for the deletion to happen.
+        """
         try:
             await self.nova.servers.force_delete(uuid)
         except NotFoundError:
@@ -310,7 +342,21 @@ class OpenStackProvider(Provider):
     async def wait_till_provisioned(
         self, uuid, timeout=None, poll_sleep=None, poll_sleep_initial=None
     ):
+        """
+        Wait till server is provisioned.
 
+        Provisioned means that server is in ACTIVE or ERROR state
+
+        State is checked by polling. Polling can be controller via `poll_sleep` and
+        `poll_sleep_initial` options. This is useful when provisioning a lot of
+        machines as it is better to increase initial poll to not ask to often as
+        provisioning resources takes some time.
+
+        Waits till timeout happens. Timeout can be either specified or default provider
+        timeout is used.
+
+        Return information about provisioned server.
+        """
         if not poll_sleep_initial:
             poll_sleep_initial = self.poll_sleep_initial
         if not poll_sleep:
@@ -347,10 +393,10 @@ class OpenStackProvider(Provider):
         return server
 
     def get_poll_sleep_times(self, hosts):
-        """
-        Compute polling sleep times based on number of hosts
+        """Compute polling sleep times based on number of hosts.
 
-        So that we don't create unnecessary load on server while still checking
+        So that we don't create unnecessary load on server while checking state of
+        provisioning.
 
         returns (initial_sleep, sleep)
         """
@@ -370,6 +416,19 @@ class OpenStackProvider(Provider):
         return init_poll, poll
 
     async def provision_hosts(self, hosts):
+        """Provision hosts based on list of host requirements.
+
+        Main provider method for provisioning.
+
+        First it validates that host requirements are valid and that OpenStack tenant
+        has enough resources(quota).
+
+        Then issues provisioning and waits for it succeed. Raises exception if any of
+        the servers was not successfully provisioned. If that happens it issues deletion
+        of all already provisioned resources.
+
+        Return list of inforamtion about provisioned servers.
+        """
         print("Validating hosts definitions")
         await self.validate_hosts(hosts)
         print("Host definitions valid")
@@ -423,6 +482,7 @@ class OpenStackProvider(Provider):
         return server_results
 
     async def delete_hosts(self, provisioning_results):
+        """Issue deletion of all servers based on previous results from provisioning."""
         print("Issuing deletion")
         delete_aws = []
         for server_result in provisioning_results:
@@ -432,6 +492,7 @@ class OpenStackProvider(Provider):
         print("All servers issued to be deleted")
 
     def print_basic_info(self, server_results):
+        """Print basic information about all provided provisioned hosts."""
         name = server_results.get("name")
         uuid = server_results.get("id")
         status = server_results.get("status")

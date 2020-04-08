@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Module to work with provisioning config.
+
+Provisioning config is general project configuration shared between multiple jobs
+"""
+
 
 class ProvisioningConfig:
+    """Represents loaded provisioning configuration."""
+
     pass
