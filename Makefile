@@ -1,6 +1,7 @@
-
-init:
-	pip install -r requirements.txt
+format:
+	black src
+	black tests
+	black setup.py
 
 test:
-	pytest tests
+	tox

@@ -1,0 +1,136 @@
+{
+    "flavors": [
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 40,
+            "id": "0d7e33e2-7516-11ea-824f-e470b821142a",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/0d7e33e2-7516-11ea-824f-e470b821142a",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/0d7e33e2-7516-11ea-824f-e470b821142a",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.medium",
+            "os-flavor-access:is_public": true,
+            "ram": 4096,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 2
+        },
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 10,
+            "id": "1cfe843e-7516-11ea-824f-e470b821142a",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/1cfe843e-7516-11ea-824f-e470b821142a",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/1cfe843e-7516-11ea-824f-e470b821142a",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "ci.m1.micro",
+            "os-flavor-access:is_public": true,
+            "ram": 1024,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 1
+        },
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 40,
+            "id": "2695501c-9029-4c05-aae2-34b1b17e8810",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/2695501c-9029-4c05-aae2-34b1b17e8810",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/2695501c-9029-4c05-aae2-34b1b17e8810",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "ci.m5.xlarge",
+            "os-flavor-access:is_public": true,
+            "ram": 49152,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 24
+        },
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 40,
+            "id": "3176cb6a-7516-11ea-824f-e470b821142a",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/3176cb6a-7516-11ea-824f-e470b821142a",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/3176cb6a-7516-11ea-824f-e470b821142a",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "ci.m1.xlarge",
+            "os-flavor-access:is_public": true,
+            "ram": 16384,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 8
+        },
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 80,
+            "id": "8cf76be8-7516-11ea-824f-e470b821142a",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/8cf76be8-7516-11ea-824f-e470b821142a",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/8cf76be8-7516-11ea-824f-e470b821142a",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.xlarge",
+            "os-flavor-access:is_public": true,
+            "ram": 16384,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 8
+        },
+        {
+            "OS-FLV-DISABLED:disabled": false,
+            "OS-FLV-EXT-DATA:ephemeral": 0,
+            "disk": 1,
+            "id": "9734fc9c-7516-11ea-824f-e470b821142a",
+            "links": [
+                {
+                    "href": "https://rhos.example.test:13774/v2.1/flavors/9734fc9c-7516-11ea-824f-e470b821142a",
+                    "rel": "self"
+                },
+                {
+                    "href": "https://rhos.example.test:13774/flavors/9734fc9c-7516-11ea-824f-e470b821142a",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.tiny",
+            "os-flavor-access:is_public": true,
+            "ram": 512,
+            "rxtx_factor": "1.0",
+            "swap": "",
+            "vcpus": 1
+        }
+    ]
+}

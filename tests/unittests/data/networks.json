@@ -1,0 +1,124 @@
+{
+    "networks": [
+        {
+            "admin_state_up": true,
+            "availability_zone_hints": [],
+            "availability_zones": [
+                "nova"
+            ],
+            "created_at": "2019-08-19T07:54:27Z",
+            "description": "",
+            "id": "9b42e096-7517-11ea-824f-e470b821142a",
+            "ipv4_address_scope": null,
+            "ipv6_address_scope": null,
+            "is_default": false,
+            "l2_adjacency": true,
+            "mtu": 1500,
+            "name": "net_1",
+            "port_security_enabled": true,
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "qos_policy_id": null,
+            "revision_number": 12,
+            "router:external": true,
+            "shared": true,
+            "status": "ACTIVE",
+            "subnets": [
+                "a4b9e214-7517-11ea-824f-e470b821142a"
+            ],
+            "tags": [],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "updated_at": "2019-08-27T12:43:31Z"
+        },
+        {
+            "admin_state_up": true,
+            "availability_zone_hints": [],
+            "availability_zones": [
+                "nova"
+            ],
+            "created_at": "2019-01-10T11:31:23Z",
+            "description": "",
+            "id": "a50332fc-7517-11ea-824f-e470b821142a",
+            "ipv4_address_scope": null,
+            "ipv6_address_scope": null,
+            "is_default": false,
+            "l2_adjacency": true,
+            "mtu": 1500,
+            "name": "net_2",
+            "port_security_enabled": true,
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "qos_policy_id": null,
+            "revision_number": 31,
+            "router:external": true,
+            "shared": true,
+            "status": "ACTIVE",
+            "subnets": [
+                "3389431e-d528-4dfe-a42e-f21d2ec25ac0",
+                "822082ce-c7c8-4574-a851-dd6b8ac760d9"
+            ],
+            "tags": [
+                "cci",
+                "provider"
+            ],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "updated_at": "2019-08-27T12:43:41Z"
+        },
+        {
+            "admin_state_up": true,
+            "availability_zone_hints": [],
+            "availability_zones": [
+                "nova"
+            ],
+            "created_at": "2019-08-19T07:56:35Z",
+            "description": "",
+            "id": "daf913c9-cc06-4755-83fc-ece66d628d2d",
+            "ipv4_address_scope": null,
+            "ipv6_address_scope": null,
+            "is_default": false,
+            "l2_adjacency": true,
+            "mtu": 1500,
+            "name": "net_3",
+            "port_security_enabled": true,
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "qos_policy_id": null,
+            "revision_number": 13,
+            "router:external": true,
+            "shared": true,
+            "status": "ACTIVE",
+            "subnets": [
+                "ebf607e0-63c0-491d-988f-d9829c1efcf3"
+            ],
+            "tags": [],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "updated_at": "2019-09-11T10:46:29Z"
+        },
+        {
+            "admin_state_up": true,
+            "availability_zone_hints": [],
+            "availability_zones": [
+                "nova"
+            ],
+            "created_at": "2019-01-10T13:31:44Z",
+            "description": "",
+            "id": "d74feefa-69a5-4047-89f7-6cd219d67873",
+            "ipv4_address_scope": null,
+            "ipv6_address_scope": null,
+            "is_default": false,
+            "l2_adjacency": true,
+            "mtu": 1500,
+            "name": "net_4_ip_v6",
+            "port_security_enabled": true,
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "qos_policy_id": null,
+            "revision_number": 13,
+            "router:external": true,
+            "shared": true,
+            "status": "ACTIVE",
+            "subnets": [
+                "5d3311b8-e3c1-47f9-9234-02443a0a9b12"
+            ],
+            "tags": [],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "updated_at": "2019-10-10T12:48:17Z"
+        }
+    ]
+}
