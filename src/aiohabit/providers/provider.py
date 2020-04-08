@@ -12,19 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""General Provider interface."""
+
 
 class Provider:
+    """General Provider interface."""
+
     def __init__(self, provisioning_config, job_config):
+        """Initialize provider."""
         return
 
     async def validate_hosts(hosts):
+        """Validate that host requirements are well specified."""
         return
 
     async def can_provision(self, hosts):
+        """Check that provider has enough resources to provison hosts."""
         raise NotImplementedError()
 
     async def provision_hosts(self, hosts):
+        """Provision hosts and wait for it to finish."""
         raise NotImplementedError()
 
     async def delete_hosts(self, provisioning_results):
+        """Delete provisioned hosts based on input from provision_hosts."""
         raise NotImplementedError()

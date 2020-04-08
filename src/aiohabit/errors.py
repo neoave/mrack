@@ -12,26 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Provisioning errors."""
+
 
 class ConfigError(Exception):
+    """Error in configuration."""
+
     pass
 
 
 class ProvisioningConfigError(ConfigError):
+    """Error in provisioning configuraiton."""
+
     pass
 
 
 class JobConfigError(ConfigError):
+    """Error in job configuration."""
+
     pass
 
 
 class ValidationError(Exception):
+    """Error found in validation of values."""
+
     pass
 
 
 class ServerNotFoundError(Exception):
+    """Provided doesn't know the specified server."""
+
     pass
 
 
 class ProvisioningError(Exception):
+    """Error happened during provisioning of resources."""
+
     pass

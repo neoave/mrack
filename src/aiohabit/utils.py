@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+"""Module with utility and helper functions."""
+
 import base64
 import datetime
 import json
@@ -21,7 +23,8 @@ from .errors import ConfigError
 
 
 def get_config_value(config_dict, key, default=None):
-    """
+    """Get configuration value or default value from dictionary.
+
     Usable for dictionaries which can also contain attribute 'default'
 
     Order of preference:
@@ -36,9 +39,9 @@ def get_config_value(config_dict, key, default=None):
 
 
 def validate_dict_attrs(dct, attr_list, dct_name):
-    """
-    Validate that dictionary contains all atributes from provided attribute
-    list.
+    """Validate that dictionary contains all atributes.
+
+    Based on provided attribute list.
     """
     missing = [a for a in attr_list if a not in dct]
     if missing:
@@ -51,11 +54,11 @@ def validate_dict_attrs(dct, attr_list, dct_name):
 
 
 def json_convertor(obj):
-    """
-    To be used for json.dumps as value for default= so that given object
+    """Convert object to be useable for json serialization.
+
+    To be used in json.dumps as value for default= so that given object
     is serializable
     """
-
     if "Binary" in str(obj.__class__):
         return base64.b64encode(obj.data).decode("utf-8")
 
@@ -68,7 +71,5 @@ def json_convertor(obj):
 
 
 def print_obj(obj):
-    """
-    Print object as JSON
-    """
+    """Print object as JSON."""
     print(json.dumps(obj, default=json_convertor, sort_keys=True, indent=4))
