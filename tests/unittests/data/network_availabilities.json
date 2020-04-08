@@ -1,0 +1,84 @@
+{
+    "network_ip_availabilities": [
+        {
+            "network_id": "9b42e096-7517-11ea-824f-e470b821142a",
+            "network_name": "net_1",
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "subnet_ip_availability": [
+                {
+                    "cidr": "10.0.10.0/22",
+                    "ip_version": 4,
+                    "subnet_id": "a4b9e214-7517-11ea-824f-e470b821142a",
+                    "subnet_name": "provider_net_subnet_net_1",
+                    "total_ips": 1010,
+                    "used_ips": 462
+                }
+            ],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "total_ips": 1010,
+            "used_ips": 462
+        },
+        {
+            "network_id": "a50332fc-7517-11ea-824f-e470b821142a",
+            "network_name": "net_2",
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "subnet_ip_availability": [
+                {
+                    "cidr": "10.0.20.0/22",
+                    "ip_version": 4,
+                    "subnet_id": "3389431e-d528-4dfe-a42e-f21d2ec25ac0",
+                    "subnet_name": "provider_net_subnet_net_2",
+                    "total_ips": 1009,
+                    "used_ips": 530
+                },
+                {
+                    "cidr": "2828:60:0:80::/64",
+                    "ip_version": 6,
+                    "subnet_id": "822082ce-c7c8-4574-a851-dd6b8ac760d9",
+                    "subnet_name": "provider_net_subnet_net_2_ipv6_1",
+                    "total_ips": 18446744073709551614,
+                    "used_ips": 530
+                }
+            ],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "total_ips": 18446744073709552623,
+            "used_ips": 1060
+        },
+        {
+            "network_id": "daf913c9-cc06-4755-83fc-ece66d628d2d",
+            "network_name": "net_3",
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "subnet_ip_availability": [
+                {
+                    "cidr": "10.0.30.0/22",
+                    "ip_version": 4,
+                    "subnet_id": "ebf607e0-63c0-491d-988f-d9829c1efcf3",
+                    "subnet_name": "provider_net_subnet_net_3",
+                    "total_ips": 1010,
+                    "used_ips": 379
+                }
+            ],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "total_ips": 1010,
+            "used_ips": 379
+        },
+        {
+            "network_id": "d74feefa-69a5-4047-89f7-6cd219d67873",
+            "network_name": "net_4_ip_v6",
+            "project_id": "6ecd972c751711ea824fe470b821142a",
+            "subnet_ip_availability": [
+                {
+                    "cidr": "2828:60:0:90::/64",
+                    "ip_version": 6,
+                    "subnet_id": "d74feefa-69a5-4047-89f7-6cd219d67873",
+                    "subnet_name": "provider_net_subnet_net_4_ip_v6",
+                    "total_ips": 18446744073709551361,
+                    "used_ips": 151
+                }
+            ],
+            "tenant_id": "6ecd972c751711ea824fe470b821142a",
+            "total_ips": 18446744073709551361,
+            "used_ips": 151
+        }
+    ]
+}

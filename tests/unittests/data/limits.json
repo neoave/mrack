@@ -1,0 +1,26 @@
+{
+    "limits": {
+        "absolute": {
+            "maxImageMeta": 128,
+            "maxPersonality": 5,
+            "maxPersonalitySize": 10240,
+            "maxSecurityGroupRules": 20,
+            "maxSecurityGroups": 10,
+            "maxServerGroupMembers": 100,
+            "maxServerGroups": 100,
+            "maxServerMeta": 128,
+            "maxTotalCores": 400,
+            "maxTotalFloatingIps": 10,
+            "maxTotalInstances": 400,
+            "maxTotalKeypairs": 100,
+            "maxTotalRAMSize": 819200,
+            "totalCoresUsed": 293,
+            "totalFloatingIpsUsed": 0,
+            "totalInstancesUsed": 148,
+            "totalRAMUsed": 563200,
+            "totalSecurityGroupsUsed": 1,
+            "totalServerGroupsUsed": 0
+        },
+        "rate": []
+    }
+}
