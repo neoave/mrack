@@ -21,8 +21,22 @@ class ConfigError(Exception):
     pass
 
 
+class MetadataError(Exception):
+    """Error in job metadata."""
+
+    pass
+
+
+class ProviderNotExists(ConfigError):
+    """Request provider does not exist."""
+
+    def __init__(self, name):
+        """Init the error with provider name."""
+        self._provider_name = name
+
+
 class ProvisioningConfigError(ConfigError):
-    """Error in provisioning configuraiton."""
+    """Error in provisioning configuration."""
 
     pass
 
