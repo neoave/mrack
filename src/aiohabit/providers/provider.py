@@ -20,9 +20,15 @@ class Provider:
 
     def __init__(self, provisioning_config, job_config):
         """Initialize provider."""
+        self._name = "dummy"
         return
 
-    async def validate_hosts(hosts):
+    @property
+    def name(self):
+        """Get provider name."""
+        return self._name
+
+    async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
         return
 

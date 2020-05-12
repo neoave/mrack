@@ -22,12 +22,32 @@ from simple_rest_client.exceptions import NotFoundError
 from urllib.parse import urlparse, parse_qs
 from .utils.osapi import ExtraNovaClient, NeutronClient
 from .provider import Provider
-from ..utils import print_obj
+from ..host import (
+    Host,
+    STATUS_ACTIVE,
+    STATUS_PROVISIONING,
+    STATUS_DELETED,
+    STATUS_ERROR,
+    STATUS_OTHER,
+)
 from ..errors import ServerNotFoundError, ValidationError, ProvisioningError
 
 # Docs
 # https://github.com/DreamLab/AsyncOpenStackClient
 # https://docs.openstack.org/queens/api/
+
+
+KEY = "openstack"
+
+
+STATUS_MAP = {
+    "ACTIVE": STATUS_ACTIVE,
+    "BUILD": STATUS_PROVISIONING,
+    "DELETED": STATUS_DELETED,
+    "ERROR": STATUS_ERROR,
+    # there is much more we can treat it as STATUS_OTHER, see:
+    # https://docs.openstack.org/api-guide/compute/server_concepts.html
+}
 
 
 class OpenStackProvider(Provider):
@@ -40,6 +60,7 @@ class OpenStackProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
+        self._name = KEY
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}
@@ -477,32 +498,41 @@ class OpenStackProvider(Provider):
             await self.delete_hosts(server_results)
             raise ProvisioningError(errors)
 
-        for srv in server_results:
-            self.print_basic_info(srv)
-        return server_results
+        hosts = [self.to_host(srv) for srv in server_results]
+        for host in hosts:
+            print(host)
+        return hosts
 
-    async def delete_hosts(self, provisioning_results):
+    async def delete_host(self, host):
+        """Issue deletion of host(server) from OpenStack."""
+        await self.delete_server(host._id)
+        return True
+
+    async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
         print("Issuing deletion")
         delete_aws = []
-        for server_result in provisioning_results:
-            aws = self.delete_server(server_result.get("id"))
+        for host in hosts:
+            aws = self.delete_host(host)
             delete_aws.append(aws)
-        await asyncio.gather(*delete_aws)
+        results = await asyncio.gather(*delete_aws)
         print("All servers issued to be deleted")
+        return results
 
-    def print_basic_info(self, server_results):
-        """Print basic information about all provided provisioned hosts."""
-        name = server_results.get("name")
-        uuid = server_results.get("id")
-        status = server_results.get("status")
-        networks = server_results.get("addresses", {})
-        networks = networks.values()
+    def to_host(self, provisioning_result):
+        """Transform provisioning result into Host object."""
+        networks = provisioning_result.get("addresses", {})
         addresses = [ip.get("addr") for n in networks for ip in n]
-        net_str = " ".join(addresses)
-        print(f"{status} {name} {uuid} {net_str}")
+        fault = provisioning_result.get("fault")
+        status = STATUS_MAP.get(provisioning_result.get("status"), STATUS_OTHER)
 
-        fault = server_results.get("fault")
-        if fault:
-            print("Fault:")
-            print_obj(fault)
+        host = Host(
+            self,
+            provisioning_result.get("id"),
+            provisioning_result.get("name"),
+            addresses,
+            status,
+            provisioning_result,
+            error_obj=fault,
+        )
+        return host

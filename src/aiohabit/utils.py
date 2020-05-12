@@ -18,6 +18,7 @@
 import base64
 import datetime
 import json
+import sys
 
 from .errors import ConfigError
 
@@ -39,7 +40,7 @@ def get_config_value(config_dict, key, default=None):
 
 
 def validate_dict_attrs(dct, attr_list, dct_name):
-    """Validate that dictionary contains all atributes.
+    """Validate that dictionary contains all attributes.
 
     Based on provided attribute list.
     """
@@ -68,6 +69,23 @@ def json_convertor(obj):
 
     if "Decimal" in str(obj.__class__):
         return str(obj)
+
+
+def load_json(path):
+    """Load JSON file into Python object."""
+    with open(path, "r") as file_data:
+        data = json.load(file_data)
+    return data
+
+
+def save_to_json(path, data):
+    """Serialize object into JSON file."""
+    try:
+        with open(path, "w") as output:
+            json.dump(data, output, default=json_convertor, indent=2, sort_keys=True)
+    except IOError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        exit(1)
 
 
 def print_obj(obj):

@@ -12,19 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module to work with provisioning config.
+"""Outputs package.
 
-Provisioning config is general project configuration shared between multiple jobs
+Outputs generate various output artifacts from provisioning results.
 """
-
-
-class ProvisioningConfig:
-    """Represents loaded provisioning configuration."""
-
-    def __init__(self, data):
-        """Initialize provisioning configuration."""
-        self.raw = data
-
-    def raw(self):
-        """Get raw configuration."""
-        return self._raw()

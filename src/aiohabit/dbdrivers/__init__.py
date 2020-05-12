@@ -12,19 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module to work with provisioning config.
 
-Provisioning config is general project configuration shared between multiple jobs
+"""aiohabit database drivers.
+
+A database driver persists and loads results of actions so that it can be used in
+consecutive actions.
 """
-
-
-class ProvisioningConfig:
-    """Represents loaded provisioning configuration."""
-
-    def __init__(self, data):
-        """Initialize provisioning configuration."""
-        self.raw = data
-
-    def raw(self):
-        """Get raw configuration."""
-        return self._raw()
