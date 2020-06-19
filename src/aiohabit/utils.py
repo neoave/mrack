@@ -18,7 +18,10 @@
 import base64
 import datetime
 import json
+import yaml
 import sys
+import contextlib
+
 
 from .errors import ConfigError
 
@@ -78,6 +81,13 @@ def load_json(path):
     return data
 
 
+def load_yaml(path):
+    """Load YAML file into Python object."""
+    with open(path, "r") as file_data:
+        data = yaml.safe_load(file_data)
+    return data
+
+
 def save_to_json(path, data):
     """Serialize object into JSON file."""
     try:
@@ -86,6 +96,31 @@ def save_to_json(path, data):
     except IOError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         exit(1)
+
+
+@contextlib.contextmanager
+def fd_open(filename=None):
+    """Use file or stout as output file descriptor."""
+    if filename:
+        fd = open(filename, "w")
+    else:
+        fd = sys.stdout
+
+    try:
+        yield fd
+    finally:
+        if fd is not sys.stdout:
+            fd.close()
+
+
+def save_yaml(path, yaml_data):
+    """
+    Write yaml data with file.write(yaml.dump()) to file specified by path.
+
+    If path is not specified use stdout.
+    """
+    with fd_open(path) as yaml_file:
+        yaml_file.write(yaml.dump(yaml_data, default_flow_style=False))
 
 
 def print_obj(obj):

@@ -92,7 +92,7 @@ class OpenStackProvider(Provider):
 
         login_start = datetime.now()
         await asyncio.gather(
-            self.nova.init_api(), self.glance.init_api(), self.neutron.init_api(),
+            self.nova.init_api(), self.glance.init_api(), self.neutron.init_api()
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
