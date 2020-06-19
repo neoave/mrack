@@ -126,3 +126,26 @@ def save_yaml(path, yaml_data):
 def print_obj(obj):
     """Print object as JSON."""
     print(json.dumps(obj, default=json_convertor, sort_keys=True, indent=4))
+
+
+class no_such_file_config_handler(object):
+    """
+    Decorator which change error into ConfigError with custom message.
+
+    error string can contain {path} template.
+    """
+
+    def __init__(self, error):
+        """Initialize decorator."""
+        self.error = error
+
+    def __call__(self, func):
+        """Transform FileNotFoundError into ConfigError."""
+
+        def wrapped_f(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except FileNotFoundError as e:
+                raise ConfigError(self.error.format(path=e.filename))
+
+        return wrapped_f
