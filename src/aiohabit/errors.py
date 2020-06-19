@@ -53,13 +53,19 @@ class ValidationError(Exception):
     pass
 
 
-class ServerNotFoundError(Exception):
-    """Provided doesn't know the specified server."""
+class ProviderError(Exception):
+    """General provider error."""
 
     pass
 
 
-class ProvisioningError(Exception):
+class ServerNotFoundError(ProviderError):
+    """Provider doesn't know the specified server."""
+
+    pass
+
+
+class ProvisioningError(ProviderError):
     """Error happened during provisioning of resources."""
 
     pass
