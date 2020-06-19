@@ -33,7 +33,7 @@ class FileDBDriver:
         self._hosts = {}
         self._raw_data = None
         self.save_on_change = True
-        self.load(path)
+        self.load()
 
     def load(self):
         """Load configuration from file."""

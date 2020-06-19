@@ -18,7 +18,7 @@ import asyncio
 import click
 
 from .dbdrivers.file import FileDBDriver
-from .utils import load_json, print_obj
+from .utils import load_yaml, print_obj
 from .config import ProvisioningConfig
 from .actions.destroy import Destroy
 from .actions.up import Up
@@ -39,14 +39,14 @@ def init_db(path):
 
 def init_config(path):
     """Load and initialize provisioning configuration."""
-    config_data = load_json(path)
+    config_data = load_yaml(path)
     config = ProvisioningConfig(config_data)
     return config
 
 
 def init_metadata(path):
     """Load and initialize job metadata."""
-    metadata_data = load_json(path)
+    metadata_data = load_yaml(path)
     return metadata_data
 
 
@@ -63,8 +63,8 @@ def aiohabitcli(ctx, config, db):
     """Multihost human friendly provisioner."""
     init_providers()
     ctx.ensure_object(dict)
-    ctx[DB] = init_db(db)
-    ctx[CONFIG] = init_config(config)
+    ctx.obj[DB] = init_db(db)
+    ctx.obj[CONFIG] = init_config(config)
 
 
 @aiohabitcli.command()
