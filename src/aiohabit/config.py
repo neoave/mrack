@@ -23,8 +23,16 @@ class ProvisioningConfig:
 
     def __init__(self, data):
         """Initialize provisioning configuration."""
-        self.raw = data
+        self._raw = data
 
     def raw(self):
         """Get raw configuration."""
         return self._raw()
+
+    def __getitem__(self, key):
+        """Get item from raw representation."""
+        return self._raw[key]
+
+    def get(self, key, default=None):
+        """Get method as in dict for raw config."""
+        return self._raw.get(key, default)

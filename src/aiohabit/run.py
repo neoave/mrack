@@ -16,16 +16,28 @@
 
 import asyncio
 import click
+from functools import update_wrapper
 import sys
 
 from .dbdrivers.file import FileDBDriver
-from .utils import load_yaml, print_obj, no_such_file_config_handler
+from .utils import load_yaml, no_such_file_config_handler
 from .config import ProvisioningConfig
 from .actions.destroy import Destroy
 from .actions.up import Up
 from .providers import providers
 from .providers.openstack import OpenStackProvider, KEY as OPENSTACK_KEY
 from .errors import ConfigError, MetadataError, ValidationError, ProviderError
+
+
+def async_run(f):
+    """Decorate click actions to run as async."""
+    f = asyncio.coroutine(f)
+
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(f(*args, **kwargs))
+
+    return update_wrapper(wrapper, f)
 
 
 def init_providers():
@@ -75,24 +87,28 @@ def aiohabitcli(ctx, config, db):
 @click.pass_context
 @click.argument("metadata")
 @click.option("-p", "--provider", default="openstack")
+@async_run
 async def up(ctx, metadata, provider):
     """Provision hosts.
 
     Based on provided job metadata file and provisioning configuration.
     """
-    ctx[META] = init_metadata(metadata)
-    up_action = Up(ctx[CONFIG], ctx[META], provider, ctx[DB])
-    hosts = await up_action.provision()
-    print_obj(hosts)
+    ctx.obj[META] = init_metadata(metadata)
+    up_action = Up()
+    await up_action.init(ctx.obj[CONFIG], ctx.obj[META], provider, ctx.obj[DB])
+    await up_action.provision()
 
 
 @aiohabitcli.command()
 @click.pass_context
-async def destroy(ctx):
+@click.argument("metadata")
+@async_run
+async def destroy(ctx, metadata):
     """Destroy provisioned hosts."""
-    destroy_action = Destroy(ctx[CONFIG], ctx[DB])
-    result = await destroy_action.destroy()
-    print_obj(result)
+    ctx.obj[META] = init_metadata(metadata)
+    destroy_action = Destroy()
+    await destroy_action.init(ctx.obj[CONFIG], ctx.obj[META], ctx.obj[DB])
+    await destroy_action.destroy()
 
 
 def exception_handler(func):
@@ -127,7 +143,7 @@ def exception_handler(func):
 @exception_handler
 def run():
     """Run the app."""
-    asyncio.run(aiohabitcli(obj={}))
+    aiohabitcli(obj={})
 
 
 if __name__ == "__main__":

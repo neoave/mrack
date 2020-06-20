@@ -37,12 +37,13 @@ class Up:
     inventory.
     """
 
-    def __init__(self, config, metadata, default_provider, db_driver):
+    async def init(self, config, metadata, default_provider, db_driver):
         """Initialize the Up action."""
         self._transformers = {}
         self._config = config
         self._metadata = metadata
         self._db_driver = db_driver
+        self._required_domain_attrs = ["name", "hosts"]
 
         self.validate_topology()
         default_provider_name = self._config.get("provider", default_provider)
@@ -50,15 +51,16 @@ class Up:
         for domain in self._metadata["domains"]:
             for host in domain["hosts"]:
                 provider_name = host.get("provider", default_provider_name)
-                transformer = transformers.get(provider_name)
+                transformer = await self._get_transformer(provider_name)
                 transformer.validate_host(host)
                 transformer.add_host(host)
 
-    def _get_transformer(self, provider_name):
+    async def _get_transformer(self, provider_name):
         """Get a transformer by name, initialize a new one if not yet done."""
         transformer = self._transformers.get(provider_name)
         if not transformer:
             transformer = transformers.get(provider_name)
+            await transformer.init(self._config, self._metadata)
             if not transformer:
                 raise MetadataError(f"Invalid provider: {provider_name}")
             self._transformers[provider_name] = transformer
@@ -84,13 +86,13 @@ class Up:
         for provider_name, transformer in self._transformers.items():
             reqs = transformer.create_host_requirements()
             provider = providers.get(provider_name)
-            aws = provider.provision_hosts(reqs)
-            prov_aws.append(aws)
+            aw = provider.provision_hosts(reqs)
+            prov_aws.append(aw)
         provisioning_results = await asyncio.gather(*prov_aws)
-
         hosts = []
         for results in provisioning_results:
             hosts.extend(results)
 
         self._db_driver.add_hosts(hosts)
+        print("Provisioning done")
         return hosts

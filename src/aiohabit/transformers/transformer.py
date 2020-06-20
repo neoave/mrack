@@ -26,14 +26,20 @@ class Transformer:
     _required_config_attrs = []
     _config_key = None
 
-    def __init__(self, cfg, metadata):
+    async def init(self, cfg, metadata):
         """Initialize transformer."""
         self._hosts = []
         self._config = cfg
         self._metadata = metadata
-        self._provider = providers.get(self._config_key)
         if self._config_key:
             self.validate_config()
+
+        self._provider = providers.get(self._config_key)
+        await self.init_provider()
+
+    async def init_provider(self):
+        """Initialize associated provider."""
+        pass
 
     @property
     def config(self):

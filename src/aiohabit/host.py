@@ -14,7 +14,7 @@
 
 """Host object."""
 
-from .utils import print_obj
+from .utils import object2json
 from .providers import providers
 
 STATUS_PENDING = "pending"
@@ -86,10 +86,12 @@ class Host:
         """Return string representation of host."""
         net_str = " ".join(self._ips)
 
-        print(f"{self._id} {self._name} {net_str} {self.username} " f"{self.password}")
-        if self.error_obj:
-            print("Error:")
-            print_obj(self.error_obj)
+        out = f"{self._id} {self._name} {net_str} {self._username} " f"{self._password}"
+
+        if self._error:
+            o = [out, "Error:", object2json(self._error)]
+            out = "\n".join(o)
+        return out
 
     def to_json(self):
         """Transform object into representation which is acceptable by `json.dump`."""
@@ -109,6 +111,11 @@ class Host:
     def name(self):
         """Get host name."""
         return self._name
+
+    @property
+    def provider(self):
+        """Get host provisioning provider."""
+        return self._provider
 
     @property
     def status(self):
