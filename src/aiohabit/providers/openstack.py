@@ -80,7 +80,7 @@ class OpenStackProvider(Provider):
         Load:
         * available flavors
         * networks
-        * network avalabilities (number of available IPs for networks)
+        * network availabilities (number of available IPs for networks)
         * images which were defined in `image_names` option
         * account limits (max and current usage of vCPUs, memory, ...)
         """
@@ -151,7 +151,7 @@ class OpenStackProvider(Provider):
         return network
 
     def get_ips(self, name=None, ref=None):
-        """Get network availibility by network name or network UUID."""
+        """Get network availability by network name or network UUID."""
         aval = self.ips.get(name)
         if not aval:
             aval = self.ips_by_ref.get(ref)
@@ -206,7 +206,7 @@ class OpenStackProvider(Provider):
         return networks
 
     async def load_ip_availabilities(self):
-        """Extend provider configuration by loading networks avalabilities."""
+        """Extend provider configuration by loading networks availabilities."""
         resp = await self.neutron.ip.list()
         availabilities = resp["network_ip_availabilities"]
         for availability in availabilities:
@@ -321,7 +321,7 @@ class OpenStackProvider(Provider):
         """Issue creation of a server.
 
         req - dict of server requirements - can contains values defined in
-              POST /servers oficial OpenStack API
+              POST /servers official OpenStack API
               https://docs.openstack.org/api-ref/compute/?expanded=create-server-detail#create-server
 
         The req object can contain following additional attributes:
@@ -430,7 +430,7 @@ class OpenStackProvider(Provider):
         # time when more than half of host is in ACTIVE state
         init_poll = init_poll + 0.65 * count
 
-        # poll time should ask owten enough, to not create unnecessary delays
+        # poll time should ask often enough, to not create unnecessary delays
         # while not that many to not load the server much
         poll = poll + 0.22 * count
 
@@ -448,7 +448,7 @@ class OpenStackProvider(Provider):
         the servers was not successfully provisioned. If that happens it issues deletion
         of all already provisioned resources.
 
-        Return list of inforamtion about provisioned servers.
+        Return list of information about provisioned servers.
         """
         print("Validating hosts definitions")
         await self.validate_hosts(hosts)
