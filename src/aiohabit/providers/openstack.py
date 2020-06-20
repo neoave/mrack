@@ -522,7 +522,7 @@ class OpenStackProvider(Provider):
     def to_host(self, provisioning_result):
         """Transform provisioning result into Host object."""
         networks = provisioning_result.get("addresses", {})
-        addresses = [ip.get("addr") for n in networks for ip in n]
+        addresses = [ip.get("addr") for n in networks.values() for ip in n]
         fault = provisioning_result.get("fault")
         status = STATUS_MAP.get(provisioning_result.get("status"), STATUS_OTHER)
 

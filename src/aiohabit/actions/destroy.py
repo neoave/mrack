@@ -15,7 +15,9 @@
 """Destroy action module."""
 
 import asyncio
+from ..errors import MetadataError
 from ..host import STATUS_DELETED
+from ..transformers import transformers
 
 
 class Destroy:
@@ -24,22 +26,48 @@ class Destroy:
     Destroy all still active provisioned host. Save the state to DB.
     """
 
-    def __init__(self, config, metadata, db_driver):
+    async def init(self, config, metadata, db_driver):
         """Initialize the destroy action."""
         self._config = config
         self._metadata = metadata
         self._db_driver = db_driver
+        self._transformers = {}
 
     async def destroy(self):
         """Execute the destroy action."""
-        hosts = self._db_driver.hosts
+        hosts = self._db_driver.hosts.values()
+        to_del = [host for host in hosts if host.status != STATUS_DELETED]
+        names = [host.name for host in to_del]
+        names = ", ".join(names)
+        print(f"Hosts to delete: {names}")
+
+        await self.init_providers(to_del)
         results_aws = []
-        for host in hosts.values():
-            if host.status == STATUS_DELETED:
-                continue
+
+        for host in to_del:
+            print(f"Deleting host: {host}")
             aw = host.delete()
             results_aws.append(aw)
         delete_results = await asyncio.gather(*results_aws)
         success = all(delete_results)
         self._db_driver.update_hosts(hosts)
+        print("Destroy done")
         return success
+
+    async def init_providers(self, hosts):
+        """Initialize providers for hosts to delete."""
+        providers = [host.provider.name for host in hosts]
+        providers = set(providers)
+        aws = [self._get_transformer(provider) for provider in providers]
+        await asyncio.gather(*aws)
+
+    async def _get_transformer(self, provider_name):
+        """Get a transformer by name, initialize a new one if not yet done."""
+        transformer = self._transformers.get(provider_name)
+        if not transformer:
+            transformer = transformers.get(provider_name)
+            await transformer.init(self._config, self._metadata)
+            if not transformer:
+                raise MetadataError(f"Invalid provider: {provider_name}")
+            self._transformers[provider_name] = transformer
+        return transformer

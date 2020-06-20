@@ -123,9 +123,14 @@ def save_yaml(path, yaml_data):
         yaml_file.write(yaml.dump(yaml_data, default_flow_style=False))
 
 
+def object2json(obj):
+    """Convert object to JSON string."""
+    return json.dumps(obj, default=json_convertor, sort_keys=True, indent=4)
+
+
 def print_obj(obj):
     """Print object as JSON."""
-    print(json.dumps(obj, default=json_convertor, sort_keys=True, indent=4))
+    print(object2json(obj))
 
 
 class no_such_file_config_handler(object):

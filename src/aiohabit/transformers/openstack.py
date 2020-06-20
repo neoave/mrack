@@ -15,7 +15,7 @@
 """OpenStack transformer module."""
 
 from .transformer import Transformer
-from ..utils import get_config_value
+from ..utils import get_config_value, print_obj
 from ..errors import ProvisioningConfigError
 
 CONFIG_KEY = "openstack"
@@ -30,13 +30,12 @@ class OpenStackTransformer(Transformer):
         "networks",
         "images",
         "keypair",
-        "profile",
-        "credentials_file",
     ]
 
-    def __init__(self, cfg, metadata):
-        """Initialize OpenStack transformer."""
-        super().__init__(cfg, metadata)
+    async def init_provider(self):
+        """Initialize associate provider."""
+        images = self.config["images"].values()
+        await self._provider.init(image_names=images)
 
     def _get_flavor(self, host):
         """Get flavor by host group."""
@@ -119,7 +118,8 @@ class OpenStackTransformer(Transformer):
 
             nt = host.get("network")
 
-            if not self.is_network_type(nt):
+            # skip if nt is not network type
+            if not self.config["networks"].get(nt):
                 continue
 
             network_name = nt_map[nt]
@@ -151,7 +151,7 @@ class OpenStackTransformer(Transformer):
         """Create single input for OpenStack provisioner."""
         return {
             "name": host["name"],
-            "flavor": self._get_flavor(host["group"]),
+            "flavor": self._get_flavor(host),
             "image": self._get_image(host["os"]),
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
@@ -164,5 +164,6 @@ class OpenStackTransformer(Transformer):
         available IP addresses.
         """
         reqs = [self.create_host_requirement(host) for host in self.hosts]
+        print_obj(reqs)
         self.translate_network_types(reqs)
         return reqs
