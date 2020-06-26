@@ -15,7 +15,7 @@ import pytest
 from aiohabit.providers.openstack import OpenStackProvider
 from unittest import mock
 from unittest.mock import Mock, patch
-from .utils import get_data
+from .utils import get_data  # FIXME do not use relative import
 
 
 def AsyncMock(*args, **kwargs):

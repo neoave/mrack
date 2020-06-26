@@ -15,8 +15,8 @@
 """File database driver module."""
 
 from os import path
-from ..host import host_from_json
-from ..utils import save_to_json, load_json
+from aiohabit.host import host_from_json
+from aiohabit.utils import save_to_json, load_json
 
 HOSTS_KEY = "hosts"
 

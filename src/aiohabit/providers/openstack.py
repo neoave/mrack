@@ -20,9 +20,9 @@ from datetime import datetime, timedelta
 from asyncopenstackclient import GlanceClient, AuthPassword
 from simple_rest_client.exceptions import NotFoundError
 from urllib.parse import urlparse, parse_qs
-from .utils.osapi import ExtraNovaClient, NeutronClient
-from .provider import Provider
-from ..host import (
+from aiohabit.providers.utils.osapi import ExtraNovaClient, NeutronClient
+from aiohabit.providers.provider import Provider
+from aiohabit.host import (
     Host,
     STATUS_ACTIVE,
     STATUS_PROVISIONING,
@@ -30,7 +30,7 @@ from ..host import (
     STATUS_ERROR,
     STATUS_OTHER,
 )
-from ..errors import ServerNotFoundError, ValidationError, ProvisioningError
+from aiohabit.errors import ServerNotFoundError, ValidationError, ProvisioningError
 
 # Docs
 # https://github.com/DreamLab/AsyncOpenStackClient

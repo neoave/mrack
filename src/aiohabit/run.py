@@ -19,14 +19,14 @@ import click
 from functools import update_wrapper
 import sys
 
-from .dbdrivers.file import FileDBDriver
-from .utils import load_yaml, no_such_file_config_handler
-from .config import ProvisioningConfig
-from .actions.destroy import Destroy
-from .actions.up import Up
-from .providers import providers
-from .providers.openstack import OpenStackProvider, KEY as OPENSTACK_KEY
-from .errors import ConfigError, MetadataError, ValidationError, ProviderError
+from aiohabit.dbdrivers.file import FileDBDriver
+from aiohabit.utils import load_yaml, no_such_file_config_handler
+from aiohabit.config import ProvisioningConfig
+from aiohabit.actions.destroy import Destroy
+from aiohabit.actions.up import Up
+from aiohabit.providers import providers
+from aiohabit.providers.openstack import OpenStackProvider, KEY as OPENSTACK_KEY
+from aiohabit.errors import ConfigError, MetadataError, ValidationError, ProviderError
 
 
 def async_run(f):

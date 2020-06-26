@@ -23,7 +23,7 @@ import sys
 import contextlib
 
 
-from .errors import ConfigError
+from aiohabit.errors import ConfigError
 
 
 def get_config_value(config_dict, key, default=None):

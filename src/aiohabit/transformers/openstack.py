@@ -14,9 +14,9 @@
 
 """OpenStack transformer module."""
 
-from .transformer import Transformer
-from ..utils import get_config_value, print_obj
-from ..errors import ProvisioningConfigError
+from aiohabit.transformers.transformer import Transformer
+from aiohabit.utils import get_config_value, print_obj
+from aiohabit.errors import ProvisioningConfigError
 
 CONFIG_KEY = "openstack"
 

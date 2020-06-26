@@ -14,9 +14,9 @@
 
 """Generic Transformer."""
 
-from ..errors import ConfigError, MetadataError
-from ..utils import validate_dict_attrs
-from ..providers import providers
+from aiohabit.errors import ConfigError, MetadataError
+from aiohabit.utils import validate_dict_attrs
+from aiohabit.providers import providers
 
 
 class Transformer:

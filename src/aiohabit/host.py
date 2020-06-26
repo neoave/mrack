@@ -14,8 +14,8 @@
 
 """Host object."""
 
-from .utils import object2json
-from .providers import providers
+from aiohabit.utils import object2json
+from aiohabit.providers import providers
 
 STATUS_PENDING = "pending"
 STATUS_PROVISIONING = "provisioning"

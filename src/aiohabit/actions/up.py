@@ -15,10 +15,10 @@
 """Up action module."""
 
 import asyncio
-from ..errors import MetadataError
-from ..utils import validate_dict_attrs
-from ..transformers import transformers
-from ..providers import providers
+from aiohabit.errors import MetadataError
+from aiohabit.utils import validate_dict_attrs
+from aiohabit.transformers import transformers
+from aiohabit.providers import providers
 
 
 class Up:
