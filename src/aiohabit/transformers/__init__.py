@@ -18,8 +18,8 @@ Transformers take job definitions, combine it with provisioning configuration
 and returns provisioning requirements (input for provisioners).
 """
 
-from ..errors import ProviderNotExists
-from .openstack import OpenStackTransformer, CONFIG_KEY as OPENSTACK_KEY
+from aiohabit.errors import ProviderNotExists
+from aiohabit.transformers.openstack import OpenStackTransformer, CONFIG_KEY as OPENSTACK_KEY
 
 
 class Registry:

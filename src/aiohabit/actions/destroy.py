@@ -15,9 +15,9 @@
 """Destroy action module."""
 
 import asyncio
-from ..errors import MetadataError
-from ..host import STATUS_DELETED
-from ..transformers import transformers
+from aiohabit.errors import MetadataError
+from aiohabit.host import STATUS_DELETED
+from aiohabit.transformers import transformers
 
 
 class Destroy:
