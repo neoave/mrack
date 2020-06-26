@@ -25,7 +25,8 @@ from aiohabit.config import ProvisioningConfig
 from aiohabit.actions.destroy import Destroy
 from aiohabit.actions.up import Up
 from aiohabit.providers import providers
-from aiohabit.providers.openstack import OpenStackProvider, KEY as OPENSTACK_KEY
+from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
+from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
 from aiohabit.errors import ConfigError, MetadataError, ValidationError, ProviderError
 
 
@@ -42,7 +43,8 @@ def async_run(f):
 
 def init_providers():
     """Register all providers usable in this session."""
-    providers.register(OPENSTACK_KEY, OpenStackProvider)
+    providers.register(OPENSTACK, OpenStackProvider)
+    providers.register(AWS, AWSProvider)
 
 
 def init_db(path):
@@ -68,7 +70,7 @@ def init_metadata(path):
 
 DB = "db"
 CONFIG = "config"
-META = "metadata"
+METADATA = "metadata"
 
 
 @click.group()
@@ -93,9 +95,9 @@ async def up(ctx, metadata, provider):
 
     Based on provided job metadata file and provisioning configuration.
     """
-    ctx.obj[META] = init_metadata(metadata)
+    ctx.obj[METADATA] = init_metadata(metadata)
     up_action = Up()
-    await up_action.init(ctx.obj[CONFIG], ctx.obj[META], provider, ctx.obj[DB])
+    await up_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], provider, ctx.obj[DB])
     await up_action.provision()
 
 
@@ -105,9 +107,9 @@ async def up(ctx, metadata, provider):
 @async_run
 async def destroy(ctx, metadata):
     """Destroy provisioned hosts."""
-    ctx.obj[META] = init_metadata(metadata)
+    ctx.obj[METADATA] = init_metadata(metadata)
     destroy_action = Destroy()
-    await destroy_action.init(ctx.obj[CONFIG], ctx.obj[META], ctx.obj[DB])
+    await destroy_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     await destroy_action.destroy()
 
 
@@ -129,8 +131,9 @@ def exception_handler(func):
             MetadataError,
             ValidationError,
             ProviderError,
-        ) as e:
-            print(e, file=sys.stderr)
+        ) as known_error:
+            print(known_error, file=sys.stderr)
+            sys.exit(1)
         except Exception as e:
             raise e
             # TODO: when logging support added: logger.error(e, exc_info=True)
