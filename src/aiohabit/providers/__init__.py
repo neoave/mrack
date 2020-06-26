@@ -56,3 +56,4 @@ class Registry:
 
 
 providers = Registry()
+# registersing in run.py init_providers()

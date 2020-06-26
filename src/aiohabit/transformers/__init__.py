@@ -19,7 +19,11 @@ and returns provisioning requirements (input for provisioners).
 """
 
 from aiohabit.errors import ProviderNotExists
-from aiohabit.transformers.openstack import OpenStackTransformer, CONFIG_KEY as OPENSTACK_KEY
+from aiohabit.transformers.openstack import (
+    OpenStackTransformer,
+    CONFIG_KEY as OPENSTACK_KEY,
+)
+from aiohabit.transformers.aws import AWSTransformer, CONFIG_KEY as AWS_KEY
 
 
 class Registry:
@@ -56,3 +60,4 @@ class Registry:
 
 transformers = Registry()
 transformers.register(OPENSTACK_KEY, OpenStackTransformer)
+transformers.register(AWS_KEY, AWSTransformer)

@@ -37,7 +37,7 @@ from aiohabit.errors import ServerNotFoundError, ValidationError, ProvisioningEr
 # https://docs.openstack.org/queens/api/
 
 
-KEY = "openstack"
+PROVISIONER_KEY = "openstack"
 
 
 STATUS_MAP = {
@@ -60,7 +60,7 @@ class OpenStackProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
-        self._name = KEY
+        self._name = PROVISIONER_KEY
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}

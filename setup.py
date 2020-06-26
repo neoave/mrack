@@ -25,7 +25,7 @@ with open("LICENSE") as f:
 
 setup(
     name="aiohabit",
-    version="0.1.0",
+    version="0.1.1",
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
