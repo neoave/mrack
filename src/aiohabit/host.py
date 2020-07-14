@@ -108,19 +108,39 @@ class Host:
         }
 
     @property
-    def name(self):
-        """Get host name."""
-        return self._name
-
-    @property
     def provider(self):
         """Get host provisioning provider."""
         return self._provider
 
     @property
+    def id(self):
+        """Get provider host id."""
+        return self._id
+
+    @property
+    def name(self):
+        """Get host name."""
+        return self._name
+
+    @property
+    def ips(self):
+        """Get host IP addresses."""
+        return self._ips
+
+    @property
     def status(self):
         """Get host status."""
         return self._status
+
+    @property
+    def username(self):
+        """Get username for connecting to host."""
+        return self._username
+
+    @property
+    def password(self):
+        """Get password for connecting to host."""
+        return self._password
 
     async def delete(self):
         """Issue host deletion via associated provider."""
