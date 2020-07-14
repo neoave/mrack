@@ -133,6 +133,20 @@ def print_obj(obj):
     print(object2json(obj))
 
 
+def get_host_from_metadata(metadata, name):
+    """
+    Get host definition from job metadata base on name.
+
+    Returns:
+    (host, domain)
+    """
+    domains = metadata.get("domains", [])
+    for domain in domains:
+        for host in domain.get("hosts", []):
+            if host["name"] == name:
+                return host, domain
+
+
 class no_such_file_config_handler(object):
     """
     Decorator which change error into ConfigError with custom message.

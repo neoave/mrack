@@ -24,6 +24,7 @@ from aiohabit.utils import load_yaml, no_such_file_config_handler
 from aiohabit.config import ProvisioningConfig
 from aiohabit.actions.destroy import Destroy
 from aiohabit.actions.up import Up
+from aiohabit.actions.output import Output
 from aiohabit.providers import providers
 from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
 from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
@@ -100,6 +101,10 @@ async def up(ctx, metadata, provider):
     await up_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], provider, ctx.obj[DB])
     await up_action.provision()
 
+    output_action = Output()
+    await output_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    await output_action.generate_outputs()
+
 
 @aiohabitcli.command()
 @click.pass_context
@@ -111,6 +116,18 @@ async def destroy(ctx, metadata):
     destroy_action = Destroy()
     await destroy_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     await destroy_action.destroy()
+
+
+@aiohabitcli.command()
+@click.pass_context
+@click.argument("metadata")
+@async_run
+async def output(ctx, metadata):
+    """Create outputs - such as Ansible inventory."""
+    ctx.obj[METADATA] = init_metadata(metadata)
+    output_action = Output()
+    await output_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    await output_action.generate_outputs()
 
 
 def exception_handler(func):
