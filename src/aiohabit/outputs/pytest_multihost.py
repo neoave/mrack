@@ -1,0 +1,126 @@
+# Copyright 2020 Red Hat Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""pytest-multihost configuration file output module."""
+
+import os
+from copy import deepcopy
+from aiohabit.outputs.utils import is_windows_host, resolve_hostname
+from aiohabit.utils import save_yaml
+
+
+DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
+
+
+class PytestMultihostOutput:
+    """
+    Create a configuration file for python-pytest-multihost.
+
+    From job metadata and provisioned information (DB).
+
+    Structure of multihost config file is almost the same as our topology in job
+    metadata definition.
+    """
+
+    def __init__(self, config, db, metadata, path=DEFAULT_MHCFG_PATH):
+        """Init the output module."""
+        self._config = config
+        self._db = db
+        self._metadata = metadata
+        self._path = path
+
+    def create_multihost_config(self):
+        """
+        Create configuration file for python-pytest-multihost.
+
+        Return in form of dict.
+        """
+        mhcfg = deepcopy(self._metadata)
+
+        if "phases" in mhcfg:
+            del mhcfg["phases"]
+
+        # topology config in metadata contains more values (os, group) than the ones
+        # needed by pytest multihost. They need to be removed in order to work.
+        host_allowed_attrs = [
+            "name",
+            "role",
+            "hostname",
+            "shortname",
+            "external_hostname",
+            "ip",
+            "domain",
+            "username",
+            "password",
+            "host_type",
+        ]
+        domain_allowed_attrs = ["name", "type", "hosts"]
+
+        # Use values from provisioning-config mhcfg section - as default values
+        for option in self._config["mhcfg"]:
+            # options defined in metadata takes precedence over options in
+            # provisioning-config as it is "closer" to user.
+            if option in mhcfg:
+                continue
+            mhcfg[option] = self._config["mhcfg"][option]
+
+        for domain in mhcfg["domains"]:
+            for host in domain["hosts"]:
+                provisioned_host = self._db.hosts[host["name"]]
+                username = provisioned_host.username or host.get("username")
+                password = provisioned_host.password or host.get("password")
+
+                if is_windows_host(host):
+                    host["password"] = password or mhcfg.get("ad_admin_password")
+                    host["username"] = username or "Administrator"
+                else:
+                    if username:
+                        host["username"] = username
+
+                ip = provisioned_host.ips[0]
+                dns_record = resolve_hostname(ip)
+                host["ip"] = ip
+                host["external_hostname"] = dns_record
+
+                if host["group"] == "ad_root":
+                    mhcfg["ad_top_domain"] = domain["name"]
+                    mhcfg["ad_hostname"] = host["name"]
+                    mhcfg["ad_ip"] = host["ip"]
+                elif host["group"] == "ad_subdomain":
+                    mhcfg["ad_sub_domain"] = domain["name"]
+                    mhcfg["ad_sub_hostname"] = host["name"]
+                    mhcfg["ad_sub_ip"] = host["ip"]
+
+                rm_keys = [key for key in host.keys() if key not in host_allowed_attrs]
+                for key in rm_keys:
+                    del host[key]
+
+            domain_rm_keys = [
+                key for key in domain.keys() if key not in domain_allowed_attrs
+            ]
+            for key in domain_rm_keys:
+                del domain[key]
+
+        # ssh_key_filename must be absolute as it can be used from a different
+        # working directory, e.g. running tests from git repo
+        ssh_key_filename = mhcfg.get("ssh_key_filename")
+        if ssh_key_filename and not ssh_key_filename.startswith("~"):
+            mhcfg["ssh_key_filename"] = os.path.abspath(ssh_key_filename)
+
+        return mhcfg
+
+    def create_output(self):
+        """Create the target output file."""
+        inventory = self.create_multihost_config()
+        save_yaml(self._path, inventory)
