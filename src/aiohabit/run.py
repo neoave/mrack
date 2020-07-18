@@ -25,6 +25,7 @@ from aiohabit.config import ProvisioningConfig
 from aiohabit.actions.destroy import Destroy
 from aiohabit.actions.up import Up
 from aiohabit.actions.output import Output
+from aiohabit.actions.list import List
 from aiohabit.providers import providers
 from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
 from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
@@ -128,6 +129,16 @@ async def output(ctx, metadata):
     output_action = Output()
     await output_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     await output_action.generate_outputs()
+
+
+@aiohabitcli.command()
+@click.pass_context
+@async_run
+async def list(ctx):
+    """List host tracked by."""
+    list_action = List()
+    list_action.init(ctx.obj[DB])
+    list_action.list()
 
 
 def exception_handler(func):
