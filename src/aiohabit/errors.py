@@ -21,6 +21,12 @@ class ConfigError(Exception):
     pass
 
 
+class ApplicationError(Exception):
+    """General application error."""
+
+    pass
+
+
 class MetadataError(Exception):
     """Error in job metadata."""
 
