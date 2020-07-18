@@ -86,7 +86,10 @@ class Host:
         """Return string representation of host."""
         net_str = " ".join(self._ips)
 
-        out = f"{self._id} {self._name} {net_str} {self._username} " f"{self._password}"
+        out = (
+            f"{self._status} {self._id} {self._name} {net_str} {self._username} "
+            f"{self._password}"
+        )
 
         if self._error:
             o = [out, "Error:", object2json(self._error)]
