@@ -88,7 +88,7 @@ class PytestMultihostOutput:
                 if password:
                     host["password"] = password
 
-                ip = provisioned_host.ips[0]
+                ip = provisioned_host.ip
                 dns_record = resolve_hostname(ip)
                 host["ip"] = ip
                 host["external_hostname"] = dns_record

@@ -83,7 +83,7 @@ class AnsibleInventoryOutput:
         meta_host, meta_domain = get_host_from_metadata(self._metadata, name)
         db_host = self._db.hosts[name]
 
-        ip = db_host.ips[0]
+        ip = db_host.ip
         ansible_host = resolve_hostname(ip) or ip
 
         python = (
