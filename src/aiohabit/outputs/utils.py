@@ -24,17 +24,3 @@ def resolve_hostname(ip):
         return socket.gethostbyaddr(ip)[0]
     except socket_error:
         return None
-
-
-def is_windows_host(meta_host):
-    """
-    Return if host is Windows host based on host metadata info.
-
-    Host is windows host if:
-    * os starts with 'win' or
-    * os_type is 'windows'
-    """
-    return (
-        meta_host.get("os", "").startswith("win")
-        or meta_host.get("os_type", "") == "windows"
-    )

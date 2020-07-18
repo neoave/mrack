@@ -147,6 +147,51 @@ def get_host_from_metadata(metadata, name):
                 return host, domain
 
 
+def is_windows_host(meta_host):
+    """
+    Return if host is Windows host based on host metadata info.
+
+    Host is windows host if:
+    * os starts with 'win' or
+    * os_type is 'windows'
+    """
+    return (
+        meta_host.get("os", "").startswith("win")
+        or meta_host.get("os_type", "") == "windows"
+    )
+
+
+def get_username(host, meta_host, config):
+    """Find username from sources db/metadata/config."""
+    username = host.username or meta_host.get("username")
+    if is_windows_host(meta_host):
+        username = username or "Administrator"
+
+    default_user = get_config_value(config["users"], meta_host["os"])
+    username = username or default_user
+    return username
+
+
+def get_password(host, meta_host, config):
+    """Find password from sources db/metadata/config."""
+    password = host.password or meta_host.get("password")
+    multihost_config = config.get("mhcfg")
+    if is_windows_host(meta_host) and multihost_config:
+        password = password or multihost_config.get("ad_admin_password")
+    return password
+
+
+def get_ssh_key(host, meta_host, config):
+    """Find ssh_key path from sources: db/metadata/config."""
+    ssh_key_attr = "ssh_key_filename"
+    provider_config = config.get(host.provider.name, {})
+
+    ssh_key = meta_host.get(ssh_key_attr)
+    ssh_key = ssh_key or provider_config.get(ssh_key_attr)
+    ssh_key = ssh_key or config.get(ssh_key_attr)
+    return ssh_key
+
+
 class no_such_file_config_handler(object):
     """
     Decorator which change error into ConfigError with custom message.
