@@ -26,6 +26,7 @@ from aiohabit.actions.destroy import Destroy
 from aiohabit.actions.up import Up
 from aiohabit.actions.output import Output
 from aiohabit.actions.list import List
+from aiohabit.actions.ssh import SSH
 from aiohabit.providers import providers
 from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
 from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
@@ -139,6 +140,20 @@ async def list(ctx):
     list_action = List()
     list_action.init(ctx.obj[DB])
     list_action.list()
+
+
+@aiohabitcli.command()
+@click.pass_context
+@click.argument("metadata", type=click.Path(exists=True))
+@click.argument("hostname", required=False)
+@async_run
+async def ssh(ctx, metadata, hostname):
+    """SSH to host."""
+    ctx.obj[METADATA] = init_metadata(metadata)
+
+    ssh_action = SSH()
+    ssh_action.init(ctx.obj[CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    ssh_action.ssh(hostname)
 
 
 def exception_handler(func):
