@@ -131,6 +131,12 @@ class Host:
         return self._ips
 
     @property
+    def ip(self):
+        """Get first host IP address."""
+        if self._ips:
+            return self._ips[0]
+
+    @property
     def status(self):
         """Get host status."""
         return self._status
