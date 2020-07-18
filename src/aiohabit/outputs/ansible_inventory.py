@@ -15,8 +15,15 @@
 """Ansible inventory output module."""
 
 from copy import deepcopy
-from aiohabit.outputs.utils import is_windows_host, resolve_hostname
-from aiohabit.utils import get_config_value, get_host_from_metadata, save_yaml
+from aiohabit.outputs.utils import resolve_hostname
+from aiohabit.utils import (
+    get_host_from_metadata,
+    save_yaml,
+    get_username,
+    get_password,
+    get_ssh_key,
+    is_windows_host,
+)
 
 DEFAULT_INVENTORY_PATH = "aiohabit-inventory.yaml"
 DEFAULT_INVENTORY_LAYOUT = {"all": {"children": {}, "hosts": {}}}
@@ -83,8 +90,9 @@ class AnsibleInventoryOutput:
             self._config["python"][meta_host["os"]] or self._config["python"]["default"]
         )
 
-        default_user = get_config_value(self._config["users"], meta_host["os"])
-        ansible_user = db_host.username or meta_host.get("username", default_user)
+        ansible_user = get_username(db_host, meta_host, self._config)
+        password = get_password(db_host, meta_host, self._config)
+        ssh_key = get_ssh_key(db_host, meta_host, self._config)
 
         # Common attributes
         host_info = {
@@ -104,13 +112,15 @@ class AnsibleInventoryOutput:
         if "parent" in meta_domain:
             host_info["parent_domain"] = meta_domain["parent"]
 
+        if ssh_key:
+            host_info["ansible_ssh_private_key_file"] = ssh_key
+
+        if password:
+            host_info["ansible_password"] = password
+
         if is_windows_host(meta_host):
-            password = meta_host.get(
-                "password", self._config["mhcfg"]["ad_admin_password"]
-            )
             host_info.update(
                 {
-                    "ansible_password": password,
                     "ansible_port": 5986,
                     "ansible_connection": "winrm",
                     "ansible_winrm_server_cert_validation": "ignore",

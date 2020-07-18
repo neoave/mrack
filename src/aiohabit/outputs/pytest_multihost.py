@@ -16,8 +16,8 @@
 
 import os
 from copy import deepcopy
-from aiohabit.outputs.utils import is_windows_host, resolve_hostname
-from aiohabit.utils import save_yaml
+from aiohabit.outputs.utils import resolve_hostname
+from aiohabit.utils import save_yaml, get_username, get_password
 
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
@@ -78,15 +78,15 @@ class PytestMultihostOutput:
         for domain in mhcfg["domains"]:
             for host in domain["hosts"]:
                 provisioned_host = self._db.hosts[host["name"]]
-                username = provisioned_host.username or host.get("username")
-                password = provisioned_host.password or host.get("password")
 
-                if is_windows_host(host):
-                    host["password"] = password or mhcfg.get("ad_admin_password")
-                    host["username"] = username or "Administrator"
-                else:
-                    if username:
-                        host["username"] = username
+                username = get_username(provisioned_host, host, self._config)
+                password = get_password(provisioned_host, host, self._config)
+                # pytest-multihost doesn't support different ssh_keys per host
+
+                if username:
+                    host["username"] = username
+                if password:
+                    host["password"] = password
 
                 ip = provisioned_host.ips[0]
                 dns_record = resolve_hostname(ip)
@@ -114,7 +114,7 @@ class PytestMultihostOutput:
 
         # ssh_key_filename must be absolute as it can be used from a different
         # working directory, e.g. running tests from git repo
-        ssh_key_filename = mhcfg.get("ssh_key_filename")
+        ssh_key_filename = self._config.get("ssh_key_filename")
         if ssh_key_filename and not ssh_key_filename.startswith("~"):
             mhcfg["ssh_key_filename"] = os.path.abspath(ssh_key_filename)
 
