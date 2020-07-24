@@ -13,6 +13,9 @@
 # limitations under the License.
 
 """List action module."""
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class List:
@@ -30,4 +33,4 @@ class List:
         hosts = self._db_driver.hosts.values()
 
         for host in hosts:
-            print(host)
+            logger.info(host)

@@ -15,10 +15,13 @@
 """Up action module."""
 
 import asyncio
+import logging
 from aiohabit.errors import MetadataError
 from aiohabit.utils import validate_dict_attrs
 from aiohabit.transformers import transformers
 from aiohabit.providers import providers
+
+logger = logging.getLogger(__name__)
 
 
 class Up:
@@ -82,6 +85,7 @@ class Up:
 
     async def provision(self):
         """Execute the up action."""
+        logger.info("Provisioning started")
         prov_aws = []
         for provider_name, transformer in self._transformers.items():
             reqs = transformer.create_host_requirements()
@@ -94,5 +98,5 @@ class Up:
             hosts.extend(results)
 
         self._db_driver.add_hosts(hosts)
-        print("Provisioning done")
+        logger.info("Provisioning done")
         return hosts

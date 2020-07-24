@@ -13,9 +13,12 @@
 # limitations under the License.
 
 """Output action."""
+import logging
 
 from aiohabit.outputs.ansible_inventory import AnsibleInventoryOutput
 from aiohabit.outputs.pytest_multihost import PytestMultihostOutput
+
+logger = logging.getLogger(__name__)
 
 
 class Output:
@@ -33,6 +36,7 @@ class Output:
 
     async def generate_outputs(self):
         """Generate outputs."""
+        logger.info("Output generation started")
         ansible_o = AnsibleInventoryOutput(
             self._config, self._db_driver, self._metadata
         )
@@ -43,5 +47,5 @@ class Output:
         ansible_o.create_output()
         multihost_o.create_output()
 
-        print("Output generation done")
+        logger.info("Output generation done")
         return True

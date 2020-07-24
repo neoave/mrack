@@ -15,6 +15,7 @@
 """OpenStack provider."""
 
 import asyncio
+import logging
 from copy import deepcopy
 from datetime import datetime, timedelta
 from asyncopenstackclient import GlanceClient, AuthPassword
@@ -31,6 +32,8 @@ from aiohabit.host import (
     STATUS_OTHER,
 )
 from aiohabit.errors import ServerNotFoundError, ValidationError, ProvisioningError
+
+logger = logging.getLogger(__name__)
 
 # Docs
 # https://github.com/DreamLab/AsyncOpenStackClient
@@ -85,6 +88,7 @@ class OpenStackProvider(Provider):
         * account limits (max and current usage of vCPUs, memory, ...)
         """
         # session expects that credentials will be set via env variables
+        logger.info("Initializing OpenStack provider")
         self.session = AuthPassword()
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
@@ -96,7 +100,7 @@ class OpenStackProvider(Provider):
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
-        print(f"Login duration {login_duration}")
+        logger.info(f"Login duration {login_duration}")
 
         object_start = datetime.now()
         flavors, images, limits, networks, ips = await asyncio.gather(
@@ -109,7 +113,9 @@ class OpenStackProvider(Provider):
         self.limits = limits
         object_end = datetime.now()
         object_duration = object_end - object_start
-        print(f"Open Stack environment objects " f"load duration: {object_duration}")
+        logger.info(
+            f"Open Stack environment objects " f"load duration: {object_duration}"
+        )
 
     def set_flavors(self, flavors):
         """Extend provider configuration with list of flavors."""
@@ -312,8 +318,10 @@ class OpenStackProvider(Provider):
         req_vcpus = used_vcpus + vcpus
         req_memory = used_memory + ram
 
-        print(f"Required vcpus: {vcpus}, " f"used: {used_vcpus}, max: {limit_vcpus}")
-        print(f"Required ram: {ram}, used: {used_memory}, max: {limit_memory}")
+        logger.info(
+            f"Required vcpus: {vcpus}, " f"used: {used_vcpus}, max: {limit_vcpus}"
+        )
+        logger.info(f"Required ram: {ram}, used: {used_memory}, max: {limit_memory}")
 
         return req_vcpus <= limit_vcpus and req_memory <= limit_memory
 
@@ -329,6 +337,7 @@ class OpenStackProvider(Provider):
         * 'network': uuid or name of network to use. Will be added to networks
                      list if present
         """
+        logger.info("Creating OpenStack server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         flavor = self._translate_flavor(req)
@@ -357,7 +366,7 @@ class OpenStackProvider(Provider):
         try:
             await self.nova.servers.force_delete(uuid)
         except NotFoundError:
-            print("Server not found, probably already deleted")
+            logger.warning(f"Server '{uuid}' not found, probably already deleted")
             pass
 
     async def wait_till_provisioned(
@@ -407,9 +416,11 @@ class OpenStackProvider(Provider):
         prov_duration = (done_time - start).total_seconds()
 
         if datetime.now() >= timeout_time:
-            print(f"{uuid} was not provisioned within a timeout of" f" {timeout} mins")
+            logger.warning(
+                f"{uuid} was not provisioned within a timeout of" f" {timeout} mins"
+            )
         else:
-            print(f"{uuid} was provisioned in {prov_duration:.1f}s")
+            logger.info(f"{uuid} was provisioned in {prov_duration:.1f}s")
 
         return server
 
@@ -450,28 +461,28 @@ class OpenStackProvider(Provider):
 
         Return list of information about provisioned servers.
         """
-        print("Validating hosts definitions")
+        logger.info("Validating hosts definitions")
         await self.validate_hosts(hosts)
-        print("Host definitions valid")
+        logger.info("Host definitions valid")
 
-        print("Checking available resources")
+        logger.info("Checking available resources")
         can = await self.can_provision(hosts)
         if not can:
             raise ValidationError("Not enough resources to provision")
-        print("Resource availability: OK")
+        logger.info("Resource availability: OK")
 
         started = datetime.now()
 
         count = len(hosts)
-        print(f"Issuing provisioning of {count} hosts")
+        logger.info(f"Issuing provisioning of {count} hosts")
         create_aws = []
         for req in hosts:
             aws = self.create_server(req)
             create_aws.append(aws)
         create_resps = await asyncio.gather(*create_aws)
-        print("Provisioning issued")
+        logger.info("Provisioning issued")
 
-        print("Waiting for all hosts to be available")
+        logger.info("Waiting for all hosts to be available")
         init_poll_sleep, poll_sleep = self.get_poll_sleep_times(hosts)
         wait_aws = []
         for create_resp in create_resps:
@@ -486,37 +497,38 @@ class OpenStackProvider(Provider):
         provisioned = datetime.now()
         provi_duration = provisioned - started
 
-        print("All hosts reached provisioning final state (ACTIVE or ERROR)")
-        print(f"Provisioning duration: {provi_duration}")
+        logger.info("All hosts reached provisioning final state (ACTIVE or ERROR)")
+        logger.info(f"Provisioning duration: {provi_duration}")
 
         errors = [res for res in server_results if res["status"] == "ERROR"]
         if errors:
-            print("Some host did not start properly")
+            logger.info("Some host did not start properly")
             for err in errors:
                 self.print_basic_info(err)
-            print("Given the error, will delete all hosts")
+            logger.info("Given the error, will delete all hosts")
             await self.delete_hosts(server_results)
             raise ProvisioningError(errors)
 
         hosts = [self.to_host(srv) for srv in server_results]
         for host in hosts:
-            print(host)
+            logger.info(host)
         return hosts
 
     async def delete_host(self, host):
         """Issue deletion of host(server) from OpenStack."""
+        logger.info(f"Deleting OpenStack host {host.id}")
         await self.delete_server(host._id)
         return True
 
     async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
-        print("Issuing deletion")
+        logger.info("Issuing OpenStack deletion")
         delete_aws = []
         for host in hosts:
             aws = self.delete_host(host)
             delete_aws.append(aws)
         results = await asyncio.gather(*delete_aws)
-        print("All servers issued to be deleted")
+        logger.info("All servers issued to be deleted")
         return results
 
     def to_host(self, provisioning_result):

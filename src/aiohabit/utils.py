@@ -21,9 +21,11 @@ import json
 import yaml
 import sys
 import contextlib
-
+import logging
 
 from aiohabit.errors import ConfigError
+
+logger = logging.getLogger(__name__)
 
 
 def get_config_value(config_dict, key, default=None):
@@ -93,8 +95,8 @@ def save_to_json(path, data):
     try:
         with open(path, "w") as output:
             json.dump(data, output, default=json_convertor, indent=2, sort_keys=True)
-    except IOError as e:
-        print(f"ERROR: {e}", file=sys.stderr)
+    except IOError as exc:
+        logger.exception(exc)
         exit(1)
 
 
@@ -130,7 +132,7 @@ def object2json(obj):
 
 def print_obj(obj):
     """Print object as JSON."""
-    print(object2json(obj))
+    logger.info(object2json(obj))
 
 
 def get_host_from_metadata(metadata, name):

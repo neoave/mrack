@@ -13,10 +13,13 @@
 # limitations under the License.
 
 """OpenStack transformer module."""
+import logging
 
 from aiohabit.transformers.transformer import Transformer
 from aiohabit.utils import get_config_value, print_obj
 from aiohabit.errors import ProvisioningConfigError
+
+logger = logging.getLogger(__name__)
 
 CONFIG_KEY = "openstack"
 
@@ -81,12 +84,14 @@ class OpenStackTransformer(Transformer):
                 usable.append((network["name"], available))
 
         if not usable:
-            print("Error: no usable network for {count} hosts with {network_type}")
+            logger.error(
+                f"Error: no usable network for {count} hosts with {network_type}"
+            )
             return None
 
         # sort networks by number of available IPs
         usable = sorted(usable, key=lambda u: u[1])
-        print(usable)
+        logger.info(usable)
         return usable[-1][0]  # Pick the one with most IPs
 
     def translate_network_types(self, hosts):

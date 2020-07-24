@@ -45,7 +45,7 @@ class Registry:
         """
         trans_cls = self._transformer_cls.get(name)
         if not trans_cls:
-            raise ProviderNotExists(name)
+            raise ProviderNotExists(f"Transformer '{name}' doesn't exist")
         transformer = self._transformers.get(name)
         if not transformer:
             transformer = trans_cls()
