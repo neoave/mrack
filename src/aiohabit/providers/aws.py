@@ -25,6 +25,7 @@ from aiohabit.host import (
     STATUS_PROVISIONING,
     STATUS_DELETED,
     STATUS_ERROR,
+    STATUS_OTHER,
 )
 
 
@@ -213,7 +214,7 @@ class AWSProvider(Provider):
             host_info.get("id"),
             host_info.get("name"),
             host_info.get("addresses"),
-            host_info.get("status"),
+            STATUS_MAP.get(host_info.get("status"), STATUS_OTHER),
             provisioning_result,
             error_obj=host_info.get("fault"),
         )
