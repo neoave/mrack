@@ -30,6 +30,7 @@ from aiohabit.actions.ssh import SSH
 from aiohabit.providers import providers
 from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
 from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
+from aiohabit.providers.static import StaticProvider, PROVISIONER_KEY as STATIC
 from aiohabit.errors import ConfigError, MetadataError, ValidationError, ProviderError
 
 
@@ -48,6 +49,7 @@ def init_providers():
     """Register all providers usable in this session."""
     providers.register(OPENSTACK, OpenStackProvider)
     providers.register(AWS, AWSProvider)
+    providers.register(STATIC, StaticProvider)
 
 
 def init_db(path):
