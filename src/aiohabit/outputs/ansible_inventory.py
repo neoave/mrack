@@ -87,7 +87,8 @@ class AnsibleInventoryOutput:
         ansible_host = resolve_hostname(ip) or ip
 
         python = (
-            self._config["python"][meta_host["os"]] or self._config["python"]["default"]
+            self._config["python"].get(meta_host["os"])
+            or self._config["python"]["default"]
         )
 
         ansible_user = get_username(db_host, meta_host, self._config)
