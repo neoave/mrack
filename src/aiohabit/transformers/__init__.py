@@ -24,6 +24,7 @@ from aiohabit.transformers.openstack import (
     CONFIG_KEY as OPENSTACK_KEY,
 )
 from aiohabit.transformers.aws import AWSTransformer, CONFIG_KEY as AWS_KEY
+from aiohabit.transformers.static import StaticTransformer, CONFIG_KEY as STATIC_KEY
 
 
 class Registry:
@@ -61,3 +62,4 @@ class Registry:
 transformers = Registry()
 transformers.register(OPENSTACK_KEY, OpenStackTransformer)
 transformers.register(AWS_KEY, AWSTransformer)
+transformers.register(STATIC_KEY, StaticTransformer)
