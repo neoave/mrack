@@ -15,6 +15,7 @@
 """SSH action module."""
 
 import os
+import logging
 import subprocess
 
 from aiohabit.errors import ApplicationError
@@ -25,6 +26,8 @@ from aiohabit.utils import (
     get_password,
     get_ssh_key,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SSH:
@@ -46,16 +49,16 @@ class SSH:
             return hosts[0].name
 
         for idx, host in enumerate(hosts):
-            print(f"{idx}: {host}")
+            logger.info(f"{idx}: {host}")
 
         while True:
             try:
                 host_idx = int(input("Enter a number of host to ssh into: "))
             except ValueError:
-                print("Entered value is not a number.")
+                logger.info("Entered value is not a number.")
                 continue
             if host_idx < 0 or host_idx >= len(hosts):
-                print("Entered value is not a number of any host.")
+                logger.info("Entered value is not a number of any host.")
                 continue
             break
 
@@ -115,7 +118,7 @@ class SSH:
 
         cmd = " ".join(cmd)
 
-        print(cmd)
+        logger.info(cmd)
         process = subprocess.Popen(cmd, **run_args)
         process.communicate(input=psw_input)
         return process.returncode

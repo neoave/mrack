@@ -16,6 +16,8 @@
 
 import asyncio
 import boto3
+import logging
+
 from copy import deepcopy
 from datetime import datetime
 from aiohabit.providers.provider import Provider
@@ -28,6 +30,7 @@ from aiohabit.host import (
     STATUS_OTHER,
 )
 
+logger = logging.getLogger(__name__)
 
 PROVISIONER_KEY = "aws"
 
@@ -68,12 +71,13 @@ class AWSProvider(Provider):
     async def init(self, image_names):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
+        logger.info("Initializing AWS provider")
         login_start = datetime.now()
         self.ec2 = boto3.resource("ec2")
         self.client = boto3.client("ec2")
         login_end = datetime.now()
         login_duration = login_end - login_start
-        print(f"Login duration {login_duration}")
+        logger.info(f"Login duration {login_duration}")
 
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
@@ -88,6 +92,7 @@ class AWSProvider(Provider):
         * 'image': ami or name of image
         * 'flavor': flavor to use
         """
+        logger.info("Creating AWS server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         aws_res = self.ec2.create_instances(
@@ -158,16 +163,16 @@ class AWSProvider(Provider):
         started = datetime.now()
 
         count = len(hosts)
-        print(f"Issuing provisioning of {count} hosts")
+        logger.info(f"Issuing provisioning of {count} hosts")
         create_aws = []
         for req in hosts:
             aws = self.create_server(req)
             create_aws.append(aws)
         create_resps = await asyncio.gather(*create_aws)
-        print("Provisioning issued")
-        print(create_resps)
+        logger.info("Provisioning issued")
+        logger.info(create_resps)
 
-        print("Waiting for all hosts to be available")
+        logger.info("Waiting for all AWS hosts to be available")
         wait_aws = []
         for create_resp in create_resps:
             aws = self.wait_till_provisioned(create_resp)
@@ -178,17 +183,18 @@ class AWSProvider(Provider):
         provisioned = datetime.now()
         provi_duration = provisioned - started
 
-        print("All hosts reached provisioning final state (running)")
-        print(f"Provisioning duration: {provi_duration}")
+        logger.info("All AWS hosts reached provisioning final state (running)")
+        logger.info(f"Provisioning duration: {provi_duration}")
 
         hosts = [self.to_host(srv) for srv in server_results]
         for host in hosts:
-            print(host)
+            logger.info(host)
 
         return hosts
 
     async def delete_host(self, host):
         """Delete provisioned hosts based on input from provision_hosts."""
+        logger.info(f"Deleting AWS host {host.id}")
         ids = [host._id]
         self.ec2.instances.filter(InstanceIds=ids).stop()
         self.ec2.instances.filter(InstanceIds=ids).terminate()
@@ -196,13 +202,13 @@ class AWSProvider(Provider):
 
     async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
-        print("Issuing deletion")
+        logger.info("Issuing AWS deletion")
         delete_aws = []
         for host in hosts:
             aws = self.delete_host(host)
             delete_aws.append(aws)
         results = await asyncio.gather(*delete_aws)
-        print("All servers issued to be deleted")
+        logger.info("All AWS servers issued to be deleted")
         return results
 
     def to_host(self, provisioning_result):

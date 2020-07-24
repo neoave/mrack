@@ -42,7 +42,7 @@ class Registry:
         """
         prov_cls = self._provider_cls.get(name)
         if not prov_cls:
-            raise ProviderNotExists(name)
+            raise ProviderNotExists(f"Provider '{name}' doesn't exist")
         provider = self._providers.get(name)
         if not provider:
             provider = prov_cls()

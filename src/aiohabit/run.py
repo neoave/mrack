@@ -184,11 +184,11 @@ def exception_handler(func):
             ValidationError,
             ProviderError,
         ) as known_error:
-            print(known_error, file=sys.stderr)
+            logger.error(known_error)
             sys.exit(1)
-        except Exception as e:
-            raise e
-            # TODO: when logging support added: logger.error(e, exc_info=True)
+        except Exception as exc:
+            logger.exception(exc)
+            raise exc
 
         return rc
 

@@ -15,9 +15,12 @@
 """Destroy action module."""
 
 import asyncio
+import logging
 from aiohabit.errors import MetadataError
 from aiohabit.host import STATUS_DELETED
 from aiohabit.transformers import transformers
+
+logger = logging.getLogger(__name__)
 
 
 class Destroy:
@@ -39,19 +42,19 @@ class Destroy:
         to_del = [host for host in hosts if host.status != STATUS_DELETED]
         names = [host.name for host in to_del]
         names = ", ".join(names)
-        print(f"Hosts to delete: {names}")
+        logger.info(f"Hosts to delete: {names}")
 
         await self.init_providers(to_del)
         results_aws = []
 
         for host in to_del:
-            print(f"Deleting host: {host}")
+            logger.info(f"Deleting host: {host}")
             aw = host.delete()
             results_aws.append(aw)
         delete_results = await asyncio.gather(*results_aws)
         success = all(delete_results)
         self._db_driver.update_hosts(hosts)
-        print("Destroy done")
+        logger.info("Destroy done")
         return success
 
     async def init_providers(self, hosts):
