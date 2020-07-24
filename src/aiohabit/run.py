@@ -17,6 +17,7 @@
 import asyncio
 import click
 from functools import update_wrapper
+import logging
 import sys
 
 from aiohabit.dbdrivers.file import FileDBDriver
@@ -31,6 +32,8 @@ from aiohabit.providers import providers
 from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
 from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
 from aiohabit.errors import ConfigError, MetadataError, ValidationError, ProviderError
+
+logger = logging.getLogger(__name__)
 
 
 def async_run(f):
@@ -79,9 +82,13 @@ METADATA = "metadata"
 @click.group()
 @click.option("-c", "--config", default="./provisioning-config.yaml")
 @click.option("-d", "--db", default="./.aiohabitdb.json")
+@click.option("--debug", default=False, is_flag=True)
 @click.pass_context
-def aiohabitcli(ctx, config, db):
+def aiohabitcli(ctx, config, db, debug):
     """Multihost human friendly provisioner."""
+    if debug:
+        logging.getLogger("aiohabit").setLevel(logging.DEBUG)
+
     init_providers()
     ctx.ensure_object(dict)
     ctx.obj[DB] = init_db(db)
