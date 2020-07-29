@@ -23,7 +23,7 @@ steps:
     python -m pip install --upgrade pip
     pip install -r requirements.txt
     pip install -r test-requirements.txt
-    pip install pytest pytest-azurepipelines flake8 black pydocstyle
+    pip install pytest pytest-azurepipelines flake8 black pydocstyle isort
   displayName: 'Install dependencies'
 
 - script: |
@@ -44,3 +44,8 @@ steps:
     pip install .
     pytest
   displayName: 'pytest'
+
+- script: |
+    isort src --check --diff 
+    isort tests --check --diff 
+  displayName: 'isort'
