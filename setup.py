@@ -16,12 +16,14 @@
 
 from setuptools import setup, find_packages
 
-
 with open("README.md") as f:
     readme = f.read()
 
 with open("LICENSE") as f:
-    license = f.read()
+    ghlicense = f.read()
+
+with open("requirements.txt") as req:
+    reqs = req.readlines()
 
 setup(
     name="mrack",
@@ -32,9 +34,9 @@ setup(
     author="Petr Vobornik",
     author_email="pvoborni@redhat.com",
     url="https://github.com/pvoborni/mrack",
-    license=license,
+    license=ghlicense,
     packages=find_packages("src"),
     package_dir={"": "src"},
-    install_requires=["asyncopenstackclient"],
+    install_requires=reqs,
     scripts=["scripts/mrack"],
 )
