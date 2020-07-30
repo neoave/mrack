@@ -16,10 +16,11 @@
 
 import asyncio
 import logging
+
 from mrack.errors import MetadataError
-from mrack.utils import validate_dict_attrs
-from mrack.transformers import transformers
 from mrack.providers import providers
+from mrack.transformers import transformers
+from mrack.utils import validate_dict_attrs
 
 logger = logging.getLogger(__name__)
 

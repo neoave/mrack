@@ -15,8 +15,9 @@
 """File database driver module."""
 
 from os import path
+
 from mrack.host import host_from_json
-from mrack.utils import save_to_json, load_json
+from mrack.utils import load_json, save_to_json
 
 HOSTS_KEY = "hosts"
 

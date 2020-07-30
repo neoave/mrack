@@ -16,9 +16,9 @@
 
 import os
 from copy import deepcopy
-from mrack.outputs.utils import resolve_hostname
-from mrack.utils import save_yaml, get_username, get_password
 
+from mrack.outputs.utils import resolve_hostname
+from mrack.utils import get_password, get_username, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
 

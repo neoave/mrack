@@ -15,14 +15,15 @@
 """Ansible inventory output module."""
 
 from copy import deepcopy
+
 from mrack.outputs.utils import resolve_hostname
 from mrack.utils import (
     get_host_from_metadata,
-    save_yaml,
-    get_username,
     get_password,
     get_ssh_key,
+    get_username,
     is_windows_host,
+    save_yaml,
 )
 
 DEFAULT_INVENTORY_PATH = "mrack-inventory.yaml"

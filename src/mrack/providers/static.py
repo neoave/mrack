@@ -14,12 +14,9 @@
 
 """Static provider."""
 
-from mrack.providers.provider import Provider
-from mrack.host import (
-    Host,
-    STATUS_ACTIVE,
-)
 from mrack.errors import ValidationError
+from mrack.host import STATUS_ACTIVE, Host
+from mrack.providers.provider import Provider
 
 PROVISIONER_KEY = "static"
 

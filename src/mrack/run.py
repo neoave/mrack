@@ -15,24 +15,28 @@
 """mrack default app."""
 
 import asyncio
-import click
-from functools import update_wrapper
 import logging
 import sys
+from functools import update_wrapper
 
-from mrack.dbdrivers.file import FileDBDriver
-from mrack.utils import load_yaml, no_such_file_config_handler
-from mrack.config import ProvisioningConfig
+import click
+
 from mrack.actions.destroy import Destroy
-from mrack.actions.up import Up
-from mrack.actions.output import Output
 from mrack.actions.list import List
+from mrack.actions.output import Output
 from mrack.actions.ssh import SSH
+from mrack.actions.up import Up
+from mrack.config import ProvisioningConfig
+from mrack.dbdrivers.file import FileDBDriver
+from mrack.errors import ConfigError, MetadataError, ProviderError, ValidationError
 from mrack.providers import providers
-from mrack.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
-from mrack.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
-from mrack.providers.static import StaticProvider, PROVISIONER_KEY as STATIC
-from mrack.errors import ConfigError, MetadataError, ValidationError, ProviderError
+from mrack.providers.aws import PROVISIONER_KEY as AWS
+from mrack.providers.aws import AWSProvider
+from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
+from mrack.providers.openstack import OpenStackProvider
+from mrack.providers.static import PROVISIONER_KEY as STATIC
+from mrack.providers.static import StaticProvider
+from mrack.utils import load_yaml, no_such_file_config_handler
 
 logger = logging.getLogger(__name__)
 

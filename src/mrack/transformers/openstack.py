@@ -15,9 +15,9 @@
 """OpenStack transformer module."""
 import logging
 
+from mrack.errors import ProvisioningConfigError
 from mrack.transformers.transformer import Transformer
 from mrack.utils import get_config_value, print_obj
-from mrack.errors import ProvisioningConfigError
 
 logger = logging.getLogger(__name__)
 

@@ -16,12 +16,13 @@
 """Module with utility and helper functions."""
 
 import base64
+import contextlib
 import datetime
 import json
-import yaml
-import sys
-import contextlib
 import logging
+import sys
+
+import yaml
 
 from mrack.errors import ConfigError
 

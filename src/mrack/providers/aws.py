@@ -15,20 +15,21 @@
 """AWS Provider interface."""
 
 import asyncio
-import boto3
 import logging
-
 from copy import deepcopy
 from datetime import datetime
-from mrack.providers.provider import Provider
+
+import boto3
+
 from mrack.host import (
-    Host,
     STATUS_ACTIVE,
-    STATUS_PROVISIONING,
     STATUS_DELETED,
     STATUS_ERROR,
     STATUS_OTHER,
+    STATUS_PROVISIONING,
+    Host,
 )
+from mrack.providers.provider import Provider
 
 logger = logging.getLogger(__name__)
 

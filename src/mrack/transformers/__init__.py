@@ -19,12 +19,12 @@ and returns provisioning requirements (input for provisioners).
 """
 
 from mrack.errors import ProviderNotExists
-from mrack.transformers.openstack import (
-    OpenStackTransformer,
-    CONFIG_KEY as OPENSTACK_KEY,
-)
-from mrack.transformers.aws import AWSTransformer, CONFIG_KEY as AWS_KEY
-from mrack.transformers.static import StaticTransformer, CONFIG_KEY as STATIC_KEY
+from mrack.transformers.aws import CONFIG_KEY as AWS_KEY
+from mrack.transformers.aws import AWSTransformer
+from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
+from mrack.transformers.openstack import OpenStackTransformer
+from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
+from mrack.transformers.static import StaticTransformer
 
 
 class Registry:

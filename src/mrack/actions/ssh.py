@@ -14,18 +14,13 @@
 
 """SSH action module."""
 
-import os
 import logging
+import os
 import subprocess
 
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
-from mrack.utils import (
-    get_host_from_metadata,
-    get_username,
-    get_password,
-    get_ssh_key,
-)
+from mrack.utils import get_host_from_metadata, get_password, get_ssh_key, get_username
 
 logger = logging.getLogger(__name__)
 
