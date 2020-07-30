@@ -14,8 +14,9 @@
 
 """Static transformer module."""
 
-from mrack.transformers.transformer import Transformer
 from copy import deepcopy
+
+from mrack.transformers.transformer import Transformer
 
 CONFIG_KEY = "static"
 

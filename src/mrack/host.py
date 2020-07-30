@@ -14,8 +14,8 @@
 
 """Host object."""
 
-from mrack.utils import object2json
 from mrack.providers import providers
+from mrack.utils import object2json
 
 STATUS_PENDING = "pending"
 STATUS_PROVISIONING = "provisioning"

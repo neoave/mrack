@@ -15,8 +15,8 @@
 """Generic Transformer."""
 
 from mrack.errors import ConfigError, MetadataError
-from mrack.utils import validate_dict_attrs
 from mrack.providers import providers
+from mrack.utils import validate_dict_attrs
 
 
 class Transformer:
