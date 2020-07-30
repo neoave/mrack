@@ -14,9 +14,9 @@
 
 """Generic Transformer."""
 
-from aiohabit.errors import ConfigError, MetadataError
-from aiohabit.utils import validate_dict_attrs
-from aiohabit.providers import providers
+from mrack.errors import ConfigError, MetadataError
+from mrack.utils import validate_dict_attrs
+from mrack.providers import providers
 
 
 class Transformer:

@@ -24,17 +24,17 @@ with open("LICENSE") as f:
     license = f.read()
 
 setup(
-    name="aiohabit",
+    name="mrack",
     version="0.1.1",
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
     author="Petr Vobornik",
     author_email="pvoborni@redhat.com",
-    url="https://github.com/pvoborni/aiohabit",
+    url="https://github.com/pvoborni/mrack",
     license=license,
     packages=find_packages("src"),
     package_dir={"": "src"},
     install_requires=["asyncopenstackclient"],
-    scripts=["scripts/aiohabit"],
+    scripts=["scripts/mrack"],
 )

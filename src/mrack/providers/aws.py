@@ -20,8 +20,8 @@ import logging
 
 from copy import deepcopy
 from datetime import datetime
-from aiohabit.providers.provider import Provider
-from aiohabit.host import (
+from mrack.providers.provider import Provider
+from mrack.host import (
     Host,
     STATUS_ACTIVE,
     STATUS_PROVISIONING,

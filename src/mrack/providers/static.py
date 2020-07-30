@@ -14,12 +14,12 @@
 
 """Static provider."""
 
-from aiohabit.providers.provider import Provider
-from aiohabit.host import (
+from mrack.providers.provider import Provider
+from mrack.host import (
     Host,
     STATUS_ACTIVE,
 )
-from aiohabit.errors import ValidationError
+from mrack.errors import ValidationError
 
 PROVISIONER_KEY = "static"
 

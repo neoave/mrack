@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""aiohabit default app."""
+"""mrack default app."""
 
 import asyncio
 import click
@@ -20,19 +20,19 @@ from functools import update_wrapper
 import logging
 import sys
 
-from aiohabit.dbdrivers.file import FileDBDriver
-from aiohabit.utils import load_yaml, no_such_file_config_handler
-from aiohabit.config import ProvisioningConfig
-from aiohabit.actions.destroy import Destroy
-from aiohabit.actions.up import Up
-from aiohabit.actions.output import Output
-from aiohabit.actions.list import List
-from aiohabit.actions.ssh import SSH
-from aiohabit.providers import providers
-from aiohabit.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
-from aiohabit.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
-from aiohabit.providers.static import StaticProvider, PROVISIONER_KEY as STATIC
-from aiohabit.errors import ConfigError, MetadataError, ValidationError, ProviderError
+from mrack.dbdrivers.file import FileDBDriver
+from mrack.utils import load_yaml, no_such_file_config_handler
+from mrack.config import ProvisioningConfig
+from mrack.actions.destroy import Destroy
+from mrack.actions.up import Up
+from mrack.actions.output import Output
+from mrack.actions.list import List
+from mrack.actions.ssh import SSH
+from mrack.providers import providers
+from mrack.providers.openstack import OpenStackProvider, PROVISIONER_KEY as OPENSTACK
+from mrack.providers.aws import AWSProvider, PROVISIONER_KEY as AWS
+from mrack.providers.static import StaticProvider, PROVISIONER_KEY as STATIC
+from mrack.errors import ConfigError, MetadataError, ValidationError, ProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -83,13 +83,13 @@ METADATA = "metadata"
 
 @click.group()
 @click.option("-c", "--config", default="./provisioning-config.yaml")
-@click.option("-d", "--db", default="./.aiohabitdb.json")
+@click.option("-d", "--db", default="./.mrackdb.json")
 @click.option("--debug", default=False, is_flag=True)
 @click.pass_context
-def aiohabitcli(ctx, config, db, debug):
+def mrackcli(ctx, config, db, debug):
     """Multihost human friendly provisioner."""
     if debug:
-        logging.getLogger("aiohabit").setLevel(logging.DEBUG)
+        logging.getLogger("mrack").setLevel(logging.DEBUG)
 
     init_providers()
     ctx.ensure_object(dict)
@@ -97,7 +97,7 @@ def aiohabitcli(ctx, config, db, debug):
     ctx.obj[CONFIG] = init_config(config)
 
 
-@aiohabitcli.command()
+@mrackcli.command()
 @click.pass_context
 @click.argument("metadata")
 @click.option("-p", "--provider", default="openstack")
@@ -117,7 +117,7 @@ async def up(ctx, metadata, provider):
     await output_action.generate_outputs()
 
 
-@aiohabitcli.command()
+@mrackcli.command()
 @click.pass_context
 @click.argument("metadata")
 @async_run
@@ -129,7 +129,7 @@ async def destroy(ctx, metadata):
     await destroy_action.destroy()
 
 
-@aiohabitcli.command()
+@mrackcli.command()
 @click.pass_context
 @click.argument("metadata")
 @async_run
@@ -141,7 +141,7 @@ async def output(ctx, metadata):
     await output_action.generate_outputs()
 
 
-@aiohabitcli.command()
+@mrackcli.command()
 @click.pass_context
 @async_run
 async def list(ctx):
@@ -151,7 +151,7 @@ async def list(ctx):
     list_action.list()
 
 
-@aiohabitcli.command()
+@mrackcli.command()
 @click.pass_context
 @click.argument("metadata", type=click.Path(exists=True))
 @click.argument("hostname", required=False)
@@ -198,7 +198,7 @@ def exception_handler(func):
 @exception_handler
 def run():
     """Run the app."""
-    aiohabitcli(obj={})
+    mrackcli(obj={})
 
 
 if __name__ == "__main__":

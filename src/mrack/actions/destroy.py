@@ -16,9 +16,9 @@
 
 import asyncio
 import logging
-from aiohabit.errors import MetadataError
-from aiohabit.host import STATUS_DELETED
-from aiohabit.transformers import transformers
+from mrack.errors import MetadataError
+from mrack.host import STATUS_DELETED
+from mrack.transformers import transformers
 
 logger = logging.getLogger(__name__)
 

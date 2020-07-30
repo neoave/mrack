@@ -14,8 +14,8 @@
 
 """Host object."""
 
-from aiohabit.utils import object2json
-from aiohabit.providers import providers
+from mrack.utils import object2json
+from mrack.providers import providers
 
 STATUS_PENDING = "pending"
 STATUS_PROVISIONING = "provisioning"

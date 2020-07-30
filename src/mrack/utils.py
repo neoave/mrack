@@ -23,7 +23,7 @@ import sys
 import contextlib
 import logging
 
-from aiohabit.errors import ConfigError
+from mrack.errors import ConfigError
 
 logger = logging.getLogger(__name__)
 
