@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from aiohabit.providers.openstack import OpenStackProvider
+from mrack.providers.openstack import OpenStackProvider
 from unittest import mock
 from unittest.mock import Mock, patch
 from .utils import get_data  # FIXME do not use relative import
@@ -36,7 +36,7 @@ class TestOpenStackProvider:
         self.availabilities = get_data("network_availabilities.json")
         self.networks = get_data("networks.json")
 
-        self.auth_patcher = patch("aiohabit.providers.openstack.AuthPassword")
+        self.auth_patcher = patch("mrack.providers.openstack.AuthPassword")
         self.mock_auth = self.auth_patcher.start()
 
         self.mock_nova = Mock()
@@ -46,7 +46,7 @@ class TestOpenStackProvider:
 
         self.mock_nova_class = Mock(return_value=self.mock_nova)
         self.nova_patcher = patch(
-            "aiohabit.providers.openstack.ExtraNovaClient", new=self.mock_nova_class
+            "mrack.providers.openstack.ExtraNovaClient", new=self.mock_nova_class
         )
         self.nova_patcher.start()
 
@@ -57,7 +57,7 @@ class TestOpenStackProvider:
 
         self.mock_neutron_class = Mock(return_value=self.mock_neutron)
         self.neutron_patcher = patch(
-            "aiohabit.providers.openstack.NeutronClient", new=self.mock_neutron_class
+            "mrack.providers.openstack.NeutronClient", new=self.mock_neutron_class
         )
         self.neutron_patcher.start()
 
@@ -67,7 +67,7 @@ class TestOpenStackProvider:
 
         self.mock_glance_class = Mock(return_value=self.mock_glance)
         self.glance_patcher = patch(
-            "aiohabit.providers.openstack.GlanceClient", new=self.mock_glance_class
+            "mrack.providers.openstack.GlanceClient", new=self.mock_glance_class
         )
         self.glance_patcher.start()
 

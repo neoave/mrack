@@ -1,4 +1,4 @@
-# aiohabit
+# mrack
 
 **Important**: most of the described below is not implemented yet
 
@@ -89,7 +89,7 @@ TODO: example
 Atm there is no CLI and it is implemented as Python library
 
 ```python
-import aiohabit
+import mrack
 # TODO
 ```
 

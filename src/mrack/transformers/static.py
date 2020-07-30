@@ -14,7 +14,7 @@
 
 """Static transformer module."""
 
-from aiohabit.transformers.transformer import Transformer
+from mrack.transformers.transformer import Transformer
 from copy import deepcopy
 
 CONFIG_KEY = "static"

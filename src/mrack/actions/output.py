@@ -15,8 +15,8 @@
 """Output action."""
 import logging
 
-from aiohabit.outputs.ansible_inventory import AnsibleInventoryOutput
-from aiohabit.outputs.pytest_multihost import PytestMultihostOutput
+from mrack.outputs.ansible_inventory import AnsibleInventoryOutput
+from mrack.outputs.pytest_multihost import PytestMultihostOutput
 
 logger = logging.getLogger(__name__)
 

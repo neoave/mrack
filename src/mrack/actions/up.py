@@ -16,10 +16,10 @@
 
 import asyncio
 import logging
-from aiohabit.errors import MetadataError
-from aiohabit.utils import validate_dict_attrs
-from aiohabit.transformers import transformers
-from aiohabit.providers import providers
+from mrack.errors import MetadataError
+from mrack.utils import validate_dict_attrs
+from mrack.transformers import transformers
+from mrack.providers import providers
 
 logger = logging.getLogger(__name__)
 

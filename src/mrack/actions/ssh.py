@@ -18,9 +18,9 @@ import os
 import logging
 import subprocess
 
-from aiohabit.errors import ApplicationError
-from aiohabit.host import STATUS_ACTIVE
-from aiohabit.utils import (
+from mrack.errors import ApplicationError
+from mrack.host import STATUS_ACTIVE
+from mrack.utils import (
     get_host_from_metadata,
     get_username,
     get_password,

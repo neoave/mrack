@@ -18,13 +18,13 @@ Transformers take job definitions, combine it with provisioning configuration
 and returns provisioning requirements (input for provisioners).
 """
 
-from aiohabit.errors import ProviderNotExists
-from aiohabit.transformers.openstack import (
+from mrack.errors import ProviderNotExists
+from mrack.transformers.openstack import (
     OpenStackTransformer,
     CONFIG_KEY as OPENSTACK_KEY,
 )
-from aiohabit.transformers.aws import AWSTransformer, CONFIG_KEY as AWS_KEY
-from aiohabit.transformers.static import StaticTransformer, CONFIG_KEY as STATIC_KEY
+from mrack.transformers.aws import AWSTransformer, CONFIG_KEY as AWS_KEY
+from mrack.transformers.static import StaticTransformer, CONFIG_KEY as STATIC_KEY
 
 
 class Registry:

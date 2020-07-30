@@ -18,7 +18,7 @@ Providers provisions resources in Clouds or other means based on provisioning
 requirements (e.g. host requirements)
 """
 
-from aiohabit.errors import ProviderNotExists
+from mrack.errors import ProviderNotExists
 
 
 class Registry:

@@ -13,8 +13,4 @@
 # limitations under the License.
 
 
-"""aiohabit database drivers.
-
-A database driver persists and loads results of actions so that it can be used in
-consecutive actions.
-"""
+"""mrack actions."""

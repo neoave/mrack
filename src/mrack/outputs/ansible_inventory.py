@@ -15,8 +15,8 @@
 """Ansible inventory output module."""
 
 from copy import deepcopy
-from aiohabit.outputs.utils import resolve_hostname
-from aiohabit.utils import (
+from mrack.outputs.utils import resolve_hostname
+from mrack.utils import (
     get_host_from_metadata,
     save_yaml,
     get_username,
@@ -25,7 +25,7 @@ from aiohabit.utils import (
     is_windows_host,
 )
 
-DEFAULT_INVENTORY_PATH = "aiohabit-inventory.yaml"
+DEFAULT_INVENTORY_PATH = "mrack-inventory.yaml"
 DEFAULT_INVENTORY_LAYOUT = {"all": {"children": {}, "hosts": {}}}
 
 

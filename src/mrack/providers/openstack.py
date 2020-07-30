@@ -21,9 +21,9 @@ from datetime import datetime, timedelta
 from asyncopenstackclient import GlanceClient, AuthPassword
 from simple_rest_client.exceptions import NotFoundError
 from urllib.parse import urlparse, parse_qs
-from aiohabit.providers.utils.osapi import ExtraNovaClient, NeutronClient
-from aiohabit.providers.provider import Provider
-from aiohabit.host import (
+from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
+from mrack.providers.provider import Provider
+from mrack.host import (
     Host,
     STATUS_ACTIVE,
     STATUS_PROVISIONING,
@@ -31,7 +31,7 @@ from aiohabit.host import (
     STATUS_ERROR,
     STATUS_OTHER,
 )
-from aiohabit.errors import ServerNotFoundError, ValidationError, ProvisioningError
+from mrack.errors import ServerNotFoundError, ValidationError, ProvisioningError
 
 logger = logging.getLogger(__name__)
 
