@@ -14,6 +14,7 @@
 
 """pytest-multihost configuration file output module."""
 
+import logging
 import os
 from copy import deepcopy
 
@@ -21,6 +22,8 @@ from mrack.outputs.utils import resolve_hostname
 from mrack.utils import get_password, get_username, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
+
+logger = logging.getLogger(__name__)
 
 
 class PytestMultihostOutput:
@@ -77,7 +80,10 @@ class PytestMultihostOutput:
 
         for domain in mhcfg["domains"]:
             for host in domain["hosts"]:
-                provisioned_host = self._db.hosts[host["name"]]
+                provisioned_host = self._db.hosts.get(host["name"])
+                if not provisioned_host:
+                    logger.error(f"Host {host['name']} not found in the database.")
+                    continue
 
                 username = get_username(provisioned_host, host, self._config)
                 password = get_password(provisioned_host, host, self._config)
