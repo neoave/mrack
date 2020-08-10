@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 file_formatter = logging.Formatter("%(asctime)s %(name)s %(message)s")
-console_formatter = logging.Formatter("%(name)s %(message)s")
+console_formatter = logging.Formatter("%(message)s")
 
 file_handler = logging.FileHandler("mrack.log")
 file_handler.setFormatter(file_formatter)
