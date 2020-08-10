@@ -15,6 +15,7 @@
 """Output action."""
 import logging
 
+from mrack.errors import MetadataError
 from mrack.outputs.ansible_inventory import AnsibleInventoryOutput
 from mrack.outputs.pytest_multihost import PytestMultihostOutput
 
@@ -37,6 +38,10 @@ class Output:
     async def generate_outputs(self):
         """Generate outputs."""
         logger.info("Output generation started")
+
+        if not self._db_driver.hosts:
+            raise MetadataError("No hosts found.")
+
         ansible_o = AnsibleInventoryOutput(
             self._config, self._db_driver, self._metadata
         )
