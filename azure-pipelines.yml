@@ -20,11 +20,16 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
+    sudo apt-get update -y
+    sudo apt-get install libkrb5-dev -y
+  displayName: 'Install distro dependencies'
+
+- script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
     pip install -r test-requirements.txt
     pip install pytest-azurepipelines
-  displayName: 'Install dependencies'
+  displayName: 'Install python dependencies'
 
 - script: |
     flake8

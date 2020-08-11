@@ -32,6 +32,8 @@ from mrack.errors import ConfigError, MetadataError, ProviderError, ValidationEr
 from mrack.providers import providers
 from mrack.providers.aws import PROVISIONER_KEY as AWS
 from mrack.providers.aws import AWSProvider
+from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
+from mrack.providers.beaker import BeakerProvider
 from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
 from mrack.providers.openstack import OpenStackProvider
 from mrack.providers.static import PROVISIONER_KEY as STATIC
@@ -56,6 +58,7 @@ def init_providers():
     """Register all providers usable in this session."""
     providers.register(OPENSTACK, OpenStackProvider)
     providers.register(AWS, AWSProvider)
+    providers.register(BEAKER, BeakerProvider)
     providers.register(STATIC, StaticProvider)
 
 
