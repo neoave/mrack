@@ -1,0 +1,18 @@
+domains:
+- hosts:
+  - group: ipaserver
+    name: f30.aiohabit.test
+    os: fedora-30
+    role: master
+    ip: 192.168.100.2
+  - group: ipaserver
+    name: f31.aiohabit.test
+    os: fedora-31
+    role: master
+    ip: 192.168.100.3
+  - group: ipaserver
+    name: f32.aiohabit.test
+    os: fedora-32
+    role: master
+    ip: 192.168.100.4
+  name: aiohabit.test

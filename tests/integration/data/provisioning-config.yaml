@@ -1,0 +1,22 @@
+# provider
+static:
+    credentials_file: static.key
+
+# default user of image
+users:
+    fedora-30: fedora
+    fedora-31: fedora
+    fedora-32: fedora
+    default: cloud-user
+
+# ansible_python_interpreter
+python:
+    fedora-30: /usr/bin/python3
+    fedora-31: /usr/bin/python3
+    fedora-32: /usr/bin/python3
+    fedora-rawhide: /usr/bin/python3
+    default: /usr/bin/python3
+
+# For python pytest multihost - all will be copied
+mhcfg:
+    ssh_key_filename: 'config/id_rsa'
