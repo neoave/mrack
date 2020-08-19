@@ -42,7 +42,7 @@ steps:
 
 - script: |
     pip install .
-    pytest
+    pytest --junit-xml=TEST-pytest.xml
   displayName: 'pytest'
 
 - script: |
