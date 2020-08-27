@@ -42,7 +42,9 @@ class TestStaticProvider:
     @pytest.mark.asyncio
     async def test_list_action(self, database, setup_providers, caplog):
         list_action = ListAction()
-        list_action.init(db_driver=database,)
+        list_action.init(
+            db_driver=database,
+        )
         list_action.list()
         expected_lines = [
             "active f30.aiohabit.test f30.aiohabit.test 192.168.100.2 None None",
@@ -63,7 +65,9 @@ class TestStaticProvider:
 
         output_action = OutputAction()
         await output_action.init(
-            config=provisioning_config, metadata=metadata, db_driver=database,
+            config=provisioning_config,
+            metadata=metadata,
+            db_driver=database,
         )
         await output_action.generate_outputs()
 
@@ -78,7 +82,9 @@ class TestStaticProvider:
     ):
         destroy_action = DestroyAction()
         await destroy_action.init(
-            config=provisioning_config, metadata=metadata, db_driver=database,
+            config=provisioning_config,
+            metadata=metadata,
+            db_driver=database,
         )
         await destroy_action.destroy()
 
