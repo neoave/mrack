@@ -81,7 +81,7 @@ TODO: example
 ## Installation
 
 ```
-# TODO
+pip install mrack
 ```
 
 ## Run
