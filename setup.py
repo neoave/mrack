@@ -19,22 +19,20 @@ from setuptools import setup, find_packages
 with open("README.md") as f:
     readme = f.read()
 
-with open("LICENSE") as f:
-    ghlicense = f.read()
-
 with open("requirements.txt") as req:
     reqs = req.readlines()
 
 setup(
     name="mrack",
-    version="0.1.1",
+    version="0.1.2",
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
+    long_description_content_type='text/markdown',
     author="Petr Vobornik",
     author_email="pvoborni@redhat.com",
     url="https://github.com/pvoborni/mrack",
-    license=ghlicense,
+    license="Apache License 2.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
     install_requires=reqs,
