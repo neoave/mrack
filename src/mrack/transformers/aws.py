@@ -27,16 +27,22 @@ class AWSTransformer(Transformer):
     _required_config_attrs = [
         "flavors",
         "images",
-        "keypair",
         "credentials_file",
+        "keypair",
+        "security_group",
         "profile",
-        "tags",
+        "instance_tags",
     ]
 
     async def init_provider(self):
         """Initialize associate provider."""
         images = self.config["images"].values()
-        await self._provider.init(image_names=images)
+        await self._provider.init(
+            image_names=images,
+            ssh_key=self.config["keypair"],
+            sec_group=self.config["security_group"],
+            instance_tags=self.config["instance_tags"],
+        )
 
     def _get_flavor(self, host):
         """Get flavor by host group."""
