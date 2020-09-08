@@ -21,6 +21,7 @@ from datetime import datetime
 
 import boto3
 
+from mrack.errors import ProvisioningError
 from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
@@ -51,25 +52,17 @@ class AWSProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.flavors = {}
-        self.flavors_by_ref = {}
         self.images = {}
-        self.images_by_ref = {}
-        self.limits = {}
-        self.networks = {}
-        self.networks_by_ref = {}
-        self.ips = {}
-        self.ips_by_ref = {}
-        self.timeout = 60  # minutes
-        self.poll_sleep_initial = 15  # seconds
-        self.poll_sleep = 7  # seconds
+        self.ssh_key = None
+        self.sec_group = None
+        self.instance_tags = None
 
     @property
     def name(self):
         """Get provider name."""
         return self._name
 
-    async def init(self, image_names):
+    async def init(self, image_names, ssh_key, sec_group, instance_tags):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
         logger.info("Initializing AWS provider")
@@ -79,6 +72,10 @@ class AWSProvider(Provider):
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"Login duration {login_duration}")
+        self.images = image_names
+        self.ssh_key = ssh_key
+        self.sec_group = sec_group
+        self.instance_tags = instance_tags
 
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
@@ -101,20 +98,20 @@ class AWSProvider(Provider):
             MinCount=1,
             MaxCount=1,
             InstanceType=specs.get("flavor"),
+            KeyName=self.ssh_key,
+            SecurityGroupIds=[self.sec_group],
         )
 
         ids = [srv.id for srv in aws_res]
-        assert len(ids) == 1  # ids must be len of 1 as we provision one vm at the time
-
+        if len(ids) != 1:  # ids must be len of 1 as we provision one vm at the time
+            raise ProvisioningError("Unexpected number of instances provisioned.")
         # creating name for instance (visible in aws ec2 WebUI)
-        self.ec2.create_tags(
-            Resources=ids,
-            Tags=[
-                {"Key": "Name", "Value": "IDM-CI-runner"},
-                {"Key": "name", "Value": specs.get("name")},
-                {"Key": "IDM-CI", "Value": "True"},
-            ],
-        )
+        taglist = [{"Key": "name", "Value": specs.get("name")}]
+        for key in self.instance_tags:
+            taglist.append({"Key": key, "Value": self.instance_tags[key]})
+
+        self.ec2.create_tags(Resources=ids, Tags=taglist)
+
         # returns id of provisioned instance
         return ids[0]
 
@@ -132,11 +129,8 @@ class AWSProvider(Provider):
         for tag in prov_result.get("Tags"):
             if tag["Key"] == "name":
                 result["name"] = tag["Value"]  # should be one key "name"
-        interfaces = prov_result.get("NetworkInterfaces")
-        int_addr = [inter.get("PrivateIpAddresses") for inter in interfaces]
-        result["addresses"] = [
-            addr.get("PrivateIpAddress") for addr_list in int_addr for addr in addr_list
-        ]
+
+        result["addresses"] = [prov_result.get("PublicIpAddress")]
         result["status"] = prov_result["State"]["Name"]
 
         return result
@@ -146,11 +140,13 @@ class AWSProvider(Provider):
         instance = self.ec2.Instance(aws_id)
         instance.wait_until_running()
         response = self.client.describe_instances(InstanceIds=[aws_id])
-        assert len(response["Reservations"]) == 1
-        assert len(response["Reservations"][0]["Instances"]) == 1
-        result = response["Reservations"][0]["Instances"][0]
-        # returns dict with aws instance information
-        return result
+
+        try:  # returns dict with aws instance information
+            return response["Reservations"][0]["Instances"][0]
+        except (KeyError, IndexError):
+            raise ProvisioningError(
+                "Unexpected data format in response of provisioned instance."
+            )
 
     async def provision_hosts(self, hosts):
         """Provision hosts based on list of host requirements.
