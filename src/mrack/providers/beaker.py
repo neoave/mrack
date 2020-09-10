@@ -19,14 +19,13 @@ import logging
 import os
 import socket
 import xml.etree.ElementTree as eTree
-
 from copy import deepcopy
 from datetime import datetime
-from bkr.common.hub import HubProxy
-from bkr.common.pyconfig import PyConfigParser
-from bkr.client import BeakerRecipeSet, BeakerRecipe, BeakerJob
 from xml.dom.minidom import Document as xml_doc
 
+from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
+from bkr.common.hub import HubProxy
+from bkr.common.pyconfig import PyConfigParser
 
 from mrack.host import (
     STATUS_ACTIVE,
@@ -45,6 +44,7 @@ PROVISIONER_KEY = "beaker"
 STATUS_MAP = {
     "Reserved": STATUS_ACTIVE,
     "New": STATUS_PROVISIONING,
+    "Queued": STATUS_PROVISIONING,
     "Processed": STATUS_PROVISIONING,
     "Waiting": STATUS_PROVISIONING,
     "Installing": STATUS_PROVISIONING,
@@ -63,13 +63,15 @@ class BeakerProvider(Provider):
         self._name = PROVISIONER_KEY
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
+        self.keypair = None
 
-    async def init(self, prov_config):
+    async def init(self, max_attempts, reserve_duration, keypair):
         """Initialize provider with data from Beaker configuration."""
-        self.prov_config = prov_config
         logger.info("Initializing Beaker provider")
         # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
-        self.max_attempts = prov_config["max_attempts"]
+        self.max_attempts = max_attempts
+        self.reserve_duration = reserve_duration
+        self.keypair = keypair
         login_start = datetime.now()
         default_config = os.path.expanduser(
             os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
@@ -112,9 +114,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         specs.update({"priority": "Normal"})
 
         # Add allowed keys
-        keypair = self.prov_config.get("keypair", None)
-        if keypair:
-            specs.update({"ks_append": self._allow_ssh_key(keypair)})
+        specs.update({"ks_append": self._allow_ssh_key(self.keypair)})
 
         # Use ks_meta
         specs.update({"ks_meta": "harness='restraint-rhts beakerlib-redhat'"})
@@ -137,7 +137,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         recipe.addDistroRequires(arch_node)
 
         # Add ReserveSys element to reserve system after provisioning
-        recipe.addReservesys(duration=str(self.prov_config["reserve_duration"]))
+        recipe.addReservesys(duration=str(self.reserve_duration))
 
         for task in specs["tasks"]:
             recipe.addTask(task=task["name"], role=task["role"])
@@ -325,6 +325,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             host_info.get("addresses"),
             STATUS_MAP.get(host_info.get("status"), STATUS_OTHER),
             provisioning_result,
+            username="root",
             error_obj=host_info.get("fault"),
         )
 
