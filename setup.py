@@ -24,7 +24,7 @@ with open("requirements.txt") as req:
 
 setup(
     name="mrack",
-    version="0.1.2",
+    version="0.1.3",
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
