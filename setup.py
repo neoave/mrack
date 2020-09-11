@@ -24,11 +24,11 @@ with open("requirements.txt") as req:
 
 setup(
     name="mrack",
-    version="0.1.3",
+    version="0.1.4",
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     author="Petr Vobornik",
     author_email="pvoborni@redhat.com",
     url="https://github.com/pvoborni/mrack",
