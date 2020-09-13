@@ -16,6 +16,7 @@
 
 from copy import deepcopy
 
+from mrack.errors import ConfigError
 from mrack.outputs.utils import resolve_hostname
 from mrack.utils import (
     get_host_from_metadata,
@@ -38,30 +39,61 @@ def copy_meta_attrs(host, meta_host, attrs):
             host[f"meta_{attr}"] = val
 
 
-def find_group(inventory, group_names, top=True):
-    """Find first matching group in inventory which has one of the provided names."""
-    if not inventory:
+def ensure_all_group(inventory):
+    """Ensure that inventory has group "all" with both "hosts" and "children"."""
+    if "all" not in inventory:
+        inventory["all"] = {
+            "children": {},
+            "hosts": {},
+        }
+    all_group = inventory["all"]
+    if "children" not in all_group:
+        all_group["children"] = {}
+    if "hosts" not in all_group:
+        all_group["hosts"] = {}
+    return all_group
+
+
+def get_group(inventory, groupname):
+    """Get group from inventory, return group or None."""
+    groups = inventory.keys()
+    found = None
+    for g_name in groups:
+        group = inventory[g_name]
+        if g_name == groupname:
+            found = group
+        else:
+            if "children" in group:
+                found = get_group(group["children"], groupname)
+        if found:
+            break
+    return found
+
+
+def add_to_group(inventory, groupname, hostname):
+    """
+    Find a group in inventory layout and add a host to it.
+
+    Returns group or None if it doesn't exist.
+    """
+    group = get_group(inventory, groupname)
+    if not group:
         return None
 
-    groups = inventory.keys()
-    for group in groups:
-        if group in group_names:
-            return inventory[group]
+    if "hosts" not in group:
+        group["hosts"] = {}
+    group["hosts"][hostname] = {}
+    return group
 
-    for group in groups:
-        g = inventory[group]
 
-        if "children" not in g:
-            continue
-
-        found = find_group(g["children"], group_names, top=False)
-        if found:
-            return found
-
-    if top:
-        return inventory["all"]
-
-    return None
+def add_group(inventory, groupname, hostname=None):
+    """Add a group to inventory, optionally add it with hostname."""
+    all_group = inventory["all"]
+    group = {}
+    if hostname:
+        group["hosts"] = {hostname: {}}
+    all_group["children"][groupname] = group
+    return group
 
 
 class AnsibleInventoryOutput:
@@ -137,15 +169,27 @@ class AnsibleInventoryOutput:
         inventory = deepcopy(
             self._config.get("inventory_layout", DEFAULT_INVENTORY_LAYOUT)
         )
+        if type(inventory) is not dict:
+            raise ConfigError("Inventory layout should be a dictionary")
+        all_group = ensure_all_group(inventory)
 
         for host in provisioned.values():
             meta_host, meta_domain = get_host_from_metadata(self._metadata, host.name)
-            groups = meta_host.get("groups") or [meta_host.get("group", "all")]
-            group = find_group(inventory, groups)
-            if "hosts" not in group:
-                group["hosts"] = {}
 
-            group["hosts"][host.name] = self.create_ansible_host(host.name)
+            # Groups can be defined in both "groups" and "group" variable.
+            groups = meta_host.get("groups", [])
+            group = meta_host.get("group")
+            if group and group not in groups:
+                groups.append(group)
+
+            # Add only a reference custom groups
+            for group in groups:
+                added = add_to_group(inventory, group, host.name)
+                if not added:  # group doesn't exist
+                    add_group(inventory, group, host.name)
+
+            # Main record belongs in "all" group
+            all_group["hosts"][host.name] = self.create_ansible_host(host.name)
         return inventory
 
     def create_output(self):
