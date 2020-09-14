@@ -44,6 +44,7 @@ PROVISIONER_KEY = "beaker"
 STATUS_MAP = {
     "Reserved": STATUS_ACTIVE,
     "New": STATUS_PROVISIONING,
+    "Scheduled": STATUS_PROVISIONING,
     "Queued": STATUS_PROVISIONING,
     "Processed": STATUS_PROVISIONING,
     "Waiting": STATUS_PROVISIONING,
