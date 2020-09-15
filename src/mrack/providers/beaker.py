@@ -33,27 +33,12 @@ from mrack.host import (
     STATUS_ERROR,
     STATUS_OTHER,
     STATUS_PROVISIONING,
-    Host,
 )
 from mrack.providers.provider import Provider
 
 logger = logging.getLogger(__name__)
 
 PROVISIONER_KEY = "beaker"
-
-STATUS_MAP = {
-    "Reserved": STATUS_ACTIVE,
-    "New": STATUS_PROVISIONING,
-    "Scheduled": STATUS_PROVISIONING,
-    "Queued": STATUS_PROVISIONING,
-    "Processed": STATUS_PROVISIONING,
-    "Waiting": STATUS_PROVISIONING,
-    "Installing": STATUS_PROVISIONING,
-    "Running": STATUS_PROVISIONING,
-    "Cancelled": STATUS_DELETED,
-    "Aborted": STATUS_ERROR,
-    "Completed": STATUS_OTHER,
-}
 
 
 class BeakerProvider(Provider):
@@ -65,6 +50,19 @@ class BeakerProvider(Provider):
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.keypair = None
+        self.STATUS_MAP = {
+            "Reserved": STATUS_ACTIVE,
+            "New": STATUS_PROVISIONING,
+            "Scheduled": STATUS_PROVISIONING,
+            "Queued": STATUS_PROVISIONING,
+            "Processed": STATUS_PROVISIONING,
+            "Waiting": STATUS_PROVISIONING,
+            "Installing": STATUS_PROVISIONING,
+            "Running": STATUS_PROVISIONING,
+            "Cancelled": STATUS_DELETED,
+            "Aborted": STATUS_ERROR,
+            "Completed": STATUS_OTHER,
+        }
 
     async def init(self, max_attempts, reserve_duration, keypair):
         """Initialize provider with data from Beaker configuration."""
@@ -87,6 +85,10 @@ class BeakerProvider(Provider):
         """Validate that host requirements are well specified."""
         return
 
+    async def can_provision(self, hosts):
+        """Check that hosts can be provisioned."""
+        return True
+
     def _allow_ssh_key(self, ssh_key):
 
         with open(ssh_key, "r") as key_file:
@@ -104,6 +106,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         ]
 
     def _req_to_bkr_job(self, req):
+        """Transform requirement to beaker job xml."""
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         # Job attributes:
@@ -172,9 +175,8 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         return (job_id, req["name"])
 
-    def _get_host_info_from_prov_result(self, prov_result):
-        """Get needed host infromation from Beaker provisioning result."""
-        # init the dict
+    def prov_result_to_host_data(self, prov_result):
+        """Transform provisioning result to needed host data."""
         try:
             ip_address = socket.gethostbyname(prov_result["system"])
         except socket.gaierror:
@@ -191,6 +193,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         return result
 
     def _get_recipe_info(self, beaker_id):
+        """Get info about the recipe for beaker job id."""
         bkr_job_xml = self.hub.taskactions.to_xml(beaker_id).encode("utf8")
 
         resources = []
@@ -234,11 +237,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 )
                 prev_status = status
 
-            if STATUS_MAP.get(status) == STATUS_ACTIVE:
+            if self.STATUS_MAP.get(status) == STATUS_ACTIVE:
                 break
-            elif STATUS_MAP.get(status) == STATUS_PROVISIONING:
+            elif self.STATUS_MAP.get(status) == STATUS_PROVISIONING:
                 await asyncio.sleep(self.poll_sleep)
-            elif STATUS_MAP.get(status) in [STATUS_ERROR, STATUS_DELETED]:
+            elif self.STATUS_MAP.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
                     f"Job {beaker_id} has errored with status "
                     f"{status} with result {resource['result']}"
@@ -254,80 +257,22 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         resource.update({"JobID": beaker_id, "hname": req_hname})
         return resource
 
-    async def provision_hosts(self, hosts):
-        """Provision hosts based on list of host requirements.
+    def parse_errors(self, server_results):
+        """Parse provisioning errors from provider result."""
+        errors = []
+        for res in server_results:
+            if self.STATUS_MAP.get(res["status"], STATUS_OTHER) == STATUS_ERROR:
+                errors.append(res)
 
-        Issues provisioning and waits for it succeed. Raises exception if any of
-        the servers was not successfully provisioned. If that happens it issues deletion
-        of all already provisioned resources.
-
-        Return list of information about provisioned servers.
-        """
-        started = datetime.now()
-
-        count = len(hosts)
-        logger.info(f"Issuing provisioning of {count} hosts")
-        create_res = []
-        for req in hosts:
-            resource = self.create_server(req)
-            create_res.append(resource)
-
-        create_resps = await asyncio.gather(*create_res)
-        logger.info("Provisioning issued")
-
-        logger.info("Waiting for all Beaker hosts to be available")
-        wait_res = []
-        for resp in create_resps:
-            resource = self.wait_till_provisioned(resp)
-            wait_res.append(resource)
-
-        server_results = await asyncio.gather(*wait_res)
-
-        provisioned = datetime.now()
-        provi_duration = provisioned - started
-
-        logger.info("All Beaker hosts reached provisioning final state (Reserved)")
-        logger.info(f"Provisioning duration: {provi_duration}")
-
-        hosts = [self.to_host(srv) for srv in server_results]
-        for host in hosts:
-            logger.info(host)
-
-        return hosts
+        return errors
 
     async def delete_host(self, host):
         """Delete provisioned hosts based on input from provision_hosts."""
         logger.info(f"Deleting Beaker host from Job {host.id}")
         return self.hub.taskactions.stop(
-            host.id, "cancel", "Job has been cancelled by mrack."
+            host.id, "cancel", "Job has been stopped by mrack."
         )
 
-    async def delete_hosts(self, hosts):
-        """Issue deletion of all servers based on previous results from provisioning."""
-        logger.info("Issuing Beaker deletion")
-
-        delete_bkr = []
-        for host in hosts:
-            awaitable = self.delete_host(host)
-            delete_bkr.append(awaitable)
-        results = await asyncio.gather(*delete_bkr)
-        logger.info("All Beaker servers issued to be deleted")
-
-        return results
-
-    def to_host(self, provisioning_result):
+    def to_host(self, provisioning_result, username=None):
         """Transform provisioning result into Host object."""
-        host_info = self._get_host_info_from_prov_result(provisioning_result)
-
-        host = Host(
-            self,
-            host_info.get("id"),
-            host_info.get("name"),
-            host_info.get("addresses"),
-            STATUS_MAP.get(host_info.get("status"), STATUS_OTHER),
-            provisioning_result,
-            username="root",
-            error_obj=host_info.get("fault"),
-        )
-
-        return host
+        return super().to_host(provisioning_result, username="root")
