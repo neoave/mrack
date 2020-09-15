@@ -14,7 +14,6 @@
 
 """AWS Provider interface."""
 
-import asyncio
 import logging
 from copy import deepcopy
 from datetime import datetime
@@ -28,22 +27,12 @@ from mrack.host import (
     STATUS_ERROR,
     STATUS_OTHER,
     STATUS_PROVISIONING,
-    Host,
 )
 from mrack.providers.provider import Provider
 
 logger = logging.getLogger(__name__)
 
 PROVISIONER_KEY = "aws"
-
-STATUS_MAP = {
-    "running": STATUS_ACTIVE,
-    "pending": STATUS_PROVISIONING,
-    "terminated": STATUS_DELETED,
-    "error": STATUS_ERROR,
-    # there is much more we can treat it as STATUS_OTHER, see statuses:
-    # pending | running | shutting-down | terminated | stopping | stopped
-}
 
 
 class AWSProvider(Provider):
@@ -56,6 +45,14 @@ class AWSProvider(Provider):
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None
+        self.STATUS_MAP = {
+            "running": STATUS_ACTIVE,
+            "pending": STATUS_PROVISIONING,
+            "terminated": STATUS_DELETED,
+            "error": STATUS_ERROR,
+            # there is much more we can treat it as STATUS_OTHER, see statuses:
+            # pending | running | shutting-down | terminated | stopping | stopped
+        }
 
     @property
     def name(self):
@@ -80,6 +77,10 @@ class AWSProvider(Provider):
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
         return
+
+    async def can_provision(self, hosts):
+        """Check that hosts can be provisioned."""
+        return True
 
     async def create_server(self, req):
         """Issue creation of a server.
@@ -115,8 +116,8 @@ class AWSProvider(Provider):
         # returns id of provisioned instance
         return ids[0]
 
-    def _get_host_info_from_prov_result(self, prov_result):
-        """Get needed host infromation from AWS provisioning result."""
+    def prov_result_to_host_data(self, prov_result):
+        """Transform provisioning result to needed host data."""
         # init the dict
         result = {
             "id": None,
@@ -135,90 +136,34 @@ class AWSProvider(Provider):
 
         return result
 
+    def parse_errors(self, server_results):
+        """Parse provisioning errors from provider result."""
+        errors = []
+        for res in server_results:
+            if self.STATUS_MAP.get(res["State"]["Name"], STATUS_OTHER) == STATUS_ERROR:
+                errors.append(res)
+
+        return errors
+
     async def wait_till_provisioned(self, aws_id):
         """Wait for AWS provisioning result."""
         instance = self.ec2.Instance(aws_id)
         instance.wait_until_running()
         response = self.client.describe_instances(InstanceIds=[aws_id])
-
+        result = {}
         try:  # returns dict with aws instance information
-            return response["Reservations"][0]["Instances"][0]
+            result = response["Reservations"][0]["Instances"][0]
         except (KeyError, IndexError):
             raise ProvisioningError(
                 "Unexpected data format in response of provisioned instance."
             )
 
-    async def provision_hosts(self, hosts):
-        """Provision hosts based on list of host requirements.
-
-        Issues provisioning and waits for it succeed. Raises exception if any of
-        the servers was not successfully provisioned. If that happens it issues deletion
-        of all already provisioned resources.
-
-        Return list of information about provisioned servers.
-        """
-        started = datetime.now()
-
-        count = len(hosts)
-        logger.info(f"Issuing provisioning of {count} hosts")
-        create_aws = []
-        for req in hosts:
-            aws = self.create_server(req)
-            create_aws.append(aws)
-        create_resps = await asyncio.gather(*create_aws)
-        logger.info("Provisioning issued")
-        logger.info(create_resps)
-
-        logger.info("Waiting for all AWS hosts to be available")
-        wait_aws = []
-        for create_resp in create_resps:
-            aws = self.wait_till_provisioned(create_resp)
-            wait_aws.append(aws)
-
-        server_results = await asyncio.gather(*wait_aws)
-
-        provisioned = datetime.now()
-        provi_duration = provisioned - started
-
-        logger.info("All AWS hosts reached provisioning final state (running)")
-        logger.info(f"Provisioning duration: {provi_duration}")
-
-        hosts = [self.to_host(srv) for srv in server_results]
-        for host in hosts:
-            logger.info(host)
-
-        return hosts
+        return result
 
     async def delete_host(self, host):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"Deleting AWS host {host.id}")
+        logger.info(f"Terminating AWS host {host.id}")
         ids = [host._id]
         self.ec2.instances.filter(InstanceIds=ids).stop()
         self.ec2.instances.filter(InstanceIds=ids).terminate()
         return True
-
-    async def delete_hosts(self, hosts):
-        """Issue deletion of all servers based on previous results from provisioning."""
-        logger.info("Issuing AWS deletion")
-        delete_aws = []
-        for host in hosts:
-            aws = self.delete_host(host)
-            delete_aws.append(aws)
-        results = await asyncio.gather(*delete_aws)
-        logger.info("All AWS servers issued to be deleted")
-        return results
-
-    def to_host(self, provisioning_result):
-        """Transform provisioning result into Host object."""
-        host_info = self._get_host_info_from_prov_result(provisioning_result)
-
-        host = Host(
-            self,
-            host_info.get("id"),
-            host_info.get("name"),
-            host_info.get("addresses"),
-            STATUS_MAP.get(host_info.get("status"), STATUS_OTHER),
-            provisioning_result,
-            error_obj=host_info.get("fault"),
-        )
-        return host
