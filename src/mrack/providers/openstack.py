@@ -30,7 +30,6 @@ from mrack.host import (
     STATUS_ERROR,
     STATUS_OTHER,
     STATUS_PROVISIONING,
-    Host,
 )
 from mrack.providers.provider import Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
@@ -43,16 +42,6 @@ logger = logging.getLogger(__name__)
 
 
 PROVISIONER_KEY = "openstack"
-
-
-STATUS_MAP = {
-    "ACTIVE": STATUS_ACTIVE,
-    "BUILD": STATUS_PROVISIONING,
-    "DELETED": STATUS_DELETED,
-    "ERROR": STATUS_ERROR,
-    # there is much more we can treat it as STATUS_OTHER, see:
-    # https://docs.openstack.org/api-guide/compute/server_concepts.html
-}
 
 
 class OpenStackProvider(Provider):
@@ -78,8 +67,16 @@ class OpenStackProvider(Provider):
         self.timeout = 60  # minutes
         self.poll_sleep_initial = 15  # seconds
         self.poll_sleep = 7  # seconds
+        self.STATUS_MAP = {
+            "ACTIVE": STATUS_ACTIVE,
+            "BUILD": STATUS_PROVISIONING,
+            "DELETED": STATUS_DELETED,
+            "ERROR": STATUS_ERROR,
+            # there is much more we can treat it as STATUS_OTHER, see:
+            # https://docs.openstack.org/api-guide/compute/server_concepts.html
+        }
 
-    async def init(self, image_names=None):
+    async def init(self, image_names=None, host_cnt=0):
         """Initialize provider with data from OpenStack.
 
         Load:
@@ -90,7 +87,10 @@ class OpenStackProvider(Provider):
         * account limits (max and current usage of vCPUs, memory, ...)
         """
         # session expects that credentials will be set via env variables
+        if host_cnt == 0:
+            raise ProvisioningError("Provider initialized with  0 required host count")
         logger.info("Initializing OpenStack provider")
+        self.poll_sleep_initial, self.poll_sleep = self.get_poll_sleep_times(host_cnt)
         self.session = AuthPassword()
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
@@ -372,7 +372,7 @@ class OpenStackProvider(Provider):
             pass
 
     async def wait_till_provisioned(
-        self, uuid, timeout=None, poll_sleep=None, poll_sleep_initial=None
+        self, instance, timeout=None, poll_sleep=None, poll_sleep_initial=None
     ):
         """
         Wait till server is provisioned.
@@ -389,6 +389,7 @@ class OpenStackProvider(Provider):
 
         Return information about provisioned server.
         """
+        uuid = instance.get("id")
         if not poll_sleep_initial:
             poll_sleep_initial = self.poll_sleep_initial
         if not poll_sleep:
@@ -426,7 +427,7 @@ class OpenStackProvider(Provider):
 
         return server
 
-    def get_poll_sleep_times(self, hosts):
+    def get_poll_sleep_times(self, host_count):
         """Compute polling sleep times based on number of hosts.
 
         So that we don't create unnecessary load on server while checking state of
@@ -434,87 +435,18 @@ class OpenStackProvider(Provider):
 
         returns (initial_sleep, sleep)
         """
-        count = len(hosts)
-
         init_poll = self.poll_sleep_initial
         poll = self.poll_sleep
 
         # initial poll is the biggest performance saver it should be around
         # time when more than half of host is in ACTIVE state
-        init_poll = init_poll + 0.65 * count
+        init_poll = init_poll + 0.65 * host_count
 
         # poll time should ask often enough, to not create unnecessary delays
         # while not that many to not load the server much
-        poll = poll + 0.22 * count
+        poll = poll + 0.22 * host_count
 
         return init_poll, poll
-
-    async def provision_hosts(self, hosts):
-        """Provision hosts based on list of host requirements.
-
-        Main provider method for provisioning.
-
-        First it validates that host requirements are valid and that OpenStack tenant
-        has enough resources(quota).
-
-        Then issues provisioning and waits for it succeed. Raises exception if any of
-        the servers was not successfully provisioned. If that happens it issues deletion
-        of all already provisioned resources.
-
-        Return list of information about provisioned servers.
-        """
-        logger.info("Validating hosts definitions")
-        await self.validate_hosts(hosts)
-        logger.info("Host definitions valid")
-
-        logger.info("Checking available resources")
-        can = await self.can_provision(hosts)
-        if not can:
-            raise ValidationError("Not enough resources to provision")
-        logger.info("Resource availability: OK")
-
-        started = datetime.now()
-
-        count = len(hosts)
-        logger.info(f"Issuing provisioning of {count} hosts")
-        create_aws = []
-        for req in hosts:
-            aws = self.create_server(req)
-            create_aws.append(aws)
-        create_resps = await asyncio.gather(*create_aws)
-        logger.info("Provisioning issued")
-
-        logger.info("Waiting for all hosts to be available")
-        init_poll_sleep, poll_sleep = self.get_poll_sleep_times(hosts)
-        wait_aws = []
-        for create_resp in create_resps:
-            aws = self.wait_till_provisioned(
-                create_resp.get("id"),
-                poll_sleep=poll_sleep,
-                poll_sleep_initial=init_poll_sleep,
-            )
-            wait_aws.append(aws)
-
-        server_results = await asyncio.gather(*wait_aws)
-        provisioned = datetime.now()
-        provi_duration = provisioned - started
-
-        logger.info("All hosts reached provisioning final state (ACTIVE or ERROR)")
-        logger.info(f"Provisioning duration: {provi_duration}")
-
-        errors = [res for res in server_results if res["status"] == "ERROR"]
-        if errors:
-            logger.info("Some host did not start properly")
-            for err in errors:
-                self.print_basic_info(err)
-            logger.info("Given the error, will delete all hosts")
-            await self.delete_hosts(server_results)
-            raise ProvisioningError(errors)
-
-        hosts = [self.to_host(srv) for srv in server_results]
-        for host in hosts:
-            logger.info(host)
-        return hosts
 
     async def delete_host(self, host):
         """Issue deletion of host(server) from OpenStack."""
@@ -522,31 +454,21 @@ class OpenStackProvider(Provider):
         await self.delete_server(host._id)
         return True
 
-    async def delete_hosts(self, hosts):
-        """Issue deletion of all servers based on previous results from provisioning."""
-        logger.info("Issuing OpenStack deletion")
-        delete_aws = []
-        for host in hosts:
-            aws = self.delete_host(host)
-            delete_aws.append(aws)
-        results = await asyncio.gather(*delete_aws)
-        logger.info("All servers issued to be deleted")
-        return results
+    def _get_host_info_from_prov_result(self, prov_result):
+        """Get needed host infromation from openstack provisioning result."""
+        result = {
+            "id": None,
+            "name": None,
+            "addresses": None,
+            "status": None,
+            "fault": None,
+        }
 
-    def to_host(self, provisioning_result):
-        """Transform provisioning result into Host object."""
-        networks = provisioning_result.get("addresses", {})
-        addresses = [ip.get("addr") for n in networks.values() for ip in n]
-        fault = provisioning_result.get("fault")
-        status = STATUS_MAP.get(provisioning_result.get("status"), STATUS_OTHER)
+        result["id"] = prov_result.get("id")
+        result["name"] = prov_result.get("name")
+        networks = prov_result.get("addresses", {})
+        result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
+        result["fault"] = prov_result.get("fault")
+        result["status"] = self.STATUS_MAP.get(prov_result.get("status"), STATUS_OTHER)
 
-        host = Host(
-            self,
-            provisioning_result.get("id"),
-            provisioning_result.get("name"),
-            addresses,
-            status,
-            provisioning_result,
-            error_obj=fault,
-        )
-        return host
+        return result
