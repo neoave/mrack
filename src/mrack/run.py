@@ -44,6 +44,8 @@ from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
 from mrack.providers.beaker import BeakerProvider
 from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
 from mrack.providers.openstack import OpenStackProvider
+from mrack.providers.podman import PROVISIONER_KEY as PODMAN
+from mrack.providers.podman import PodmanProvider
 from mrack.providers.static import PROVISIONER_KEY as STATIC
 from mrack.providers.static import StaticProvider
 from mrack.utils import load_yaml, no_such_file_config_handler
@@ -67,6 +69,7 @@ def init_providers():
     providers.register(OPENSTACK, OpenStackProvider)
     providers.register(AWS, AWSProvider)
     providers.register(BEAKER, BeakerProvider)
+    providers.register(PODMAN, PodmanProvider)
     providers.register(STATIC, StaticProvider)
 
 

@@ -25,6 +25,8 @@ from mrack.transformers.beaker import CONFIG_KEY as BEAKER_KEY
 from mrack.transformers.beaker import BeakerTransformer
 from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
 from mrack.transformers.openstack import OpenStackTransformer
+from mrack.transformers.podman import CONFIG_KEY as PODMAN_KEY
+from mrack.transformers.podman import PodmanTransformer
 from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
 from mrack.transformers.static import StaticTransformer
 
@@ -65,4 +67,5 @@ transformers = Registry()
 transformers.register(OPENSTACK_KEY, OpenStackTransformer)
 transformers.register(AWS_KEY, AWSTransformer)
 transformers.register(BEAKER_KEY, BeakerTransformer)
+transformers.register(PODMAN_KEY, PodmanTransformer)
 transformers.register(STATIC_KEY, StaticTransformer)
