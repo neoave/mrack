@@ -162,6 +162,15 @@ class AnsibleInventoryOutput:
         if password:
             host_info["ansible_password"] = password
 
+        if db_host.provider.name in ("docker", "podman"):
+            host_info.update(
+                {
+                    "ansible_host": db_host.id,
+                    "ansible_connection": db_host.provider.name,
+                    "ansible_user": "root",  # TODO make it configurable in provider
+                },
+            )
+
         if is_windows_host(meta_host):
             if "netbios" in meta_host:
                 host_info.update({"meta_netbios": meta_host["netbios"]})
