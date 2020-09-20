@@ -35,6 +35,7 @@ class PodmanProvider(Provider):
     def __init__(self):
         """Initialize provider."""
         self._name = PROVISIONER_KEY
+        self.dsp_name = "Podman"
         self.podman = Podman()
 
     async def validate_hosts(self, hosts):
@@ -89,15 +90,9 @@ class PodmanProvider(Provider):
         logger.debug(object2json(server))
         return server
 
-    def parse_errors(self, server_results):
-        """Parse provisioning errors from provider result."""
-        errors = [s for s in server_results if s["State"]["Error"]]
-        return errors
-
-    async def delete_host(self, host):
+    async def delete_host(self, host_id):
         """Delete provisioned host."""
-        uuid = host.id
-        deleted = await self.podman.rm(uuid, force=True)
+        deleted = await self.podman.rm(host_id, force=True)
         return deleted
 
     def get_status(self, state):
