@@ -20,6 +20,7 @@ import subprocess
 
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
+from mrack.providers.utils.podman import Podman
 from mrack.utils import get_host_from_metadata, get_password, get_ssh_key, get_username
 
 logger = logging.getLogger(__name__)
@@ -118,7 +119,22 @@ class SSH:
         process.communicate(input=psw_input)
         return process.returncode
 
+    def is_container_env(self, host):
+        """Check if host is using local container technology."""
+        return host.provider.name in ["docker", "podman"]
+
+    def attach_interactive_container(self, host):
+        """Simulate SSH by attaching an interactive session to a container."""
+        if host.provider.name == "podman":
+            podman = Podman()
+            podman.interactive(host.id)
+        else:
+            raise NotImplementedError("Docker is not yet supported.")
+
     def ssh(self, hostname):
         """Execute the SSH action."""
         host = self.find_host(hostname)
-        self.ssh_to_host(host)
+        if self.is_container_env(host):
+            self.attach_interactive_container(host)
+        else:
+            self.ssh_to_host(host)

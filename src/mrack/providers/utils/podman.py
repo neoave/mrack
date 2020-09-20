@@ -17,6 +17,7 @@
 import asyncio
 import json
 import logging
+import subprocess
 from mrack.errors import ProvisioningError
 
 logger = logging.getLogger(__name__)
@@ -78,3 +79,8 @@ class Podman:
         args.append(container_id)
         stdout, stderr, process = await self._run_podman(args, raise_on_err=False)
         return process.returncode == 0
+
+    def interactive(self, container_id):
+        """Create interactive session."""
+        args = [self.program, "exec", "-ti", container_id, "bash"]
+        subprocess.run(args, text=True)
