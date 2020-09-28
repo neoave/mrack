@@ -13,7 +13,6 @@
 # limitations under the License.
 
 # -*- coding: utf-8 -*-
-
 from setuptools import setup, find_packages
 
 with open("README.md") as f:
@@ -21,6 +20,9 @@ with open("README.md") as f:
 
 with open("requirements.txt") as req:
     reqs = req.readlines()
+
+mrack_conf = "mrack.conf"
+prov_conf = "provisioning-config.yaml"
 
 setup(
     name="mrack",
@@ -37,4 +39,7 @@ setup(
     package_dir={"": "src"},
     install_requires=reqs,
     scripts=["scripts/mrack"],
+    package_data={
+        "mrack": [f"data/{datafile}" for datafile in [mrack_conf, prov_conf]]
+    },
 )

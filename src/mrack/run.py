@@ -16,7 +16,9 @@
 
 import asyncio
 import logging
+import os
 import sys
+from configparser import ConfigParser, NoOptionError, NoSectionError, ParsingError
 from functools import update_wrapper
 
 import click
@@ -47,6 +49,53 @@ from mrack.providers.static import StaticProvider
 from mrack.utils import load_yaml, no_such_file_config_handler
 
 logger = logging.getLogger(__name__)
+
+
+def load_mrack_config(paths):
+    """Locate mrack.conf file."""
+    configs = ConfigParser()
+    configs.read(paths)
+    return configs
+
+
+def get_file_path_from_config(target_key, mrack_config=None):
+    """Get file paths from the mrack config."""
+    if mrack_config:
+        config = load_mrack_config(mrack_config)
+        return config["mrack"][target_key]
+    else:
+        home = os.path.expanduser("~")
+        cfg_paths = [os.path.abspath("."), f"{home}/.mrack", "/etc/mrack"]
+        for cfg_path in cfg_paths:
+            try:
+                cfg_file = os.path.abspath(f"{cfg_path}/mrack.conf")
+
+                logger.debug(
+                    f"Loading '{target_key}' from {cfg_file} configuration file."
+                )
+                config = load_mrack_config(cfg_file)
+
+                cfg_val = config.get("mrack", target_key)
+
+                if cfg_val.startswith("~"):
+                    res = cfg_val.replace("~", home)
+                else:
+                    res = os.path.abspath(os.path.join(cfg_path, cfg_val))
+
+                logger.info(f"Using '{res}' from {cfg_file} configuration file.")
+                return res
+            except (KeyError, NoOptionError):
+                logger.debug(
+                    f"Can not locate '{target_key}' in {cfg_file} configuration file."
+                )
+            except NoSectionError:
+                logger.debug(
+                    f"Can not locate 'mrack' section in {cfg_file} configuration file."
+                )
+            except ParsingError:
+                logger.debugs(f"Invalid syntax in {cfg_file} configuration file.")
+
+        raise ConfigError("Can not start mrack without proper configuration")
 
 
 def async_run(f):
@@ -95,19 +144,28 @@ METADATA = "metadata"
 
 
 @click.group()
-@click.option("-c", "--config", default="./provisioning-config.yaml")
-@click.option("-d", "--db", default="./.mrackdb.json")
+@click.option("-m", "--mrack-config", type=click.Path(exists=True))
+@click.option("-c", "--provisioning-config", type=click.Path(exists=True))
+@click.option("-d", "--db", type=click.Path(exists=True))
 @click.option("--debug", default=False, is_flag=True)
 @click.pass_context
-def mrackcli(ctx, config, db, debug):
+def mrackcli(ctx, mrack_config, provisioning_config, db, debug):
     """Multihost human friendly provisioner."""
     if debug:
         logging.getLogger("mrack").setLevel(logging.DEBUG)
 
+    mrack_files = {"provisioning-config": provisioning_config, "mrackdb": db}
+
+    for config_key in mrack_files:
+        if mrack_files[config_key] is None:
+            mrack_files[config_key] = get_file_path_from_config(
+                config_key, mrack_config=mrack_config
+            )
+
     init_providers()
     ctx.ensure_object(dict)
-    ctx.obj[DB] = init_db(db)
-    ctx.obj[CONFIG] = init_config(config)
+    ctx.obj[DB] = init_db(mrack_files["mrackdb"])
+    ctx.obj[CONFIG] = init_config(mrack_files["provisioning-config"])
 
 
 @mrackcli.command()
