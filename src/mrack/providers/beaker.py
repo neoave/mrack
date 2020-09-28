@@ -264,12 +264,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 )
                 break
 
-        resource.update(
-            {
-                "JobID": beaker_id,
-                "req_name": req_name,
-            }
-        )
+        resource.update({"JobID": beaker_id, "req_name": req_name})
         return resource
 
     async def delete_host(self, job_id):

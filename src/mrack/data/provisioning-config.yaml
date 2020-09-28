@@ -1,0 +1,82 @@
+aws: # aws provider config
+    images:
+        # list of ami images key is used in metadata ami image is used for provider e.g.
+        fedora-32: ami-0f1d60751946b66c5 # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
+
+
+    flavors:
+        # list of available flavours to ask from provider  for vm specs
+        default: t2.nano # e.g. this is 1vcpus 0.5GB ram
+
+    keypair: mrack # this name points to uploaded and available in aws ec2 key configuration
+    security_group: sg-0ad1bab3a850e70fc # setup the system firewall using one of existing sec groups
+
+    credentials_file: aws.key # file containing the credentials
+    profile: default # credentials profile to use
+    region: eu-central-1 # default region for ec2 instances
+    instance_tags: # custom tag list to add to vm created using mrack
+        Name: "mrack-runner"
+        mrack: "True"
+        persistent: "False"
+
+
+beaker: # beaker provider specific values
+    distros:
+        # list of beaker distros key is used in metadata distro is used in generated jobxml
+        fedora-32: Fedora-32%
+
+    # path to public ssh key which is later uploaded to the machine for access
+    keypair: id_rsa.pub
+    # default reservation time for the beaker job
+    reserve_duration: 86400
+    # default max_attepmts value for the beaker job
+    max_attempts: 240
+
+
+openstack: # OpenStack provider specific values
+    images:
+        fedora-32: Fedora-Cloud-Base-32-latest
+
+    flavors:
+        # list of available flavours to ask from provider for vm specs
+        default: ci.m1.medium
+
+    networks: # networks supported by OpenStack instance
+        IPv4:
+        - provider_net_cci_4
+        IPv6:
+        - provider_net_ipv6_only
+
+    default_network: IPv4
+
+    # OpenStack vm config
+    keypair: jenkins
+
+    # OpenStack security/auth config
+    credentials_file: clouds.yaml
+    # credentials profile to use from file
+    profile: devstack
+
+# default user per image from the any of provider configuration
+users:
+    fedora-32: fedora
+    # fallback to default if not specified for distro
+    default: cloud-user
+
+# ansible_python_interpreter to use based on the distribution  / image
+python:
+    fedora-32: /usr/bin/python3
+    # fallback to default if not specified for distro
+    default: /usr/libexec/platform-python
+
+# Default values
+# For python pytest multihost - all will be copied
+mhcfg:
+    ssh_key_filename: 'config/id_rsa'
+    ad_admin_name: Administrator
+    ad_admin_password: Secret123
+    admin_name: admin
+    admin_password: Secret.123
+    dirman_dn: cn=Directory Manager
+    dirman_password: Secret.123
+    dns_forwarder: '8.8.8.8' # or any internal DNS
