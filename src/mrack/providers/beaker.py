@@ -27,6 +27,7 @@ from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
 
+from mrack.errors import ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
@@ -47,6 +48,7 @@ class BeakerProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
+        self.display_name = "Beaker"
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.keypair = None
@@ -64,9 +66,10 @@ class BeakerProvider(Provider):
             "Completed": STATUS_OTHER,
         }
 
-    async def init(self, max_attempts, reserve_duration, keypair):
+    async def init(self, distros, max_attempts, reserve_duration, keypair):
         """Initialize provider with data from Beaker configuration."""
         logger.info("Initializing Beaker provider")
+        self.distros = distros
         # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
         self.max_attempts = max_attempts
         self.reserve_duration = reserve_duration
@@ -83,6 +86,13 @@ class BeakerProvider(Provider):
 
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
+        for req in hosts:
+            req_dstr = req.get("distro")
+            if not req.get("meta_distro") and req_dstr not in self.distros:
+                raise ValidationError(
+                    f"{self.display_name} provider does not support "
+                    f"'{req_dstr}' distro in provisioning config."
+                )
         return
 
     async def can_provision(self, hosts):
