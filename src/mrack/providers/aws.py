@@ -19,8 +19,9 @@ from copy import deepcopy
 from datetime import datetime
 
 import boto3
+from botocore.exceptions import ClientError
 
-from mrack.errors import ProvisioningError
+from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
@@ -41,7 +42,8 @@ class AWSProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.images = {}
+        self.display_name = "AWS"
+        self.ami_ids = []
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None
@@ -59,7 +61,7 @@ class AWSProvider(Provider):
         """Get provider name."""
         return self._name
 
-    async def init(self, image_names, ssh_key, sec_group, instance_tags):
+    async def init(self, ami_ids, ssh_key, sec_group, instance_tags):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
         logger.info("Initializing AWS provider")
@@ -69,13 +71,30 @@ class AWSProvider(Provider):
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"Login duration {login_duration}")
-        self.images = image_names
+        self.ami_ids = ami_ids
         self.ssh_key = ssh_key
         self.sec_group = sec_group
         self.instance_tags = instance_tags
 
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
+        for req in hosts:
+            req_img = req.get("image")
+            if not req.get("meta_image") and req_img not in self.ami_ids:
+                raise ValidationError(
+                    f"{self.display_name} provider does not support "
+                    f"'{req_img}' image in provisioning config."
+                )
+
+            try:
+                aws_image = self.ec2.Image(req_img)
+                logger.info(f"Requested provisioning of {aws_image.name} image.")
+            except ClientError as image_err:
+                err_resp = image_err.response["Error"]["Message"]
+                err_msg = f"Requested image '{req_img}' can not be provisioned."
+                logger.error(err_msg)
+                raise ValidationError(f"{err_msg} Request failed with {err_resp}")
+
         return
 
     async def can_provision(self, hosts):

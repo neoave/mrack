@@ -30,14 +30,22 @@ class BeakerTransformer(Transformer):
     async def init_provider(self):
         """Initialize associate provider."""
         await self._provider.init(
-            self.config["max_attempts"],
-            self.config["reserve_duration"],
-            self.config["keypair"],
+            distros=self.config["distros"].values(),
+            max_attempts=self.config["max_attempts"],
+            reserve_duration=self.config["reserve_duration"],
+            keypair=self.config["keypair"],
         )
 
     def _get_distro(self, os):
-        """Get distro string by OS name from provisioning config."""
-        return get_config_value(self.config["distros"], os)
+        """
+        Get distro string by OS name from provisioning config.
+
+        Returns:
+            1. distro by the os key
+            2. default for the distros if os is not found in keys
+            3. os name if default is not specified for distros.
+        """
+        return get_config_value(self.config["distros"], os, os)
 
     def _get_variant(self, host):
         if "beaker_variant" in host:
@@ -50,9 +58,11 @@ class BeakerTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
+        required_distro = host.get("distro") or self._get_distro(host["os"])
         return {
             "name": host["name"],
-            "distro": self._get_distro(host["os"]),
+            "distro": required_distro,
+            "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": self._get_variant(host),
         }

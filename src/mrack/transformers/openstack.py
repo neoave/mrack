@@ -32,8 +32,7 @@ class OpenStackTransformer(Transformer):
 
     async def init_provider(self):
         """Initialize associate provider."""
-        images = self.config["images"].values()
-        await self._provider.init(image_names=images)
+        await self._provider.init(image_names=self.config["images"].values())
 
     def _get_flavor(self, host):
         """Get flavor by host group."""
@@ -144,15 +143,24 @@ class OpenStackTransformer(Transformer):
         return network_type
 
     def _get_image(self, os):
-        """Get image name by OS name from provisioning config."""
-        return get_config_value(self.config["images"], os)
+        """
+        Get image name by OS name from provisioning config.
+
+        Returns:
+            1. image by the os key
+            2. default from the images if os is not found in keys
+            3. os name if default is not specified for images.
+        """
+        return get_config_value(self.config["images"], os, os)
 
     def create_host_requirement(self, host):
         """Create single input for OpenStack provisioner."""
+        required_image = host.get("image") or self._get_image(host["os"])
         return {
             "name": host["name"],
             "flavor": self._get_flavor(host),
-            "image": self._get_image(host["os"]),
+            "image": required_image,
+            "meta_image": "image" in host,
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
         }

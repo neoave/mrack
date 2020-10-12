@@ -55,6 +55,7 @@ class OpenStackProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
+        self.display_name = "OpenStack"
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}
@@ -83,7 +84,7 @@ class OpenStackProvider(Provider):
         * available flavors
         * networks
         * network availabilities (number of available IPs for networks)
-        * images which were defined in `image_names` option
+        * images which were defined in `images` option
         * account limits (max and current usage of vCPUs, memory, ...)
         """
         # session expects that credentials will be set via env variables
@@ -102,7 +103,7 @@ class OpenStackProvider(Provider):
         logger.info(f"Login duration {login_duration}")
 
         object_start = datetime.now()
-        flavors, images, limits, networks, ips = await asyncio.gather(
+        _, _, limits, _, _ = await asyncio.gather(
             self.load_flavors(),
             self.load_images(image_names),
             self.nova.limits.show(),
