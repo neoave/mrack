@@ -267,20 +267,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         resource.update({"JobID": beaker_id, "hname": req_hname})
         return resource
 
-    def parse_errors(self, server_results):
-        """Parse provisioning errors from provider result."""
-        errors = []
-        for res in server_results:
-            if self.STATUS_MAP.get(res["status"], STATUS_OTHER) == STATUS_ERROR:
-                errors.append(res)
-
-        return errors
-
-    async def delete_host(self, host):
+    async def delete_host(self, job_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"Deleting Beaker host from Job {host.id}")
+        logger.info(f"Deleting Beaker host from Job {job_id}")
         return self.hub.taskactions.stop(
-            host.id, "cancel", "Job has been stopped by mrack."
+            job_id, "cancel", "Job has been stopped by mrack."
         )
 
     def to_host(self, provisioning_result, username=None):

@@ -18,7 +18,7 @@ import logging
 from datetime import datetime
 
 from mrack.errors import ProvisioningError, ValidationError
-from mrack.host import STATUS_OTHER, Host
+from mrack.host import STATUS_ERROR, STATUS_OTHER, Host
 
 logger = logging.getLogger(__name__)
 
@@ -101,25 +101,35 @@ class Provider:
         logger.info("All hosts reached provisioning final state (ACTIVE or ERROR)")
         logger.info(f"Provisioning duration: {provi_duration}")
 
-        errors = self.parse_errors(server_results)
+        hosts = [self.to_host(srv) for srv in server_results]
+        errors = self.parse_errors(hosts)
+
         if errors:
             logger.info("Some host did not start properly")
-            for err in errors:
-                self.print_basic_info(err)
+            for host_err in errors:
+                logger.error(f"Error: {str(host_err)}")
+
             logger.info("Given the error, will delete all hosts")
-            await self.delete_hosts(server_results)
+            await self.delete_hosts(hosts)
             raise ProvisioningError(errors)
 
-        hosts = [self.to_host(srv) for srv in server_results]
+        logger.info("Printing provisioned hosts")
         for host in hosts:
             logger.info(host)
+
         return hosts
 
-    def parse_errors(self, server_results):
+    def parse_errors(self, hosts):
         """Parse provisioning errors from provider result."""
-        raise NotImplementedError()
+        errors = []
+        for host in hosts:
+            logger.info(f"Host: {host.id}\tStatus: {host.status}")
+            if self.STATUS_MAP.get(host.status, STATUS_OTHER) == STATUS_ERROR:
+                errors.append(host.error)
 
-    async def delete_host(self, host):
+        return errors
+
+    async def delete_host(self, host_id):
         """Delete provisioned host."""
         raise NotImplementedError()
 
@@ -129,7 +139,7 @@ class Provider:
 
         delete_servers = []
         for host in hosts:
-            awaitable = self.delete_host(host)
+            awaitable = self.delete_host(host.id)
             delete_servers.append(awaitable)
         results = await asyncio.gather(*delete_servers)
         logger.info("All servers issued to be deleted")

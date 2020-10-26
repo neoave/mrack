@@ -369,15 +369,6 @@ class OpenStackProvider(Provider):
             logger.warning(f"Server '{uuid}' not found, probably already deleted")
             pass
 
-    def parse_errors(self, server_results):
-        """Parse provisioning errors from provider result."""
-        errors = []
-        for res in server_results:
-            if self.STATUS_MAP.get(res["status"], STATUS_OTHER) == STATUS_ERROR:
-                errors.append(res)
-
-        return errors
-
     async def wait_till_provisioned(
         self, instance, timeout=None, poll_sleep=None, poll_sleep_initial=None
     ):
@@ -434,10 +425,10 @@ class OpenStackProvider(Provider):
 
         return server
 
-    async def delete_host(self, host):
+    async def delete_host(self, host_id):
         """Issue deletion of host(server) from OpenStack."""
-        logger.info(f"Deleting OpenStack host {host.id}")
-        await self.delete_server(host._id)
+        logger.info(f"Deleting OpenStack host {host_id}")
+        await self.delete_server(host_id)
         return True
 
     def prov_result_to_host_data(self, prov_result):
