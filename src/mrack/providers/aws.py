@@ -22,13 +22,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from mrack.errors import ProvisioningError, ValidationError
-from mrack.host import (
-    STATUS_ACTIVE,
-    STATUS_DELETED,
-    STATUS_ERROR,
-    STATUS_OTHER,
-    STATUS_PROVISIONING,
-)
+from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import Provider
 
 logger = logging.getLogger(__name__)
@@ -155,15 +149,6 @@ class AWSProvider(Provider):
 
         return result
 
-    def parse_errors(self, server_results):
-        """Parse provisioning errors from provider result."""
-        errors = []
-        for res in server_results:
-            if self.STATUS_MAP.get(res["State"]["Name"], STATUS_OTHER) == STATUS_ERROR:
-                errors.append(res)
-
-        return errors
-
     async def wait_till_provisioned(self, aws_id):
         """Wait for AWS provisioning result."""
         instance = self.ec2.Instance(aws_id)
@@ -179,10 +164,10 @@ class AWSProvider(Provider):
 
         return result
 
-    async def delete_host(self, host):
+    async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"Terminating AWS host {host.id}")
-        ids = [host._id]
+        logger.info(f"Terminating AWS host {host_id}")
+        ids = [host_id]
         self.ec2.instances.filter(InstanceIds=ids).stop()
         self.ec2.instances.filter(InstanceIds=ids).terminate()
         return True
