@@ -141,6 +141,10 @@ class AnsibleInventoryOutput:
                 "DC=%s" % dc for dc in meta_domain["name"].split(".")
             ),
         }
+
+        if "restraint_id" in meta_host:
+            host_info.update({"meta_restraint_id": meta_host["restraint_id"]})
+
         copy_meta_attrs(host_info, meta_host, ["os", "role", "netbios"])
 
         if "parent" in meta_domain:

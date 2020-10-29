@@ -194,7 +194,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         result = {
             "id": prov_result["JobID"],
-            "name": prov_result["hname"],
+            "name": prov_result["req_name"],
             "addresses": [ip_address],
             "status": prov_result["status"],
             "fault": prov_result["result"] if prov_result["result"] != "Pass" else None,
@@ -221,10 +221,10 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         return resources[0] if len(resources) == 1 else []
 
     async def wait_till_provisioned(
-        self, bkr_id_name, timeout=None, poll_sleep=None, max_attempts=None
+        self, bkr_id_req_name, timeout=None, poll_sleep=None, max_attempts=None
     ):
         """Wait for Beaker provisioning result."""
-        beaker_id, req_hname = bkr_id_name
+        beaker_id, req_name = bkr_id_req_name
 
         if not poll_sleep:
             poll_sleep = self.poll_sleep
@@ -264,7 +264,12 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 )
                 break
 
-        resource.update({"JobID": beaker_id, "hname": req_hname})
+        resource.update(
+            {
+                "JobID": beaker_id,
+                "req_name": req_name,
+            }
+        )
         return resource
 
     async def delete_host(self, job_id):
