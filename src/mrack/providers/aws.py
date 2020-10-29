@@ -139,6 +139,7 @@ class AWSProvider(Provider):
             "status": None,
             "fault": None,
         }
+
         result["id"] = prov_result.get("InstanceId")
         for tag in prov_result.get("Tags"):
             if tag["Key"] == "name":

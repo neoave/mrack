@@ -65,6 +65,7 @@ class BeakerTransformer(Transformer):
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": self._get_variant(host),
+            "restraint_id": host.get("restraint_id"),
         }
 
     def create_host_requirements(self):
