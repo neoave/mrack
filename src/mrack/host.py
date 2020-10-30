@@ -158,6 +158,6 @@ class Host:
 
     async def delete(self):
         """Issue host deletion via associated provider."""
-        await self.provider.delete_host(self)
+        await self.provider.delete_host(self.id)
         self._status = STATUS_DELETED
         return True
