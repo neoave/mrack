@@ -54,3 +54,16 @@ steps:
     isort src --check --diff
     isort tests --check --diff
   displayName: 'isort'
+
+
+- script: |
+    cd docs
+    pip install -r requirements.txt
+    make html
+  displayName: 'build-docs'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: docs/_build/html
+    artifactName: 'docs'
+  displayName: 'save-docs'
