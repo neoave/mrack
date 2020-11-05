@@ -160,10 +160,8 @@ class OpenStackTransformer(Transformer):
             "name": host["name"],
             "flavor": self._get_flavor(host),
             "image": required_image,
-            "meta_image": "image" in host,
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
-            "restraint_id": host.get("restraint_id"),
         }
 
     def create_host_requirements(self):
