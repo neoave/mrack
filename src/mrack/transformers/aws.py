@@ -68,7 +68,6 @@ class AWSTransformer(Transformer):
             "flavor": self._get_flavor(host),
             "image": required_image,
             "meta_image": "image" in host,
-            "restraint_id": host.get("restraint_id"),
         }
 
     def create_host_requirements(self):
