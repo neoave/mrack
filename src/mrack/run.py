@@ -28,7 +28,13 @@ from mrack.actions.ssh import SSH
 from mrack.actions.up import Up
 from mrack.config import ProvisioningConfig
 from mrack.dbdrivers.file import FileDBDriver
-from mrack.errors import ConfigError, MetadataError, ProviderError, ValidationError
+from mrack.errors import (
+    ApplicationError,
+    ConfigError,
+    MetadataError,
+    ProviderError,
+    ValidationError,
+)
 from mrack.providers import providers
 from mrack.providers.aws import PROVISIONER_KEY as AWS
 from mrack.providers.aws import AWSProvider
@@ -190,6 +196,7 @@ def exception_handler(func):
             MetadataError,
             ValidationError,
             ProviderError,
+            ApplicationError,
         ) as known_error:
             logger.error(known_error)
             sys.exit(1)
