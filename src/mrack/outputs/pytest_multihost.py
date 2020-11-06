@@ -19,7 +19,7 @@ import os
 from copy import deepcopy
 
 from mrack.outputs.utils import resolve_hostname
-from mrack.utils import get_password, get_username, save_yaml
+from mrack.utils import get_password, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
 
@@ -85,12 +85,9 @@ class PytestMultihostOutput:
                     logger.error(f"Host {host['name']} not found in the database.")
                     continue
 
-                username = get_username(provisioned_host, host, self._config)
                 password = get_password(provisioned_host, host, self._config)
                 # pytest-multihost doesn't support different ssh_keys per host
 
-                if username:
-                    host["username"] = username
                 if password:
                     host["password"] = password
 
