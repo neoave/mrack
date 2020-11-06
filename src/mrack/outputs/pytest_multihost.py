@@ -118,7 +118,9 @@ class PytestMultihostOutput:
         # ssh_key_filename must be absolute as it can be used from a different
         # working directory, e.g. running tests from git repo
         ssh_key_filename = self._config.get("ssh_key_filename")
-        if ssh_key_filename and not ssh_key_filename.startswith("~"):
+
+        # Update with SSH key path only if not already defined in mhcfg
+        if ssh_key_filename and not mhcfg.get("ssh_key_filename"):
             mhcfg["ssh_key_filename"] = os.path.abspath(ssh_key_filename)
 
         return mhcfg
