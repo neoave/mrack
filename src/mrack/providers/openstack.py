@@ -65,6 +65,7 @@ class OpenStackProvider(Provider):
         self.networks_by_ref = {}
         self.ips = {}
         self.ips_by_ref = {}
+        self.api_timeout = 6 * 60  # timeout for request to OpenStack
         self.timeout = 60  # minutes
         self.poll_sleep_initial = 15  # seconds
         self.poll_sleep = 7  # seconds
@@ -96,7 +97,9 @@ class OpenStackProvider(Provider):
 
         login_start = datetime.now()
         await asyncio.gather(
-            self.nova.init_api(), self.glance.init_api(), self.neutron.init_api()
+            self.nova.init_api(self.api_timeout),
+            self.glance.init_api(self.api_timeout),
+            self.neutron.init_api(self.api_timeout)
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
