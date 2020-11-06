@@ -28,7 +28,6 @@ from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
     STATUS_ERROR,
-    STATUS_OTHER,
     STATUS_PROVISIONING,
 )
 from mrack.providers.provider import Provider
@@ -446,6 +445,6 @@ class OpenStackProvider(Provider):
         networks = prov_result.get("addresses", {})
         result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
         result["fault"] = prov_result.get("fault")
-        result["status"] = self.STATUS_MAP.get(prov_result.get("status"), STATUS_OTHER)
+        result["status"] = prov_result.get("status")
 
         return result
