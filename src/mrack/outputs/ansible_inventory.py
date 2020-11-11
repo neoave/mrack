@@ -157,6 +157,9 @@ class AnsibleInventoryOutput:
             host_info["ansible_password"] = password
 
         if is_windows_host(meta_host):
+            if "netbios" in meta_host:
+                host_info.update({"meta_netbios": meta_host["netbios"]})
+
             host_info.update(
                 {
                     "ansible_port": 5986,
@@ -165,6 +168,7 @@ class AnsibleInventoryOutput:
                     "meta_domain_level": meta_host.get("domain_level", "top"),
                 }
             )
+
         return host_info
 
     def create_inventory(self):
