@@ -24,12 +24,7 @@ from asyncopenstackclient import AuthPassword, GlanceClient
 from simple_rest_client.exceptions import NotFoundError
 
 from mrack.errors import ServerNotFoundError, ValidationError
-from mrack.host import (
-    STATUS_ACTIVE,
-    STATUS_DELETED,
-    STATUS_ERROR,
-    STATUS_PROVISIONING,
-)
+from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
 
@@ -98,7 +93,7 @@ class OpenStackProvider(Provider):
         await asyncio.gather(
             self.nova.init_api(self.api_timeout),
             self.glance.init_api(self.api_timeout),
-            self.neutron.init_api(self.api_timeout)
+            self.neutron.init_api(self.api_timeout),
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
