@@ -14,9 +14,13 @@
 
 """Generic Transformer."""
 
+import logging
+
 from mrack.errors import ConfigError, MetadataError
 from mrack.providers import providers
-from mrack.utils import validate_dict_attrs
+from mrack.utils import get_config_value, object2json, validate_dict_attrs
+
+logger = logging.getLogger(__name__)
 
 
 class Transformer:
@@ -60,6 +64,26 @@ class Transformer:
         """Add host input."""
         self._hosts.append(host)
 
+    def _get_image(self, os, config_key="images"):
+        """
+        Get image name by OS name from provisioning config.
+
+        Returns:
+            1. image by the os key
+            2. default from the images if os is not found in keys
+            3. os name if default is not specified for images.
+        """
+        image = get_config_value(self.config[config_key], os, os)
+        logger.debug(f"Loaded image for {os} from {config_key}: '{image}'")
+        return image
+
+    def _get_flavor(self, host):
+        """Get flavor by host group."""
+        # TODO: add sizes
+        flavor = get_config_value(self.config["flavors"], host["group"])
+        logger.debug(f"Loaded flavor for {host['name']}: '{flavor}'")
+        return flavor
+
     def validate_config(self):
         """Validate provisioning configuration for this transformer/provider."""
         validate_dict_attrs(self.config, self._required_config_attrs, "config")
@@ -72,3 +96,13 @@ class Transformer:
         provider = host.get("provider")
         if provider and provider not in providers.names:
             raise MetadataError(f"Error: Invalid host provider: {provider}")
+
+    def create_host_requirement(self, host):
+        """Create single input for provisioner."""
+        raise NotImplementedError()
+
+    def create_host_requirements(self):
+        """Create inputs for all host for provisioner."""
+        reqs = [self.create_host_requirement(host) for host in self.hosts]
+        logger.info(f"Created requirement(s): {object2json(reqs)}")
+        return reqs

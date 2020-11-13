@@ -15,7 +15,6 @@
 """AWS transformer module."""
 
 from mrack.transformers.transformer import Transformer
-from mrack.utils import get_config_value, print_obj
 
 CONFIG_KEY = "aws"
 
@@ -43,23 +42,6 @@ class AWSTransformer(Transformer):
             instance_tags=self.config["instance_tags"],
         )
 
-    def _get_flavor(self, host):
-        """Get flavor by host group."""
-        # TODO: add sizes
-
-        return get_config_value(self.config["flavors"], host["group"])
-
-    def _get_image(self, os):
-        """
-        Get image name by OS name from provisioning config.
-
-        Returns:
-            1. image by the os key
-            2. default from the images if os is not found in keys
-            3. os name if default is not specified for images.
-        """
-        return get_config_value(self.config["images"], os, os)
-
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
         required_image = host.get("image") or self._get_image(host["os"])
@@ -69,9 +51,3 @@ class AWSTransformer(Transformer):
             "image": required_image,
             "meta_image": "image" in host,
         }
-
-    def create_host_requirements(self):
-        """Create inputs for all host for AWS provisioner."""
-        reqs = [self.create_host_requirement(host) for host in self.hosts]
-        print_obj(reqs)
-        return reqs

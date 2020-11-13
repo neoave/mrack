@@ -17,7 +17,6 @@ import logging
 
 from mrack.errors import ProvisioningConfigError
 from mrack.transformers.transformer import Transformer
-from mrack.utils import get_config_value, print_obj
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +32,6 @@ class OpenStackTransformer(Transformer):
     async def init_provider(self):
         """Initialize associate provider."""
         await self._provider.init(image_names=self.config["images"].values())
-
-    def _get_flavor(self, host):
-        """Get flavor by host group."""
-        # TODO: add sizes
-
-        return get_config_value(self.config["flavors"], host["group"])
 
     def _is_network_type(self, name):
         """Check if name is a configured network type in provisioning config."""
@@ -90,8 +83,10 @@ class OpenStackTransformer(Transformer):
 
         # sort networks by number of available IPs
         usable = sorted(usable, key=lambda u: u[1])
-        logger.info(usable)
-        return usable[-1][0]  # Pick the one with most IPs
+        logger.debug(f"Listing usable networks: {usable}")
+        res_network = usable[-1][0]
+        logger.debug(f"Picking network with the most available adresses: {res_network}")
+        return res_network  # Pick the one with most IPs
 
     def translate_network_types(self, hosts):
         """Pick the right OpenStack networks for all hosts.
@@ -142,17 +137,6 @@ class OpenStackTransformer(Transformer):
             )
         return network_type
 
-    def _get_image(self, os):
-        """
-        Get image name by OS name from provisioning config.
-
-        Returns:
-            1. image by the os key
-            2. default from the images if os is not found in keys
-            3. os name if default is not specified for images.
-        """
-        return get_config_value(self.config["images"], os, os)
-
     def create_host_requirement(self, host):
         """Create single input for OpenStack provisioner."""
         required_image = host.get("image") or self._get_image(host["os"])
@@ -170,7 +154,6 @@ class OpenStackTransformer(Transformer):
         This includes picking the right network and checking if it has
         available IP addresses.
         """
-        reqs = [self.create_host_requirement(host) for host in self.hosts]
-        print_obj(reqs)
+        reqs = super().create_host_requirements()
         self.translate_network_types(reqs)
         return reqs
