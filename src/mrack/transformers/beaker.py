@@ -16,7 +16,6 @@
 import re
 
 from mrack.transformers.transformer import Transformer
-from mrack.utils import get_config_value, print_obj
 
 CONFIG_KEY = "beaker"
 
@@ -36,18 +35,8 @@ class BeakerTransformer(Transformer):
             keypair=self.config["keypair"],
         )
 
-    def _get_distro(self, os):
-        """
-        Get distro string by OS name from provisioning config.
-
-        Returns:
-            1. distro by the os key
-            2. default for the distros if os is not found in keys
-            3. os name if default is not specified for distros.
-        """
-        return get_config_value(self.config["distros"], os, os)
-
-    def _get_variant(self, host):
+    def _get_bkr_variant(self, host):
+        """Get variant for the host system to reqirement."""
         if "beaker_variant" in host:
             variant = host["beaker_variant"]
         elif re.match(r"(rhel-8)", host["os"]):
@@ -58,17 +47,13 @@ class BeakerTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
-        required_distro = host.get("distro") or self._get_distro(host["os"])
+        required_distro = host.get("distro") or self._get_image(
+            host["os"], config_key="distros"
+        )
         return {
             "name": host["name"],
             "distro": required_distro,
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
-            "variant": self._get_variant(host),
+            "variant": self._get_bkr_variant(host),
         }
-
-    def create_host_requirements(self):
-        """Create inputs for all host for Beaker provisioner."""
-        reqs = [self.create_host_requirement(host) for host in self.hosts]
-        print_obj(reqs)
-        return reqs
