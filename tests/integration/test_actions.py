@@ -68,6 +68,8 @@ class TestStaticProvider:
             config=provisioning_config,
             metadata=metadata,
             db_driver=database,
+            ansible_path=None,
+            pytest_multihost_path=None,
         )
         await output_action.generate_outputs()
 
