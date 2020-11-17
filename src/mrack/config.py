@@ -125,3 +125,11 @@ class MrackConfig:
     def metadata_path(self, default=None):
         """Return configured job metadata path."""
         return self.get("metadata", default)
+
+    def ansible_inventory_path(self, default=None):
+        """Return configured path to Ansible inventory output."""
+        return self.get("ansible-inventory", default)
+
+    def pytest_multihost_path(self, default=None):
+        """Return configured path to pytest-multihost configuration output."""
+        return self.get("pytest-multihost", default)

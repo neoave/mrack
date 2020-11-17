@@ -29,11 +29,15 @@ class Output:
     Test action to run output modules from data in database.
     """
 
-    async def init(self, config, metadata, db_driver):
+    async def init(
+        self, config, metadata, db_driver, ansible_path, pytest_multihost_path
+    ):
         """Initialize the Output action."""
         self._config = config
         self._metadata = metadata
         self._db_driver = db_driver
+        self._ansible_path = ansible_path
+        self._pytest_multihost_path = pytest_multihost_path
 
     async def generate_outputs(self):
         """Generate outputs."""
@@ -43,10 +47,10 @@ class Output:
             raise MetadataError("No hosts found.")
 
         ansible_o = AnsibleInventoryOutput(
-            self._config, self._db_driver, self._metadata
+            self._config, self._db_driver, self._metadata, self._ansible_path
         )
         multihost_o = PytestMultihostOutput(
-            self._config, self._db_driver, self._metadata
+            self._config, self._db_driver, self._metadata, self._pytest_multihost_path
         )
 
         ansible_o.create_output()

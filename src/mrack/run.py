@@ -98,6 +98,20 @@ def init_metadata(ctx, user_defined_path):
     return metadata_data
 
 
+async def generate_outputs(ctx):
+    """Init and run output action."""
+    config = ctx.obj[CONFIG]
+    output_action = Output()
+    await output_action.init(
+        ctx.obj[PROV_CONFIG],
+        ctx.obj[METADATA],
+        ctx.obj[DB],
+        config.ansible_inventory_path(),
+        config.pytest_multihost_path(),
+    )
+    await output_action.generate_outputs()
+
+
 DB = "db"
 CONFIG = "config"
 PROV_CONFIG = "provconfig"
@@ -145,9 +159,7 @@ async def up(ctx, metadata, provider):
     await up_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], provider, ctx.obj[DB])
     await up_action.provision()
 
-    output_action = Output()
-    await output_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
-    await output_action.generate_outputs()
+    await generate_outputs(ctx)
 
 
 @mrackcli.command()
@@ -169,9 +181,7 @@ async def destroy(ctx, metadata):
 async def output(ctx, metadata):
     """Create outputs - such as Ansible inventory."""
     init_metadata(ctx, metadata)
-    output_action = Output()
-    await output_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
-    await output_action.generate_outputs()
+    await generate_outputs(ctx)
 
 
 @mrackcli.command()

@@ -36,12 +36,12 @@ class PytestMultihostOutput:
     metadata definition.
     """
 
-    def __init__(self, config, db, metadata, path=DEFAULT_MHCFG_PATH):
+    def __init__(self, config, db, metadata, path=None):
         """Init the output module."""
         self._config = config
         self._db = db
         self._metadata = metadata
-        self._path = path
+        self._path = path or DEFAULT_MHCFG_PATH
 
     def create_multihost_config(self):
         """
@@ -127,5 +127,8 @@ class PytestMultihostOutput:
 
     def create_output(self):
         """Create the target output file."""
-        inventory = self.create_multihost_config()
-        save_yaml(self._path, inventory)
+        mhcfg = self.create_multihost_config()
+        save_yaml(self._path, mhcfg)
+        if self._path:
+            logger.info(f"Created: {self._path}")
+        return mhcfg

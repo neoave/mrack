@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Ansible inventory output module."""
+import logging
 import typing
 from copy import deepcopy
 
@@ -31,6 +32,8 @@ DEFAULT_INVENTORY_PATH = "mrack-inventory.yaml"
 DEFAULT_INVENTORY_LAYOUT: typing.Dict[str, typing.Dict] = {
     "all": {"children": {}, "hosts": {}}
 }
+
+logger = logging.getLogger(__name__)
 
 
 def copy_meta_attrs(host, meta_host, attrs):
@@ -106,12 +109,12 @@ class AnsibleInventoryOutput:
     files and information in DB.
     """
 
-    def __init__(self, config, db, metadata, path=DEFAULT_INVENTORY_PATH):
+    def __init__(self, config, db, metadata, path=None):
         """Init the output module."""
         self._config = config
         self._db = db
         self._metadata = metadata
-        self._path = path
+        self._path = path or DEFAULT_INVENTORY_PATH
 
     def create_ansible_host(self, name):
         """Create host entry for Ansible inventory."""
@@ -206,4 +209,6 @@ class AnsibleInventoryOutput:
         """Create the target output file."""
         inventory = self.create_inventory()
         save_yaml(self._path, inventory)
+        if self._path:
+            logger.info(f"Created: {self._path}")
         return inventory
