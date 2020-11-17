@@ -4,3 +4,8 @@ include_trailing_comma = true
 known_first_party = "mrack"
 line_length = 88
 multi_line_output = 3
+
+[tool.pytest.ini_options]
+markers = [
+    "etc_hosts: passes path for etc_hosts fixture",
+]
