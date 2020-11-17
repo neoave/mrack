@@ -23,6 +23,7 @@ from functools import update_wrapper
 import click
 
 from mrack.actions.destroy import Destroy
+from mrack.actions.etchosts import EtcHostsUpdate
 from mrack.actions.list import List
 from mrack.actions.output import Output
 from mrack.actions.ssh import SSH
@@ -194,6 +195,29 @@ async def ssh(ctx, hostname, metadata):
     ssh_action = SSH()
     ssh_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     ssh_action.ssh(hostname)
+
+
+@mrackcli.group()
+async def eh():
+    """Commands to update /etc/hosts file."""
+
+
+@eh.command()
+@click.pass_context
+@async_run
+async def add(ctx):
+    """Add active hosts to /etc/hosts file."""
+    eh_action = EtcHostsUpdate(ctx.obj[DB])
+    eh_action.update()
+
+
+@eh.command()
+@click.pass_context
+@async_run
+async def clear(ctx):
+    """Remove all mrack hosts from /etc/hosts file."""
+    eh_action = EtcHostsUpdate(ctx.obj[DB])
+    eh_action.clear()
 
 
 def exception_handler(func):
