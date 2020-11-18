@@ -30,7 +30,8 @@ class OpenStackTransformer(Transformer):
     _required_config_attrs = ["flavors", "networks", "images", "keypair"]
 
     async def init_provider(self):
-        """Initialize associate provider."""
+        """Initialize associate provider and transformer display name."""
+        self.dsp_name = "OpenStack"
         await self._provider.init(image_names=self.config["images"].values())
 
     def _is_network_type(self, name):
@@ -77,15 +78,19 @@ class OpenStackTransformer(Transformer):
 
         if not usable:
             logger.error(
-                f"Error: no usable network for {count} hosts with {network_type}"
+                f"{self.dsp_name}: Error: no usable network"
+                f" for {count} hosts with {network_type}"
             )
             return None
 
         # sort networks by number of available IPs
         usable = sorted(usable, key=lambda u: u[1])
-        logger.debug(f"Listing usable networks: {usable}")
+        logger.debug(f"{self.dsp_name}: Listing usable networks: {usable}")
         res_network = usable[-1][0]
-        logger.debug(f"Picking network with the most available adresses: {res_network}")
+        logger.debug(
+            f"{self.dsp_name}: Picking network "
+            f"with the most available adresses: {res_network}"
+        )
         return res_network  # Pick the one with most IPs
 
     def translate_network_types(self, hosts):

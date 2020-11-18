@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 # Default level used by file_handler
 logger.setLevel(logging.DEBUG)
 
-file_formatter = logging.Formatter("%(asctime)s %(name)s %(message)s")
+file_formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")
 console_formatter = logging.Formatter("%(message)s")
 
 file_handler = logging.FileHandler("mrack.log")

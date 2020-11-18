@@ -29,6 +29,7 @@ class Provider:
     def __init__(self, provisioning_config, job_config):
         """Initialize provider."""
         self._name = "dummy"
+        self.dsp_name = "Dummy"
         self.STATUS_MAP = {"OTHER": STATUS_OTHER}
         return
 
@@ -67,28 +68,28 @@ class Provider:
 
         Return list of information about provisioned servers.
         """
-        logger.info("Validating hosts definitions")
+        logger.info(f"{self.dsp_name}: Validating hosts definitions")
         await self.validate_hosts(hosts)
-        logger.info("Host definitions valid")
+        logger.info(f"{self.dsp_name}: Host definitions valid")
 
-        logger.info("Checking available resources")
+        logger.info(f"{self.dsp_name}: Checking available resources")
         can = await self.can_provision(hosts)
         if not can:
-            raise ValidationError("Not enough resources to provision")
-        logger.info("Resource availability: OK")
+            raise ValidationError(f"{self.dsp_name}: Not enough resources to provision")
+        logger.info(f"{self.dsp_name}: Resource availability: OK")
 
         started = datetime.now()
 
         count = len(hosts)
-        logger.info(f"Issuing provisioning of {count} hosts")
+        logger.info(f"{self.dsp_name}: Issuing provisioning of {count} hosts")
         create_servers = []
         for req in hosts:
             awaitable = self.create_server(req)
             create_servers.append(awaitable)
         create_resps = await asyncio.gather(*create_servers)
-        logger.info("Provisioning issued")
+        logger.info(f"{self.dsp_name}: Provisioning issued")
 
-        logger.info("Waiting for all hosts to be available")
+        logger.info(f"{self.dsp_name}: Waiting for all hosts to be available")
         wait_servers = []
         for create_resp in create_resps:
             awaitable = self.wait_till_provisioned(create_resp)
@@ -98,32 +99,36 @@ class Provider:
         provisioned = datetime.now()
         provi_duration = provisioned - started
 
-        logger.info("All hosts reached provisioning final state (ACTIVE or ERROR)")
-        logger.info(f"Provisioning duration: {provi_duration}")
+        logger.info(
+            f"{self.dsp_name}: "
+            "All hosts reached provisioning final state (ACTIVE or ERROR)"
+        )
+        logger.info(f"{self.dsp_name}: Provisioning duration: {provi_duration}")
 
         hosts = [self.to_host(srv) for srv in server_results]
         errors = self.parse_errors(hosts)
 
         if errors:
-            logger.info("Some host did not start properly")
+            logger.info(f"{self.dsp_name}: Some host did not start properly")
             for host_err in errors:
-                logger.error(f"Error: {str(host_err)}")
+                logger.error(f"{self.dsp_name}: Error: {str(host_err)}")
 
-            logger.info("Given the error, will delete all hosts")
+            logger.info(f"{self.dsp_name}: Given the error, will delete all hosts")
             await self.delete_hosts(hosts)
             raise ProvisioningError(errors)
 
-        logger.info("Printing provisioned hosts")
+        logger.info(f"{self.dsp_name}: Printing provisioned hosts")
         for host in hosts:
-            logger.info(host)
+            logger.info(f"{self.dsp_name}: {host}")
 
         return hosts
 
     def parse_errors(self, hosts):
         """Parse provisioning errors from provider result."""
         errors = []
+        logger.debug(f"{self.dsp_name}: Checking provisioned hosts for errors")
         for host in hosts:
-            logger.info(f"Host: {host.id}\tStatus: {host.status}")
+            logger.debug(f"{self.dsp_name}: Host - {host.id}\tStatus - {host.status}")
             if self.STATUS_MAP.get(host.status, STATUS_OTHER) == STATUS_ERROR:
                 errors.append(host.error)
 
@@ -135,14 +140,14 @@ class Provider:
 
     async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
-        logger.info("Issuing deletion")
+        logger.info(f"{self.dsp_name}: Issuing deletion")
 
         delete_servers = []
         for host in hosts:
             awaitable = self.delete_host(host.id)
             delete_servers.append(awaitable)
         results = await asyncio.gather(*delete_servers)
-        logger.info("All servers issued to be deleted")
+        logger.info(f"{self.dsp_name}: All servers issued to be deleted")
         return results
 
     def prov_result_to_host_data(self, prov_result):

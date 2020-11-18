@@ -48,7 +48,7 @@ class BeakerProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.display_name = "Beaker"
+        self.dsp_name = "Beaker"
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.keypair = None
@@ -68,7 +68,7 @@ class BeakerProvider(Provider):
 
     async def init(self, distros, max_attempts, reserve_duration, keypair):
         """Initialize provider with data from Beaker configuration."""
-        logger.info("Initializing Beaker provider")
+        logger.info(f"{self.dsp_name}: Initializing provider")
         self.distros = distros
         # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
         self.max_attempts = max_attempts
@@ -82,7 +82,7 @@ class BeakerProvider(Provider):
         self.hub = HubProxy(logger=logger, conf=self.conf)
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"Login duration {login_duration}")
+        logger.info(f"{self.dsp_name}: Init duration {login_duration}")
 
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
@@ -90,8 +90,8 @@ class BeakerProvider(Provider):
             req_dstr = req.get("distro")
             if not req.get("meta_distro") and req_dstr not in self.distros:
                 raise ValidationError(
-                    f"{self.display_name} provider does not support "
-                    f"'{req_dstr}' distro in provisioning config."
+                    f"{self.dsp_name} provider does not support "
+                    f"'{req_dstr}' distro in provisioning config"
                 )
         return
 
@@ -177,7 +177,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         * 'arch':       architecture to request from beaker
         * 'variant':    variant of the system
         """
-        logger.info("Creating Beaker server")
+        logger.info(f"{self.dsp_name}: Creating server")
 
         job = self._req_to_bkr_job(req)  # Generate the job
 
@@ -242,8 +242,8 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
             if prev_status != status:
                 logger.info(
-                    f"Job {beaker_id} has changed status ("
-                    f"{prev_status} -> {status})"
+                    f"{self.dsp_name}: Job {beaker_id} has changed "
+                    f"status ({prev_status} -> {status})"
                 )
                 prev_status = status
 
@@ -253,14 +253,14 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 await asyncio.sleep(self.poll_sleep)
             elif self.STATUS_MAP.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
-                    f"Job {beaker_id} has errored with status "
-                    f"{status} with result {resource['result']}"
+                    f"{self.dsp_name}: Job {beaker_id} has errored with status "
+                    f"{status} and result {resource['result']}"
                 )
                 break
             else:
                 logger.error(
-                    f"Job {beaker_id} has swithced to status "
-                    f"{status} with result {resource['result']}"
+                    f"{self.dsp_name}: Job {beaker_id} has swithced to unexpected "
+                    f"status {status} with result {resource['result']}"
                 )
                 break
 
@@ -269,7 +269,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
     async def delete_host(self, job_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"Deleting Beaker host from Job {job_id}")
+        logger.info(f"{self.dsp_name}: Deleting host by cancelling Job {job_id}")
         return self.hub.taskactions.stop(
             job_id, "cancel", "Job has been stopped by mrack."
         )

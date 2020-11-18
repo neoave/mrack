@@ -34,7 +34,8 @@ class AWSTransformer(Transformer):
     ]
 
     async def init_provider(self):
-        """Initialize associate provider."""
+        """Initialize associate provider and transformer display name."""
+        self.dsp_name = "AWS"
         await self._provider.init(
             ami_ids=self.config["images"].values(),
             ssh_key=self.config["keypair"],
