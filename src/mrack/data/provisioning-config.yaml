@@ -1,26 +1,27 @@
-aws: # aws provider config
+---
+aws:  # aws provider config
     images:
         # list of ami images key is used in metadata ami image is used for provider e.g.
-        fedora-32: ami-0f1d60751946b66c5 # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
+        fedora-32: ami-0f1d60751946b66c5  # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
 
 
     flavors:
         # list of available flavours to ask from provider  for vm specs
-        default: t2.nano # e.g. this is 1vcpus 0.5GB ram
+        default: t2.nano  # e.g. this is 1vcpus 0.5GB ram
 
-    keypair: mrack # this name points to uploaded and available in aws ec2 key configuration
-    security_group: sg-0ad1bab3a850e70fc # setup the system firewall using one of existing sec groups
+    keypair: mrack  # this name points to uploaded and available in aws ec2 key configuration
+    security_group: sg-0ad1bab3a850e70fc  # setup the system firewall using one of existing sec groups
 
-    credentials_file: aws.key # file containing the credentials
-    profile: default # credentials profile to use
-    region: eu-central-1 # default region for ec2 instances
-    instance_tags: # custom tag list to add to vm created using mrack
+    credentials_file: aws.key  # file containing the credentials
+    profile: default  # credentials profile to use
+    region: eu-central-1  # default region for ec2 instances
+    instance_tags:  # custom tag list to add to vm created using mrack
         Name: "mrack-runner"
         mrack: "True"
         persistent: "False"
 
 
-beaker: # beaker provider specific values
+beaker:  # beaker provider specific values
     distros:
         # list of beaker distros key is used in metadata distro is used in generated jobxml
         fedora-32: Fedora-32%
@@ -33,7 +34,7 @@ beaker: # beaker provider specific values
     max_attempts: 240
 
 
-openstack: # OpenStack provider specific values
+openstack:  # OpenStack provider specific values
     images:
         fedora-32: Fedora-Cloud-Base-32-latest
 
@@ -41,11 +42,11 @@ openstack: # OpenStack provider specific values
         # list of available flavours to ask from provider for vm specs
         default: ci.m1.medium
 
-    networks: # networks supported by OpenStack instance
+    networks:  # networks supported by OpenStack instance
         IPv4:
-        - provider_net_cci_4
+            - provider_net_cci_4
         IPv6:
-        - provider_net_ipv6_only
+            - provider_net_ipv6_only
 
     default_network: IPv4
 
@@ -79,4 +80,4 @@ mhcfg:
     admin_password: Secret.123
     dirman_dn: cn=Directory Manager
     dirman_password: Secret.123
-    dns_forwarder: '8.8.8.8' # or any internal DNS
+    dns_forwarder: '8.8.8.8'  # or any internal DNS
