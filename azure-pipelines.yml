@@ -1,69 +1,71 @@
+---
 # Python package
 # Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# Add steps that analyze code, save the dist with the build record,
+# publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
-- master
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
 strategy:
   matrix:
-    Python37:
-      python.version: '3.7'
+    Python39:
+      python.version: '3.9'
 
 steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
 
-- script: |
-    sudo apt-get update -y
-    sudo apt-get install libkrb5-dev -y
-  displayName: 'Install distro dependencies'
+  - script: |
+      sudo apt-get update -y
+      sudo apt-get install libkrb5-dev -y
+    displayName: 'Install distro dependencies'
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    pip install -r test-requirements.txt
-    pip install pytest-azurepipelines
-  displayName: 'Install python dependencies'
+  - script: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install -r test-requirements.txt
+      pip install pytest-azurepipelines
+    displayName: 'Install python dependencies'
 
-- script: |
-    flake8
-  displayName: 'flake8'
+  - script: |
+      flake8
+    displayName: 'flake8'
 
-- script: |
-    black --check src
-    black --check setup.py
-    black --check tests
-  displayName: 'black'
+  - script: |
+      black --check src
+      black --check setup.py
+      black --check tests
+    displayName: 'black'
 
-- script: |
-    pydocstyle src
-  displayName: 'pydocstyle'
+  - script: |
+      pydocstyle src
+    displayName: 'pydocstyle'
 
-- script: |
-    pip install .
-    pytest --junit-xml=TEST-pytest.xml
-  displayName: 'pytest'
+  - script: |
+      pip install .
+      pytest --junit-xml=TEST-pytest.xml
+    displayName: 'pytest'
 
-- script: |
-    isort src --check --diff
-    isort tests --check --diff
-  displayName: 'isort'
+  - script: |
+      isort src --check --diff
+      isort tests --check --diff
+    displayName: 'isort'
 
 
-- script: |
-    cd docs
-    pip install -r requirements.txt
-    make html
-  displayName: 'build-docs'
+  - script: |
+      cd docs
+      pip install -r requirements.txt
+      make html
+    displayName: 'build-docs'
 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: docs/_build/html
-    artifactName: 'docs'
-  displayName: 'save-docs'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: docs/_build/html
+      artifactName: 'docs'
+    displayName: 'save-docs'
