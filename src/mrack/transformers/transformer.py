@@ -32,6 +32,7 @@ class Transformer:
 
     async def init(self, cfg, metadata):
         """Initialize transformer."""
+        self.dsp_name = "Transformer"
         self._hosts = []
         self._config = cfg
         self._metadata = metadata
@@ -74,14 +75,16 @@ class Transformer:
             3. os name if default is not specified for images.
         """
         image = get_config_value(self.config[config_key], os, os)
-        logger.debug(f"Loaded image for {os} from {config_key}: '{image}'")
+        logger.debug(
+            f"{self.dsp_name}: Loaded image for {os} from {config_key}: '{image}'"
+        )
         return image
 
     def _get_flavor(self, host):
         """Get flavor by host group."""
         # TODO: add sizes
         flavor = get_config_value(self.config["flavors"], host["group"])
-        logger.debug(f"Loaded flavor for {host['name']}: '{flavor}'")
+        logger.debug(f"{self.dsp_name}: Loaded flavor for {host['name']}: '{flavor}'")
         return flavor
 
     def validate_config(self):
@@ -95,7 +98,9 @@ class Transformer:
         # provider check
         provider = host.get("provider")
         if provider and provider not in providers.names:
-            raise MetadataError(f"Error: Invalid host provider: {provider}")
+            raise MetadataError(
+                f"{self.dsp_name}: Error: Invalid host provider: {provider}"
+            )
 
     def create_host_requirement(self, host):
         """Create single input for provisioner."""
@@ -104,5 +109,5 @@ class Transformer:
     def create_host_requirements(self):
         """Create inputs for all host for provisioner."""
         reqs = [self.create_host_requirement(host) for host in self.hosts]
-        logger.info(f"Created requirement(s): {object2json(reqs)}")
+        logger.info(f"{self.dsp_name}: Created requirement(s): {object2json(reqs)}")
         return reqs

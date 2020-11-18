@@ -27,7 +27,8 @@ class BeakerTransformer(Transformer):
     _required_config_attrs = ["distros", "keypair", "reserve_duration", "max_attempts"]
 
     async def init_provider(self):
-        """Initialize associate provider."""
+        """Initialize associate provider and transformer display name."""
+        self.dsp_name = "Beaker"
         await self._provider.init(
             distros=self.config["distros"].values(),
             max_attempts=self.config["max_attempts"],

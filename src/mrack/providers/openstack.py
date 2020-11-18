@@ -49,7 +49,7 @@ class OpenStackProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.display_name = "OpenStack"
+        self.dsp_name = "OpenStack"
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}
@@ -83,7 +83,7 @@ class OpenStackProvider(Provider):
         * account limits (max and current usage of vCPUs, memory, ...)
         """
         # session expects that credentials will be set via env variables
-        logger.info("Initializing OpenStack provider")
+        logger.info(f"{self.dsp_name}: Initializing provider")
         self.session = AuthPassword()
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
@@ -97,7 +97,7 @@ class OpenStackProvider(Provider):
         )
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"Login duration {login_duration}")
+        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
 
         object_start = datetime.now()
         _, _, limits, _, _ = await asyncio.gather(
@@ -111,7 +111,7 @@ class OpenStackProvider(Provider):
         object_end = datetime.now()
         object_duration = object_end - object_start
         logger.info(
-            f"Open Stack environment objects " f"load duration: {object_duration}"
+            f"{self.dsp_name}: Environment objects load duration: {object_duration}"
         )
 
     def set_flavors(self, flavors):
@@ -316,9 +316,14 @@ class OpenStackProvider(Provider):
         req_memory = used_memory + ram
 
         logger.info(
-            f"Required vcpus: {vcpus}, " f"used: {used_vcpus}, max: {limit_vcpus}"
+            f"{self.dsp_name}: Required vcpus: {vcpus}, "
+            f"used: {used_vcpus}, max: {limit_vcpus}"
         )
-        logger.info(f"Required ram: {ram}, used: {used_memory}, max: {limit_memory}")
+
+        logger.info(
+            f"{self.dsp_name}: Required ram: {ram}, "
+            f"used: {used_memory}, max: {limit_memory}"
+        )
 
         return req_vcpus <= limit_vcpus and req_memory <= limit_memory
 
@@ -334,7 +339,7 @@ class OpenStackProvider(Provider):
         * 'network': uuid or name of network to use. Will be added to networks
                      list if present
         """
-        logger.info("Creating OpenStack server")
+        logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         flavor = self._translate_flavor(req)
@@ -363,7 +368,9 @@ class OpenStackProvider(Provider):
         try:
             await self.nova.servers.force_delete(uuid)
         except NotFoundError:
-            logger.warning(f"Server '{uuid}' not found, probably already deleted")
+            logger.warning(
+                f"{self.dsp_name}: Server '{uuid}' not found, probably already deleted"
+            )
             pass
 
     async def wait_till_provisioned(
@@ -415,16 +422,19 @@ class OpenStackProvider(Provider):
 
         if datetime.now() >= timeout_time:
             logger.warning(
-                f"{uuid} was not provisioned within a timeout of" f" {timeout} mins"
+                f"{self.dsp_name}: Host {uuid} was not provisioned "
+                f"within a timeout of {timeout} mins"
             )
         else:
-            logger.info(f"{uuid} was provisioned in {prov_duration:.1f}s")
+            logger.info(
+                f"{self.dsp_name}: Host {uuid} was provisioned in {prov_duration:.1f}s"
+            )
 
         return server
 
     async def delete_host(self, host_id):
         """Issue deletion of host(server) from OpenStack."""
-        logger.info(f"Deleting OpenStack host {host_id}")
+        logger.info(f"{self.dsp_name}: Deleting host {host_id}")
         await self.delete_server(host_id)
         return True
 

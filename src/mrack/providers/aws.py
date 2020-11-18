@@ -36,7 +36,7 @@ class AWSProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.display_name = "AWS"
+        self.dsp_name = "AWS"
         self.ami_ids = []
         self.ssh_key = None
         self.sec_group = None
@@ -58,13 +58,13 @@ class AWSProvider(Provider):
     async def init(self, ami_ids, ssh_key, sec_group, instance_tags):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
-        logger.info("Initializing AWS provider")
+        logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
         self.ec2 = boto3.resource("ec2")
         self.client = boto3.client("ec2")
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"Login duration {login_duration}")
+        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
         self.ami_ids = ami_ids
         self.ssh_key = ssh_key
         self.sec_group = sec_group
@@ -76,17 +76,22 @@ class AWSProvider(Provider):
             req_img = req.get("image")
             if not req.get("meta_image") and req_img not in self.ami_ids:
                 raise ValidationError(
-                    f"{self.display_name} provider does not support "
-                    f"'{req_img}' image in provisioning config."
+                    f"{self.dsp_name}: Provider does not support "
+                    f"'{req_img}' image in provisioning config"
                 )
 
             try:
                 aws_image = self.ec2.Image(req_img)
-                logger.info(f"Requested provisioning of {aws_image.name} image.")
+                logger.info(
+                    f"{self.dsp_name}: Requested provisioning of {aws_image.name} image"
+                )
             except ClientError as image_err:
-                err_resp = image_err.response["Error"]["Message"]
-                err_msg = f"Requested image '{req_img}' can not be provisioned."
+                err_msg = (
+                    f"{self.dsp_name}: Requested image "
+                    f"'{req_img}' can not be provisioned"
+                )
                 logger.error(err_msg)
+                err_resp = image_err.response["Error"]["Message"]
                 raise ValidationError(f"{err_msg} Request failed with {err_resp}")
 
         return
@@ -104,7 +109,7 @@ class AWSProvider(Provider):
         * 'image': ami or name of image
         * 'flavor': flavor to use
         """
-        logger.info("Creating AWS server")
+        logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         aws_res = self.ec2.create_instances(
@@ -167,7 +172,7 @@ class AWSProvider(Provider):
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"Terminating AWS host {host_id}")
+        logger.info(f"{self.dsp_name}: Terminating host {host_id}")
         ids = [host_id]
         self.ec2.instances.filter(InstanceIds=ids).stop()
         self.ec2.instances.filter(InstanceIds=ids).terminate()
