@@ -15,6 +15,7 @@
 """AWS Provider interface."""
 
 import logging
+import typing
 from copy import deepcopy
 from datetime import datetime
 
@@ -37,7 +38,7 @@ class AWSProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "AWS"
-        self.ami_ids = []
+        self.ami_ids: typing.List[str] = []
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None

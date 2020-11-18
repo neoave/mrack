@@ -15,6 +15,7 @@
 """Generic Transformer."""
 
 import logging
+import typing
 
 from mrack.errors import ConfigError, MetadataError
 from mrack.providers import providers
@@ -26,9 +27,9 @@ logger = logging.getLogger(__name__)
 class Transformer:
     """Base class for transformers."""
 
-    _required_host_attrs = ["name", "os", "group"]
-    _required_config_attrs = []
-    _config_key = None
+    _required_host_attrs: typing.List[str] = ["name", "os", "group"]
+    _required_config_attrs: typing.List[str] = []
+    _config_key = ""
 
     async def init(self, cfg, metadata):
         """Initialize transformer."""

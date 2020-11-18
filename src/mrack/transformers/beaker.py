@@ -24,7 +24,12 @@ class BeakerTransformer(Transformer):
     """Beaker transformer."""
 
     _config_key = CONFIG_KEY
-    _required_config_attrs = ["distros", "keypair", "reserve_duration", "max_attempts"]
+    _required_config_attrs = [
+        "distros",
+        "keypair",
+        "reserve_duration",
+        "max_attempts",
+    ]  # List[str]
 
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
