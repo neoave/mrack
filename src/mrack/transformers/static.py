@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Static transformer module."""
-
+import typing
 from copy import deepcopy
 
 from mrack.transformers.transformer import Transformer
@@ -29,7 +29,7 @@ class StaticTransformer(Transformer):
     """
 
     _config_key = CONFIG_KEY
-    _required_config_attrs = []
+    _required_config_attrs: typing.List[str] = []
     _required_host_attrs = ["name", "os", "group", "ip"]
 
     async def init_provider(self):

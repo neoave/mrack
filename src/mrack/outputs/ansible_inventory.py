@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Ansible inventory output module."""
-
+import typing
 from copy import deepcopy
 
 from mrack.errors import ConfigError
@@ -28,7 +28,9 @@ from mrack.utils import (
 )
 
 DEFAULT_INVENTORY_PATH = "mrack-inventory.yaml"
-DEFAULT_INVENTORY_LAYOUT = {"all": {"children": {}, "hosts": {}}}
+DEFAULT_INVENTORY_LAYOUT: typing.Dict[str, typing.Dict] = {
+    "all": {"children": {}, "hosts": {}}
+}
 
 
 def copy_meta_attrs(host, meta_host, attrs):

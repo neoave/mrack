@@ -27,7 +27,7 @@ class OpenStackTransformer(Transformer):
     """OpenStack transformer."""
 
     _config_key = CONFIG_KEY
-    _required_config_attrs = ["flavors", "networks", "images", "keypair"]
+    _required_config_attrs = ["flavors", "networks", "images", "keypair"]  # List[str]
 
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
