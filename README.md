@@ -95,15 +95,18 @@ import mrack
 
 ## Contribute
 
-Projects is using [black](https://github.com/psf/black) formater to keep consistent
+Projects is using [black](https://github.com/psf/black) formater and [isort](https://github.com/PyCQA/isort) to keep consistent
 formatting, [flake8](https://flake8.pycqa.org/en/latest/) and
 [pydocstyle](http://pycodestyle.pycqa.org/en/latest/intro.html) to ensure following
 Python good practices.
 
-Contributions (Pull Requests) are welcome. It is expected that they will pass tox tests
-and include unit tests for new code.
+Contributions (Pull Requests) are welcome. It is expected that they will pass tox tests and code checkers.
+Inclusion of the unit tests for the new code is recommended.
+Because of that we have configured [pre-commit](https://pre-commit.com/) hook.
+Please enable the feature on your local system and use it before sending a patch.
+It could save us lot of re-pushing to the PR.
 
-### Black formatting
+### Black formatting and isort
 Expected formatting can be achived by running:
 ```
 $ make format
@@ -117,4 +120,6 @@ Just run tox to execute all tests and linters
 
 ```
 $ tox
+# or us make
+$ make test
 ```
