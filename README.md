@@ -75,7 +75,39 @@ The output is then Ansible inventory with correct group mapping and information
 which allows to SSH to the machines.
 
 ```yaml
-TODO: example
+all:
+  children:
+    ipaserver:
+      hosts:
+        f30-1.mrack.test: {}
+        f33-2.mrack.test: {}
+  hosts:
+    f30-1.mrack.test:
+      ansible_host: 10.0.154.21
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_private_key_file: config/id_rsa
+      ansible_user: fedora
+      meta_dc_record: DC=mrack,DC=test
+      meta_domain: mrack.test
+      meta_fqdn: f30-1.mrack.test
+      meta_ip: 10.0.154.21
+      meta_os: fedora-30
+      meta_provider_id: 7c3c28f9-4674-4f7f-b413-00bc0b00d711
+      meta_restraint_id: 9
+      meta_role: master
+    f33-2.mrack.test:
+      ansible_host: ec2-13-15-16-1.eu-central-1.compute.amazonaws.com
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_private_key_file: config/id_rsa
+      ansible_user: fedora
+      meta_dc_record: DC=mrack,DC=test
+      meta_domain: mrack.test
+      meta_fqdn: f33-2.mrack.test
+      meta_ip: 13.15.16.1
+      meta_os: fedora-33
+      meta_provider_id: i-08c0d4a86c4b7f7ef
+      meta_restraint_id: 1
+      meta_role: master
 ```
 
 ## Installation
@@ -84,9 +116,58 @@ TODO: example
 pip install mrack
 ```
 
-## Run
+## Run mrack
 
-Atm there is no CLI and it is implemented as Python library
+In order to use the mrack utility a mrack.conf (e.g. [mrack.conf] from the repository(repo/blob/master/src/mrack/data/mrack.conf)) is needed.
+
+Mrack looks for the config file in following order:
+- `./` actual directory
+- `~/.mrack/` home directory
+- `/etc/mrack/` system directory
+
+Values from the configuration file could be overriden using mrack utility
+options `--mrack-config` `--provisioning-config` `--db` (for more see `mrack --help`).
+```
+Usage: mrack [OPTIONS] COMMAND [ARGS]...
+
+  Multihost human friendly provisioner.
+
+Options:
+  -c, --mrack-config PATH
+  -p, --provisioning-config PATH
+  -d, --db PATH
+  --debug
+  --help                          Show this message and exit.
+
+Commands:
+  destroy  Destroy provisioned hosts.
+  list     List host tracked by.
+  output   Create outputs - such as Ansible inventory.
+  ssh      SSH to host.
+  up       Provision hosts.
+```
+
+### Provisioning with mrack
+
+To provision system from the metadata.yaml either run:
+```
+mrack up
+```
+or use `up` command's option ``/`-m` to orverride path to the metadata file.
+```
+mrack up --metadata other-metadata.yaml
+```
+
+To return resources using mrack run:
+```
+mrack destroy
+```
+or use `destroy` command's option `--metadata`/`-m` to orverride path to the metadata file.
+```
+mrack destroy --metadata other-metadata.yaml
+```
+
+### mrack as pyhon library
 
 ```python
 import mrack
