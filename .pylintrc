@@ -1,0 +1,15 @@
+[MESSAGES CONTROL]
+
+# Enable the message, report, category or checker with the given id(s). You can
+# either give multiple identifier separated by comma (,) or put this option
+# multiple time.
+#enable=
+
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifier separated by comma (,) or put this option
+# multiple time (only on the command line, not in the configuration file where
+# it should appear only once).
+#disable=
+# mrack is starting to use f style strings string-interpolation and have some
+# specific classes which are adding functionality to ones they inherit from
+disable=fixme,too-many-instance-attributes,no-self-use,attribute-defined-outside-init,unnecessary-pass,super-init-not-called,too-many-arguments,too-few-public-methods,logging-fstring-interpolation,
