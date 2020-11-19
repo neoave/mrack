@@ -1,0 +1,28 @@
+---
+name: commit-msg-check
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  check-commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: gsactions/commit-message-checker@v1
+        with:
+          pattern: '^(feat|fix|docs|style|refactor|perf|test|chore)(\(.+\))?:\ .+$'
+          flags: 'gm'
+          error: "Commit message should match the '<type>(<scope>): <subject>' style \n
+            for python-semantic-release supported types:\n
+            feat: A new feature\n
+            fix: A bug fix\n
+            docs: Documentation only changes\n
+            style: Changes that do not affect the meaning of the code (white-space, formatting, missing chars...)\n
+            refactor: A code change that neither fixes a bug nor adds a feature\n
+            perf: A code change that improves performance\n
+            test: Adding missing or correcting existing tests\n
+            chore: Changes to the build process or auxiliary tools and libraries such as documentation generation\n"
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
+          checkAllCommitMessages: true
