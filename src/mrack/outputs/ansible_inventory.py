@@ -150,7 +150,7 @@ class AnsibleInventoryOutput:
         copy_meta_attrs(host_info, meta_host, ["os", "role", "netbios"])
 
         if "parent" in meta_domain:
-            host_info["parent_domain"] = meta_domain["parent"]
+            host_info["meta_parent_domain"] = meta_domain["parent"]
 
         if ssh_key:
             host_info["ansible_ssh_private_key_file"] = ssh_key
