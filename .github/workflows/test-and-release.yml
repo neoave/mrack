@@ -1,0 +1,46 @@
+---
+name: Test & Release
+
+on: workflow_dispatch
+
+jobs:
+  pre-commit:
+    name: run pre-commit hook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: pre-commit/action@v2.0.0
+
+  test:
+    name: run tox tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install krb5-config
+        run: sudo apt update && sudo apt-get install libkrb5-dev  # krb5-config missing distro dependency
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Tox and any other packages
+        run: pip install tox
+      - name: Run Tox
+        run: tox -e py
+
+  release:
+    name: mrack semantic release
+    runs-on: ubuntu-latest
+    needs: [pre-commit, test]
+    if: github.repository == 'neoave/mrack'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Python Semantic Release
+        uses: relekang/python-semantic-release@v7.3.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
