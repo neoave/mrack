@@ -9,3 +9,13 @@ multi_line_output = 3
 markers = [
     "etc_hosts: passes path for etc_hosts fixture",
 ]
+
+[tool.semantic_release]
+version_source = "commit"
+version_variable = [
+    "src/mrack/__init__.py:__version__",
+    "docs/conf.py:release",
+]
+branch = "master"
+commit = true
+tag = true
