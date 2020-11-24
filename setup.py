@@ -13,6 +13,9 @@
 # limitations under the License.
 
 # -*- coding: utf-8 -*-
+import re
+import sys
+
 from setuptools import find_packages, setup
 
 with open("README.md") as f:
@@ -21,12 +24,23 @@ with open("README.md") as f:
 with open("requirements.txt") as req:
     reqs = req.readlines()
 
+with open("src/mrack/__init__.py", "r") as fd:
+    version = re.search(
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
+    )
+    if version is None:
+        sys.stderr.write("Could not parse the version string.\n")
+        exit(1)
+
+    mrack_version = version.group(1)
+
+
 mrack_conf = "mrack.conf"
 prov_conf = "provisioning-config.yaml"
 
 setup(
     name="mrack",
-    version="0.3.0",
+    version=mrack_version,
     description="Multicloud use-case based multihost async provisioner "
     "for CIs and testing during development",
     long_description=readme,
