@@ -1,5 +1,7 @@
 # mrack
 
+![pypi_badge](https://img.shields.io/pypi/v/mrack?label=PyPI&logo=pypi) ![readthedocs_badge](https://img.shields.io/readthedocs/mrack?label=Read%20the%20Docs&logo=read-the-docs)
+
 **Important**: most of the described below is not implemented yet
 
 Provisioning library for CI and local multi-host testing supporting multiple
