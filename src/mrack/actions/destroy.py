@@ -50,8 +50,8 @@ class Destroy:
 
         for host in to_del:
             logger.info(f"Deleting host: {host}")
-            aw = host.delete()
-            results_aws.append(aw)
+            awaitable = host.delete()
+            results_aws.append(awaitable)
         delete_results = await asyncio.gather(*results_aws)
         success = all(delete_results)
         self._db_driver.update_hosts(hosts)

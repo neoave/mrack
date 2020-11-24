@@ -32,8 +32,8 @@ class EtcHostsUpdater:
     def __init__(self, path="/etc/hosts"):
         """Init the updater."""
         self.path = path
-        with open(self.path, "r") as f:
-            self.lines = f.readlines()
+        with open(self.path, "r") as etc_hosts:
+            self.lines = etc_hosts.readlines()
 
         # Trigger validation
         self._locate_mrack_section()
@@ -83,7 +83,7 @@ class EtcHostsUpdater:
             self.lines.append(MRACK_END)
 
         for host in hosts:
-            new_line = f"{host.ip} {host.name}\n"
+            new_line = f"{host.ip_addr} {host.name}\n"
             for mrack_line in mrack_lines:
                 idx, line = mrack_line
                 # update: /etc/hosts has already a line for the host
@@ -98,16 +98,16 @@ class EtcHostsUpdater:
 
     def clear(self):
         """Remove mrack managed lines."""
-        start, end, mrack_lines = self._locate_mrack_section()
+        start, end, _mrack_lines = self._locate_mrack_section()
         if start:
             del self.lines[start : end + 1]
 
     def save(self):
         """Save changes into /etc/hosts."""
         try:
-            with open(self.path, "w") as f:
-                f.writelines(self.lines)
-        except PermissionError:
+            with open(self.path, "w") as etc_file:
+                etc_file.writelines(self.lines)
+        except PermissionError as perm_err:
             name = getpass.getuser()
             err = (
                 f"Error: Not enough permissions to write into file: {self.path}.\n\n"
@@ -115,7 +115,7 @@ class EtcHostsUpdater:
                 "or add yourself the necessary rights, e.g. by: \n"
                 f"  $ sudo setfacl -m {name}:rw {self.path}"
             )
-            raise ApplicationError(err)
+            raise ApplicationError(err) from perm_err
 
 
 class EtcHostsUpdate:

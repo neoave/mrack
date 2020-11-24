@@ -41,9 +41,9 @@ def host_from_json(host_data):
     provider = providers.get(provider_name)
     host = Host(
         provider,
-        host_data["id"],
+        host_data["host_id"],
         host_data["name"],
-        host_data["ips"],
+        host_data["ip_addrs"],
         host_data["status"],
         host_data["rawdata"],
         host_data["username"],
@@ -62,9 +62,9 @@ class Host:
     def __init__(
         self,
         provider,
-        id,
+        host_id,
         name,
-        ips,
+        ip_addrs,
         status,
         rawdata,
         username=None,
@@ -73,9 +73,9 @@ class Host:
     ):
         """Initialize host object."""
         self._provider = provider
-        self._id = id
+        self._host_id = host_id
         self._name = name
-        self._ips = ips
+        self._ip_addrs = ip_addrs
         self._status = status
         self._username = username
         self._password = password
@@ -84,25 +84,24 @@ class Host:
 
     def __str__(self):
         """Return string representation of host."""
-        net_str = " ".join(self._ips)
+        net_str = " ".join(self._ip_addrs)
 
         out = (
-            f"{self._status} {self._id} {self._name} {net_str} {self._username} "
+            f"{self._status} {self._host_id} {self._name} {net_str} {self._username} "
             f"{self._password}"
         )
 
         if self._error:
-            o = [out, "Error:", object2json(self._error)]
-            out = "\n".join(o)
+            out = "\n".join([out, "Error:", object2json(self._error)])
         return out
 
     def to_json(self):
         """Transform object into representation which is acceptable by `json.dump`."""
         return {
             "provider": self._provider.name,
-            "id": self._id,
+            "host_id": self._host_id,
             "name": self._name,
-            "ips": self._ips,
+            "ip_addrs": self._ip_addrs,
             "status": self._status,
             "username": self._username,
             "password": self._password,
@@ -116,9 +115,9 @@ class Host:
         return self._provider
 
     @property
-    def id(self):
+    def host_id(self):
         """Get provider host id."""
-        return self._id
+        return self._host_id
 
     @property
     def name(self):
@@ -126,15 +125,14 @@ class Host:
         return self._name
 
     @property
-    def ips(self):
+    def ip_addrs(self):
         """Get host IP addresses."""
-        return self._ips
+        return self._ip_addrs
 
     @property
-    def ip(self):
+    def ip_addr(self):
         """Get first host IP address."""
-        if self._ips:
-            return self._ips[0]
+        return self._ip_addrs[0] if self._ip_addrs else ""
 
     @property
     def status(self):
@@ -158,6 +156,6 @@ class Host:
 
     async def delete(self):
         """Issue host deletion via associated provider."""
-        await self.provider.delete_host(self.id)
+        await self.provider.delete_host(self.host_id)
         self._status = STATUS_DELETED
         return True

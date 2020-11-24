@@ -39,8 +39,3 @@ class StaticTransformer(Transformer):
     def create_host_requirement(self, host):
         """Create single input for Static provisioner."""
         return deepcopy(host)
-
-    def create_host_requirements(self):
-        """Create inputs for all host for Static provisioner."""
-        reqs = [self.create_host_requirement(host) for host in self.hosts]
-        return reqs

@@ -43,7 +43,7 @@ class PytestMultihostOutput:
         self._metadata = metadata
         self._path = path or DEFAULT_MHCFG_PATH
 
-    def create_multihost_config(self):
+    def create_multihost_config(self):  # pylint: disable=too-many-branches
         """
         Create configuration file for python-pytest-multihost.
 
@@ -68,7 +68,6 @@ class PytestMultihostOutput:
             "password",
             "host_type",
         ]
-        domain_allowed_attrs = ["name", "type", "hosts"]
 
         # Use values from provisioning-config mhcfg section - as default values
         for option in self._config["mhcfg"]:
@@ -91,15 +90,15 @@ class PytestMultihostOutput:
                 if password:
                     host["password"] = password
 
-                ip = provisioned_host.ip
-                dns_record = resolve_hostname(ip)
-                host["ip"] = ip
+                ip_addr = provisioned_host.ip_addr
+                dns_record = resolve_hostname(ip_addr)
+                host["ip"] = ip_addr
 
                 # Using IP as backup for external host name as pytest-multihost is using
                 # external_hostname as the host to use in ssh command.
                 # If it is not available it uses hostname, but we assume here that
                 # hostname is internal and thus not resolvable. IP should be resolvable.
-                host["external_hostname"] = dns_record or ip
+                host["external_hostname"] = dns_record or ip_addr
 
                 if is_windows_host(host):
                     # Set username for Windows, as default for multihost is often 'root'
@@ -126,7 +125,7 @@ class PytestMultihostOutput:
                     del host[key]
 
             domain_rm_keys = [
-                key for key in domain.keys() if key not in domain_allowed_attrs
+                key for key in domain.keys() if key not in ["name", "type", "hosts"]
             ]
             for key in domain_rm_keys:
                 del domain[key]

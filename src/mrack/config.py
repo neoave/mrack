@@ -54,6 +54,7 @@ class MrackConfig:
         self._user_provided_path = user_provided_path
         self.config_name = "mrack.conf"
         self.section = "mrack"
+        self._parser = ConfigParser()
 
     def get_config_paths(self):
         """Get possible mrack configuration file paths ordered by priority."""
@@ -71,7 +72,6 @@ class MrackConfig:
     def load(self):
         """Load mrack configuration, first config file wins, rest is ignored."""
         cfg_paths = self.get_config_paths()
-        self._parser = ConfigParser()
         chosen = None
         for cfg_path in cfg_paths:
             if os.path.exists(cfg_path):
@@ -86,8 +86,10 @@ class MrackConfig:
         try:
             logger.debug(f"Loading config file: {chosen}.")
             self._parser.read(chosen)
-        except ParsingError:
-            raise ConfigError(f"Invalid syntax in configuration file {chosen}.")
+        except ParsingError as parse_err:
+            raise ConfigError(
+                f"Invalid syntax in configuration file {chosen}."
+            ) from parse_err
 
         if not self._parser.has_section(self.section):
             raise ConfigError(
@@ -102,8 +104,10 @@ class MrackConfig:
         try:
             value = self._parser.get(self.section, key)
             return value
-        except NoOptionError:
-            raise KeyError(f"Configuration file doesn't have key: {key}")
+        except NoOptionError as no_opt_err:
+            raise KeyError(
+                f"Configuration file doesn't have key: {key}"
+            ) from no_opt_err
 
     def get(self, key, default=None):
         """Get configuration value."""

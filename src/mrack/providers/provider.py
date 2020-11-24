@@ -29,20 +29,20 @@ STRATEGY_RETRY = "retry"
 class Provider:
     """General Provider interface."""
 
-    def __init__(self, provisioning_config, job_config):
+    def __init__(self):
         """Initialize provider."""
         self._name = "dummy"
         self.dsp_name = "Dummy"
+        self.max_attempts = 1
         self.strategy = STRATEGY_ABORT
-        self.STATUS_MAP = {"OTHER": STATUS_OTHER}
-        return
+        self.status_map = {"OTHER": STATUS_OTHER}
 
     @property
     def name(self):
         """Get provider name."""
         return self._name
 
-    async def validate_hosts(self, hosts):
+    async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
         raise NotImplementedError()
 
@@ -62,21 +62,28 @@ class Provider:
         """Prepare provisioning."""
         raise NotImplementedError()
 
-    async def _provision_base(self, reqs):
+    async def _provision_base(self, reqs):  # pylint disable=too-many-locals
         """Provision hosts based on list of host requirements.
 
         Main function which does provisioning and not any validation.
         """
+        logger.info(f"{self.dsp_name}: Validating hosts definitions")
+        if not reqs:
+            raise ProvisioningError(
+                f"{self.dsp_name}: Can not continue with empty requirement for provider"
+            )
+
+        await self.validate_hosts(reqs)
         logger.info(f"{self.dsp_name}: Host definitions valid")
 
         logger.info(f"{self.dsp_name}: Checking available resources")
-        can = await self.can_provision(reqs)
-        if not can:
+
+        if not await self.can_provision(reqs):
             raise ValidationError(f"{self.dsp_name}: Not enough resources to provision")
         logger.info(f"{self.dsp_name}: Resource availability: OK")
         started = datetime.now()
-        count = len(reqs)
-        logger.info(f"{self.dsp_name}: Issuing provisioning of {count} hosts")
+
+        logger.info(f"{self.dsp_name}: Issuing provisioning of {len(reqs)} host(s)")
         create_servers = []
         for req in reqs:
             awaitable = self.create_server(req)
@@ -92,19 +99,19 @@ class Provider:
 
         server_results = await asyncio.gather(*wait_servers)
         provisioned = datetime.now()
-        provi_duration = provisioned - started
 
         logger.info(
             f"{self.dsp_name}: "
             "All hosts reached provisioning final state (ACTIVE or ERROR)"
         )
-        logger.info(f"{self.dsp_name}: Provisioning duration: {provi_duration}")
+        logger.info(f"{self.dsp_name}: Provisioning duration: {provisioned - started}")
 
         hosts = [self.to_host(srv) for srv in server_results]
         error_hosts = self.parse_error_hosts(hosts)
         success_hosts = [h for h in hosts if h not in error_hosts]
-        error_host_names = [host.name for host in error_hosts]
-        missing_reqs = [req for req in reqs if req["name"] in error_host_names]
+        missing_reqs = [
+            req for req in reqs if req["name"] in [host.name for host in error_hosts]
+        ]
         return (success_hosts, error_hosts, missing_reqs)
 
     async def provision_hosts(self, reqs):
@@ -128,9 +135,9 @@ class Provider:
         await self.validate_hosts(reqs)
 
         if self.strategy == STRATEGY_RETRY:
-            success_hosts, error_hosts, missing_reqs = await self.strategy_retry(reqs)
+            success_hosts, error_hosts, _missing_reqs = await self.strategy_retry(reqs)
         else:
-            success_hosts, error_hosts, missing_reqs = await self.strategy_abort(reqs)
+            success_hosts, error_hosts, _missing_reqs = await self.strategy_abort(reqs)
 
         if error_hosts:
             hosts_to_delete = success_hosts + error_hosts
@@ -180,7 +187,10 @@ class Provider:
         errors = []
         logger.debug(f"{self.dsp_name}: Checking provisioned hosts for errors")
         for host in hosts:
-            logger.debug(f"{self.dsp_name}: Host - {host.id}\tStatus - {host.status}")
+            logger.debug(
+                f"{self.dsp_name}: Host - {host.host_id}\tStatus - {host.status}"
+            )
+
             if host.status == STATUS_ERROR:
                 errors.append(host)
         return errors
@@ -205,7 +215,7 @@ class Provider:
 
         delete_servers = []
         for host in hosts:
-            awaitable = self.delete_host(host.id)
+            awaitable = self.delete_host(host.host_id)
             delete_servers.append(awaitable)
         results = await asyncio.gather(*delete_servers)
         logger.info(f"{self.dsp_name}: All servers issued to be deleted")
@@ -224,7 +234,7 @@ class Provider:
             host_info.get("id"),
             host_info.get("name"),
             host_info.get("addresses"),
-            self.STATUS_MAP.get(host_info.get("status"), STATUS_OTHER),
+            self.status_map.get(host_info.get("status"), STATUS_OTHER),
             provisioning_result,
             username=username,
             error_obj=host_info.get("fault"),

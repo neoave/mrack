@@ -18,9 +18,9 @@ import socket
 from socket import error as socket_error
 
 
-def resolve_hostname(ip):
+def resolve_hostname(ip_addr):
     """Resolve IP address to hostname."""
     try:
-        return socket.gethostbyaddr(ip)[0]
+        return socket.gethostbyaddr(ip_addr)[0]
     except socket_error:
         return None

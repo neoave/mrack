@@ -50,9 +50,9 @@ END_MARK = "# Managed by mrack - end\n"
 class TestEtcHostsUpdater:
     def assert_updater_state(self, updater, hosts):
         # expected added data
-        record1 = f"{hosts[0].ip} {hosts[0].name}\n"
-        record2 = f"{hosts[1].ip} {hosts[1].name}\n"
-        record3 = f"{hosts[2].ip} {hosts[2].name}\n"
+        record1 = f"{hosts[0].ip_addr} {hosts[0].name}\n"
+        record2 = f"{hosts[1].ip_addr} {hosts[1].name}\n"
+        record3 = f"{hosts[2].ip_addr} {hosts[2].name}\n"
         lines = updater.lines
 
         assert len(updater.lines) == 2 + 5, "expecting 5 new lines"

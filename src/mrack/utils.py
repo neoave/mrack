@@ -77,6 +77,9 @@ def json_convertor(obj):
     if "Decimal" in str(obj.__class__):
         return str(obj)
 
+    # use string as default
+    return str(obj)
+
 
 def load_json(path):
     """Load JSON file into Python object."""
@@ -99,22 +102,22 @@ def save_to_json(path, data):
             json.dump(data, output, default=json_convertor, indent=2, sort_keys=True)
     except IOError as exc:
         logger.exception(exc)
-        exit(1)
+        sys.exit(1)
 
 
 @contextlib.contextmanager
 def fd_open(filename=None):
     """Use file or stout as output file descriptor."""
     if filename:
-        fd = open(os.path.expanduser(filename), "w")
+        file_d = open(os.path.expanduser(filename), "w")
     else:
-        fd = sys.stdout
+        file_d = sys.stdout
 
     try:
-        yield fd
+        yield file_d
     finally:
-        if fd is not sys.stdout:
-            fd.close()
+        if file_d is not sys.stdout:
+            file_d.close()
 
 
 def save_yaml(path, yaml_data):
@@ -149,6 +152,8 @@ def get_host_from_metadata(metadata, name):
         for host in domain.get("hosts", []):
             if host["name"] == name:
                 return host, domain
+
+    return None, None
 
 
 def is_windows_host(meta_host):
@@ -196,7 +201,7 @@ def get_ssh_key(host, meta_host, config):
     return ssh_key
 
 
-class no_such_file_config_handler(object):
+class NoSuchFileHandler:
     """
     Decorator which change error into ConfigError with custom message.
 
@@ -213,7 +218,9 @@ class no_such_file_config_handler(object):
         def wrapped_f(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except FileNotFoundError as e:
-                raise ConfigError(self.error.format(path=e.filename))
+            except FileNotFoundError as file_error:
+                raise ConfigError(
+                    self.error.format(path=file_error.filename)
+                ) from file_error
 
         return wrapped_f

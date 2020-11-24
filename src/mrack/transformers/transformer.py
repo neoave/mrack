@@ -53,9 +53,9 @@ class Transformer:
         key = self._config_key
         try:
             return self._config[key]
-        except KeyError:
+        except KeyError as key_err:
             error = f"No '{key}' entry in provisioning configuration"
-            raise ConfigError(error)
+            raise ConfigError(error) from key_err
 
     @property
     def hosts(self):
@@ -66,7 +66,7 @@ class Transformer:
         """Add host input."""
         self._hosts.append(host)
 
-    def _get_image(self, os, config_key="images"):
+    def _get_image(self, operating_system, config_key="images"):
         """
         Get image name by OS name from provisioning config.
 
@@ -75,9 +75,12 @@ class Transformer:
             2. default from the images if os is not found in keys
             3. os name if default is not specified for images.
         """
-        image = get_config_value(self.config[config_key], os, os)
+        image = get_config_value(
+            self.config[config_key], operating_system, operating_system
+        )
         logger.debug(
-            f"{self.dsp_name}: Loaded image for {os} from {config_key}: '{image}'"
+            f"{self.dsp_name}: Loaded image for {operating_system}"
+            f" from {config_key}: '{image}'"
         )
         return image
 

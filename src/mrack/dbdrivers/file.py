@@ -28,9 +28,9 @@ class FileDBDriver:
     Serialize and load information into JSON file.
     """
 
-    def __init__(self, path):
+    def __init__(self, file_path):
         """Initialize DB driver."""
-        self._path = path
+        self._path = file_path
         self._hosts = {}
         self._raw_data = None
         self.save_on_change = True

@@ -96,7 +96,7 @@ class SSH:
         cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
         cmd.extend(["-o", "'UserKnownHostsFile=/dev/null'"])
 
-        meta_host, domain = get_host_from_metadata(self._metadata, host.name)
+        meta_host, _domain = get_host_from_metadata(self._metadata, host.name)
         username = get_username(host, meta_host, self._config)
         password = get_password(host, meta_host, self._config)
         ssh_key = get_ssh_key(host, meta_host, self._config)
@@ -110,7 +110,7 @@ class SSH:
             cmd.extend("-o", "'PasswordAuthentication'")
             psw_input = f"{password}\n"
 
-        cmd.append(host.ip)  # Destination
+        cmd.append(host.ip_addr)  # Destination
 
         cmd = " ".join(cmd)
 

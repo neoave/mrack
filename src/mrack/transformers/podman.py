@@ -15,7 +15,6 @@
 """Podman transformer module."""
 
 from mrack.transformers.transformer import Transformer
-from mrack.utils import get_config_value, print_obj
 
 CONFIG_KEY = "podman"
 
@@ -28,10 +27,6 @@ class PodmanTransformer(Transformer):
         "images",
     ]
 
-    def _get_image(self, os):
-        """Get image name by OS name from provisioning config."""
-        return get_config_value(self.config["images"], os)
-
     def create_host_requirement(self, host):
         """Create single input for podman provisioner."""
         return {
@@ -39,9 +34,3 @@ class PodmanTransformer(Transformer):
             "image": self._get_image(host["os"]),
             "hostname": host["name"],
         }
-
-    def create_host_requirements(self):
-        """Create inputs for all host for AWS provisioner."""
-        reqs = [self.create_host_requirement(host) for host in self.hosts]
-        print_obj(reqs)
-        return reqs
