@@ -52,7 +52,7 @@ def ensure_hosts_in_all_group(db, inventory):
 
         invhost = hosts[dbhost.name]
 
-        assert dbhost.ip == invhost["meta_ip"], "IP from DB in inventory"
+        assert dbhost.ip_addr == invhost["meta_ip"], "IP from DB in inventory"
         for attr in required_attrs:
             assert attr in required_attrs, "All required attrs are in host definition"
 

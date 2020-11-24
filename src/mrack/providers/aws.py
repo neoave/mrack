@@ -43,7 +43,7 @@ class AWSProvider(Provider):
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None
-        self.STATUS_MAP = {
+        self.status_map = {
             "running": STATUS_ACTIVE,
             "pending": STATUS_PROVISIONING,
             "terminated": STATUS_DELETED,
@@ -76,9 +76,9 @@ class AWSProvider(Provider):
         """Prepare provisioning."""
         pass
 
-    async def validate_hosts(self, hosts):
+    async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
-        for req in hosts:
+        for req in reqs:
             req_img = req.get("image")
             if not req.get("meta_image") and req_img not in self.ami_ids:
                 raise ValidationError(
@@ -104,7 +104,9 @@ class AWSProvider(Provider):
                 )
                 logger.error(err_msg)
                 err_resp = image_err.response["Error"]["Message"]
-                raise ValidationError(f"{err_msg}. Request failed with {err_resp}")
+                raise ValidationError(
+                    f"{err_msg} Request failed with {err_resp}"
+                ) from image_err
 
         return
 
@@ -149,13 +151,7 @@ class AWSProvider(Provider):
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""
         # init the dict
-        result = {
-            "id": None,
-            "name": None,
-            "addresses": None,
-            "status": None,
-            "fault": None,
-        }
+        result = {}
 
         result["id"] = prov_result.get("InstanceId")
         for tag in prov_result.get("Tags"):
@@ -167,7 +163,7 @@ class AWSProvider(Provider):
 
         return result
 
-    async def wait_till_provisioned(self, aws_id):
+    async def wait_till_provisioned(self, aws_id):  # pylint: disable=arguments-differ
         """Wait for AWS provisioning result."""
         instance = self.ec2.Instance(aws_id)
         instance.wait_until_running()
@@ -175,10 +171,10 @@ class AWSProvider(Provider):
         result = {}
         try:  # returns dict with aws instance information
             result = response["Reservations"][0]["Instances"][0]
-        except (KeyError, IndexError):
+        except (KeyError, IndexError) as data_err:
             raise ProvisioningError(
                 "Unexpected data format in response of provisioned instance."
-            )
+            ) from data_err
 
         return result
 

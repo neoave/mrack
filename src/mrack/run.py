@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """mrack default app."""
-
+#  pylint: disable=no-name-in-module
 import asyncio
 import logging
 import os
@@ -48,20 +48,20 @@ from mrack.providers.podman import PROVISIONER_KEY as PODMAN
 from mrack.providers.podman import PodmanProvider
 from mrack.providers.static import PROVISIONER_KEY as STATIC
 from mrack.providers.static import StaticProvider
-from mrack.utils import load_yaml, no_such_file_config_handler
+from mrack.utils import NoSuchFileHandler, load_yaml
 
 logger = logging.getLogger(__name__)
 
 
-def async_run(f):
+def async_run(func):
     """Decorate click actions to run as async."""
-    f = asyncio.coroutine(f)
+    func = asyncio.coroutine(func)
 
     def wrapper(*args, **kwargs):
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(f(*args, **kwargs))
+        return loop.run_until_complete(func(*args, **kwargs))
 
-    return update_wrapper(wrapper, f)
+    return update_wrapper(wrapper, func)
 
 
 def init_providers():
@@ -75,11 +75,11 @@ def init_providers():
 
 def init_db(path):
     """Initialize file database."""
-    db = FileDBDriver(path)
-    return db
+    db_file = FileDBDriver(path)
+    return db_file
 
 
-@no_such_file_config_handler(error="Provisioning config file not found: {path}")
+@NoSuchFileHandler(error="Provisioning config file not found: {path}")
 def init_prov_config(path):
     """Load and initialize provisioning configuration."""
     config_data = load_yaml(path)
@@ -124,17 +124,17 @@ METADATA = "metadata"
 @click.group()
 @click.option("-c", "--mrack-config", type=click.Path(exists=True))
 @click.option("-p", "--provisioning-config", type=click.Path(exists=True))
-@click.option("-d", "--db")  # db file may not exist
+@click.option("-d", "--db", "db_file")  # db file may not exist
 @click.option("--debug", default=False, is_flag=True)
 @click.pass_context
-def mrackcli(ctx, mrack_config, provisioning_config, db, debug):
+def mrackcli(ctx, mrack_config, provisioning_config, db_file, debug):
     """Multihost human friendly provisioner."""
     if debug:
         logging.getLogger("mrack").setLevel(logging.DEBUG)
 
     config = MrackConfig(mrack_config)
     config.load()
-    db_path = db or config.db_path("./.mrackdb.json")
+    db_path = db_file or config.db_path("./.mrackdb.json")
     p_config_path = provisioning_config or config.provisioning_config_path(
         "./provisioning-config.yaml"
     )
@@ -151,7 +151,7 @@ def mrackcli(ctx, mrack_config, provisioning_config, db, debug):
 @click.option("-m", "--metadata", type=click.Path(exists=True))
 @click.option("-p", "--provider", default="openstack")
 @async_run
-async def up(ctx, metadata, provider):
+async def up(ctx, metadata, provider):  # pylint: disable=invalid-name
     """Provision hosts.
 
     Based on provided job metadata file and provisioning configuration.
@@ -190,7 +190,7 @@ async def output(ctx, metadata):
 @mrackcli.command()
 @click.pass_context
 @async_run
-async def list(ctx):
+async def list(ctx):  # pylint: disable=redefined-builtin
     """List host tracked by."""
     list_action = List()
     list_action.init(ctx.obj[DB])
@@ -211,7 +211,7 @@ async def ssh(ctx, hostname, metadata):
 
 
 @mrackcli.group()
-def eh():
+def eh():  # pylint: disable=invalid-name
     """Commands to update /etc/hosts file."""
 
 
@@ -240,9 +240,9 @@ def exception_handler(func):
 
     def handle(*args, **kwargs):
         """Handle exceptions."""
-        rc = 1  # assuming error
+        ret_code = 1  # assuming error
         try:
-            rc = func(*args, **kwargs)
+            ret_code = func(*args, **kwargs)
         except (
             FileNotFoundError,
             ConfigError,
@@ -257,7 +257,7 @@ def exception_handler(func):
             logger.exception(exc)
             raise exc
 
-        return rc
+        return ret_code
 
     return handle
 
@@ -265,7 +265,7 @@ def exception_handler(func):
 @exception_handler
 def run():
     """Run the app."""
-    mrackcli(obj={})
+    mrackcli(obj={})  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ import logging
 from datetime import datetime, timedelta
 
 from mrack.errors import ProvisioningError, ServerNotFoundError
-from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_OTHER, Host
+from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_OTHER
 from mrack.providers.provider import Provider
 from mrack.providers.utils.podman import Podman
 from mrack.utils import object2json
@@ -38,13 +38,17 @@ class PodmanProvider(Provider):
         self.dsp_name = "Podman"
         self.podman = Podman()
 
-    async def validate_hosts(self, hosts):
+    async def prepare_provisioning(self, reqs):
+        """Prepare provisioning."""
+        pass
+
+    async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
-        return True  # TODO
+        return bool(reqs)  # TODO
 
     async def can_provision(self, hosts):
         """Check that provider has enough resources to provision hosts."""
-        return True  # TODO
+        return bool(hosts)  # TODO
 
     async def create_server(self, req):
         """Request and create resource on selected provider."""
@@ -67,9 +71,9 @@ class PodmanProvider(Provider):
         while datetime.now() < timeout_time:
             try:
                 inspect = await self.podman.inspect(cont_id)
-            except ProvisioningError as e:
-                logger.error(object2json(e))
-                raise ServerNotFoundError(cont_id)
+            except ProvisioningError as err:
+                logger.error(object2json(err))
+                raise ServerNotFoundError(cont_id) from err
             server = inspect[0]
             running = server["State"]["Running"]
             is_error = server["State"]["Error"]
@@ -98,36 +102,36 @@ class PodmanProvider(Provider):
     def get_status(self, state):
         """Read status from inspect State object."""
         if state.get("Running"):
-            return STATUS_ACTIVE
+            status = STATUS_ACTIVE
         elif state.get("Dead"):
-            return STATUS_DELETED
+            status = STATUS_DELETED
         elif state.get("Error"):
-            return STATUS_ERROR
+            status = STATUS_ERROR
         else:
-            return STATUS_OTHER
+            status = STATUS_OTHER
 
-    def to_host(self, prov_result, username=None):
-        """Get needed host information from provisioning result."""
-        # prov_results is output of inspect method.
+        return status
 
-        ip = None
+    def prov_result_to_host_data(self, prov_result):
+        """Get needed host information from podman provisioning result."""
+        result = {}
+
+        result["id"] = prov_result.get("Id")
+        result["name"] = prov_result["Config"]["Hostname"]
+
+        ip_addr = None
         network_set = prov_result.get("NetworkSettings")
         if network_set:
-            ip = network_set.get("IPAddress")
+            ip_addr = network_set.get("IPAddress")
+
+        result["addresses"] = [ip_addr]
 
         status = self.get_status(prov_result.get("State"))
         error_obj = None
         if status == STATUS_ERROR:
             error_obj = prov_result.get("State")
 
-        host = Host(
-            self,
-            prov_result.get("Id"),
-            prov_result["Config"]["Hostname"],
-            [ip],
-            status,
-            prov_result,
-            username=username,
-            error_obj=error_obj,
-        )
-        return host
+        result["fault"] = error_obj
+        result["status"] = status
+
+        return result

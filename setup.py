@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""mrack setup"""
 # -*- coding: utf-8 -*-
 import re
 import sys
@@ -30,13 +30,13 @@ with open("src/mrack/__init__.py", "r") as fd:
     )
     if version is None:
         sys.stderr.write("Could not parse the version string.\n")
-        exit(1)
+        sys.exit(1)
 
     mrack_version = version.group(1)
 
 
-mrack_conf = "mrack.conf"
-prov_conf = "provisioning-config.yaml"
+MRACK_CONF = "mrack.conf"
+PROV_CONF = "provisioning-config.yaml"
 
 setup(
     name="mrack",
@@ -54,6 +54,6 @@ setup(
     install_requires=reqs,
     scripts=["scripts/mrack"],
     package_data={
-        "mrack": [f"data/{datafile}" for datafile in [mrack_conf, prov_conf]]
+        "mrack": [f"data/{datafile}" for datafile in [MRACK_CONF, PROV_CONF]]
     },
 )

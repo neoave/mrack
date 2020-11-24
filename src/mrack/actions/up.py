@@ -91,8 +91,8 @@ class Up:
         for provider_name, transformer in self._transformers.items():
             reqs = transformer.create_host_requirements()
             provider = providers.get(provider_name)
-            aw = provider.provision_hosts(reqs)
-            prov_aws.append(aw)
+            awaitable = provider.provision_hosts(reqs)
+            prov_aws.append(awaitable)
         provisioning_results = await asyncio.gather(*prov_aws)
         hosts = []
         for results in provisioning_results:

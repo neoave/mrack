@@ -122,8 +122,8 @@ class AnsibleInventoryOutput:
         meta_host, meta_domain = get_host_from_metadata(self._metadata, name)
         db_host = self._db.hosts[name]
 
-        ip = db_host.ip
-        ansible_host = resolve_hostname(ip) or ip
+        ip_addr = db_host.ip_addr
+        ansible_host = resolve_hostname(ip_addr) or ip_addr
 
         python = (
             self._config["python"].get(meta_host["os"])
@@ -141,8 +141,8 @@ class AnsibleInventoryOutput:
             "ansible_user": ansible_user,
             "meta_fqdn": name,
             "meta_domain": meta_domain["name"],
-            "meta_provider_id": db_host.id,
-            "meta_ip": ip,
+            "meta_provider_id": db_host.host_id,
+            "meta_ip": ip_addr,
             "meta_dc_record": ",".join(
                 "DC=%s" % dc for dc in meta_domain["name"].split(".")
             ),
@@ -192,12 +192,12 @@ class AnsibleInventoryOutput:
         inventory = deepcopy(
             self._config.get("inventory_layout", DEFAULT_INVENTORY_LAYOUT)
         )
-        if type(inventory) is not dict:
+        if not isinstance(inventory, dict):
             raise ConfigError("Inventory layout should be a dictionary")
         all_group = ensure_all_group(inventory)
 
         for host in provisioned.values():
-            meta_host, meta_domain = get_host_from_metadata(self._metadata, host.name)
+            meta_host, _meta_domain = get_host_from_metadata(self._metadata, host.name)
 
             # Groups can be defined in both "groups" and "group" variable.
             groups = meta_host.get("groups", [])

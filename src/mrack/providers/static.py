@@ -15,7 +15,7 @@
 """Static provider."""
 
 from mrack.errors import ValidationError
-from mrack.host import STATUS_ACTIVE, Host
+from mrack.host import STATUS_ACTIVE
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 
 PROVISIONER_KEY = "static"
@@ -33,6 +33,15 @@ class StaticProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.strategy = STRATEGY_ABORT
+        self.status_map = {STATUS_ACTIVE: STATUS_ACTIVE}
+
+    async def prepare_provisioning(self, reqs):
+        """Prepare provisioning."""
+        pass
+
+    async def create_server(self, req):
+        """Request and create resource on selected provider."""
+        return req
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -41,7 +50,7 @@ class StaticProvider(Provider):
                 raise ValidationError("Name not found")
             if "ip" not in req:
                 raise ValidationError("IP address (ip) not found")
-        return True
+        return bool(reqs)
 
     async def can_provision(self, hosts):
         """Behave as that we can."""
@@ -53,19 +62,22 @@ class StaticProvider(Provider):
         hosts = [self.to_host(req) for req in reqs]
         return hosts
 
-    async def delete_host(self, host):
-        """Fake delete - pass but don't do anything."""
-        return True
+    async def wait_till_provisioned(self, resource):
+        """Wait till resource is provisioned."""
+        return resource
 
-    def to_host(self, req):
-        """Transform req into Host object."""
-        host = Host(
-            self,
-            req.get("name"),
-            req.get("name"),
-            [req.get("ip")],
-            STATUS_ACTIVE,
-            req,
-            error_obj={},
-        )
-        return host
+    def prov_result_to_host_data(self, prov_result):
+        """Transform provisioning result to needed host data."""
+        result = {}
+
+        result["id"] = prov_result.get("name")
+        result["name"] = prov_result.get("name")
+        result["addresses"] = [prov_result.get("ip")]
+        result["fault"] = {}
+        result["status"] = STATUS_ACTIVE
+
+        return result
+
+    async def delete_host(self, host_id):
+        """Fake delete - pass but don't do anything."""
+        return bool(host_id)

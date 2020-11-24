@@ -74,7 +74,7 @@ class OpenStackProvider(Provider):
         self.poll_sleep = 7  # seconds
         self.poll_init_adj = 0  # set based on # of hosts to provisions
         self.poll_adj = 0  # set based on # of hosts to provisions
-        self.STATUS_MAP = {
+        self.status_map = {
             "ACTIVE": STATUS_ACTIVE,
             "BUILD": STATUS_PROVISIONING,
             "DELETED": STATUS_DELETED,
@@ -97,12 +97,12 @@ class OpenStackProvider(Provider):
         logger.info(f"{self.dsp_name}: Initializing provider")
         try:
             self.session = AuthPassword()
-        except TypeError:
+        except TypeError as terr:
             err = (
                 "OpenStack credentials not provided. Load OpenStack RC file with valid "
                 "credentials and try again. E.g.: $ source PROJECT-openrc.sh"
             )
-            raise NotAuthenticatedError(err)
+            raise NotAuthenticatedError(err) from terr
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
         self.neutron = NeutronClient(session=self.session)
@@ -114,8 +114,7 @@ class OpenStackProvider(Provider):
             self.neutron.init_api(self.api_timeout),
         )
         login_end = datetime.now()
-        login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
+        logger.info(f"{self.dsp_name}: Login duration {login_end - login_start}")
 
         object_start = datetime.now()
         _, _, limits, _, _ = await asyncio.gather(
@@ -132,19 +131,19 @@ class OpenStackProvider(Provider):
             f"{self.dsp_name}: Environment objects load duration: {object_duration}"
         )
 
-    def set_flavors(self, flavors):
+    def _set_flavors(self, flavors):
         """Extend provider configuration with list of flavors."""
         for flavor in flavors:
             self.flavors[flavor["name"]] = flavor
             self.flavors_by_ref[flavor["id"]] = flavor
 
-    def set_images(self, images):
+    def _set_images(self, images):
         """Extend provider configuration with list of images."""
         for image in images:
             self.images[image["name"]] = image
             self.images_by_ref[image["id"]] = image
 
-    def set_networks(self, networks):
+    def _set_networks(self, networks):
         """Extend provider configuration with list of networks."""
         for network in networks:
             self.networks[network["name"]] = network
@@ -182,7 +181,7 @@ class OpenStackProvider(Provider):
         """Extend provider configuration by loading all flavors from OpenStack."""
         resp = await self.nova.flavors.list()
         flavors = resp["flavors"]
-        self.set_flavors(flavors)
+        self._set_flavors(flavors)
         return flavors
 
     async def load_images(self, image_names=None):
@@ -210,12 +209,12 @@ class OpenStackProvider(Provider):
             query = p_result.query
             next_params = parse_qs(query)
             for key, val in next_params.items():
-                if type(val) == list and len(val):
+                if isinstance(val, list) and val:
                     next_params[key] = val[0]
             response = await self.glance.images.list(**next_params)
             images.extend(response["images"])
 
-        self.set_images(images)
+        self._set_images(images)
 
         return images
 
@@ -223,7 +222,7 @@ class OpenStackProvider(Provider):
         """Extend provider configuration by loading all networks from OpenStack."""
         resp = await self.neutron.network.list()
         networks = resp["networks"]
-        self.set_networks(networks)
+        self._set_networks(networks)
         return networks
 
     async def load_ip_availabilities(self):
@@ -267,7 +266,7 @@ class OpenStackProvider(Provider):
         network_specs = req.get("networks", [])
         network_specs = deepcopy(network_specs)
         networks = []
-        if type(network_specs) != list:
+        if not isinstance(network_specs, list):
             network_specs = []
         for network_spec in network_specs:
             uuid = network_spec.get("uuid")
@@ -318,8 +317,9 @@ class OpenStackProvider(Provider):
         Load missing images if they are not in provisioning-config.yaml
         """
         prepare_images = list(
-            set([req["image"] for req in reqs if req["image"] not in self.images])
+            {req["image"] for req in reqs if req["image"] not in self.images}
         )
+
         if prepare_images:
             im_list = ", ".join(prepare_images)
             logger.debug(f"{self.dsp_name}: Loading image info for: '{im_list}'")
@@ -337,13 +337,23 @@ class OpenStackProvider(Provider):
         """Get vCPU and memory requirements for host requirement."""
         flavor_spec = req.get("flavor")
         flavor_ref = req.get("flavorRef")
+        flavor = None
         if flavor_ref:
             flavor = self.get_flavor(ref=flavor_ref)
         if flavor_spec:
             flavor = self.get_flavor(flavor_spec, flavor_spec)
-        return {"ram": flavor["ram"], "vcpus": flavor["vcpus"]}
 
-    async def can_provision(self, reqs):
+        try:
+            res = {"ram": flavor["ram"], "vcpus": flavor["vcpus"]}
+        except TypeError as flavor_none:
+            # func does not load flavor so None is used as result
+            raise ValidationError(
+                f"Could not load the flavor for requirement: {req}"
+            ) from flavor_none
+
+        return res
+
+    async def can_provision(self, reqs):  # pylint: disable=arguments-differ
         """Check that all host can be provisioned.
 
         Checks:
@@ -426,7 +436,7 @@ class OpenStackProvider(Provider):
             )
             pass
 
-    async def wait_till_provisioned(self, instance):
+    async def wait_till_provisioned(self, resource):
         """
         Wait till server is provisioned.
 
@@ -442,7 +452,7 @@ class OpenStackProvider(Provider):
 
         Return information about provisioned server.
         """
-        uuid = instance.get("id")
+        uuid = resource.get("id")
 
         poll_sleep_initial = self.poll_sleep_initial + self.poll_init_adj
         poll_sleep_initial = (
@@ -453,27 +463,28 @@ class OpenStackProvider(Provider):
 
         start = datetime.now()
         timeout_time = start + timedelta(minutes=timeout)
-        done_states = ["ACTIVE", "ERROR"]
 
         # do not check the state immediately, it will take some time
         logger.debug(f"{uuid}: sleeping for {poll_sleep_initial} seconds")
         await asyncio.sleep(poll_sleep_initial)
 
-        error_attempts = 0
+        resp = {}
         logger.debug(f"Waiting for: {uuid}")
+        error_attempts = 0
         while datetime.now() < timeout_time:
             try:
                 resp = await self.nova.servers.get(uuid)
-                server = resp["server"]
-                if server["status"] in done_states:
-                    break
-            except NotFoundError:
-                raise ServerNotFoundError(uuid)
-            except ServerError as e:
-                logger.debug(e)
+            except NotFoundError as nf_err:
+                raise ServerNotFoundError(uuid) from nf_err
+            except ServerError as err:
+                logger.debug(f"{self.dsp_name}: {err}")
                 error_attempts += 1
                 if error_attempts > SERVER_ERROR_RETRY:
-                    raise ProvisioningError(uuid)
+                    raise ProvisioningError(uuid) from err
+
+            server = resp["server"]
+            if server["status"] in ["ACTIVE", "ERROR"]:
+                break
 
             poll_sleep += 0.5  # increase delays to check the longer it takes
             logger.debug(f"{uuid}: sleeping for {poll_sleep} seconds")
@@ -501,14 +512,8 @@ class OpenStackProvider(Provider):
         return True
 
     def prov_result_to_host_data(self, prov_result):
-        """Get needed host infromation from openstack provisioning result."""
-        result = {
-            "id": None,
-            "name": None,
-            "addresses": None,
-            "status": None,
-            "fault": None,
-        }
+        """Get needed host information from openstack provisioning result."""
+        result = {}
 
         result["id"] = prov_result.get("id")
         result["name"] = prov_result.get("name")

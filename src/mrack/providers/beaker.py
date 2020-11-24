@@ -53,7 +53,7 @@ class BeakerProvider(Provider):
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.keypair = None
-        self.STATUS_MAP = {
+        self.status_map = {
             "Reserved": STATUS_ACTIVE,
             "New": STATUS_PROVISIONING,
             "Scheduled": STATUS_PROVISIONING,
@@ -85,9 +85,9 @@ class BeakerProvider(Provider):
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")
 
-    async def validate_hosts(self, hosts):
+    async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
-        for req in hosts:
+        for req in reqs:
             req_dstr = req.get("distro")
             if not req.get("meta_distro") and req_dstr not in self.distros:
                 raise ValidationError(
@@ -225,9 +225,9 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         return resources[0] if len(resources) == 1 else []
 
-    async def wait_till_provisioned(self, bkr_id_req_name):
+    async def wait_till_provisioned(self, resource):
         """Wait for Beaker provisioning result."""
-        beaker_id, req_name = bkr_id_req_name
+        beaker_id, req_name = resource
         resource = {}
         attempts = 0
         prev_status = ""
@@ -244,11 +244,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 )
                 prev_status = status
 
-            if self.STATUS_MAP.get(status) == STATUS_ACTIVE:
-                break
-            elif self.STATUS_MAP.get(status) == STATUS_PROVISIONING:
+            if self.status_map.get(status) == STATUS_PROVISIONING:
                 await asyncio.sleep(self.poll_sleep)
-            elif self.STATUS_MAP.get(status) in [STATUS_ERROR, STATUS_DELETED]:
+            elif self.status_map.get(status) == STATUS_ACTIVE:
+                break
+            elif self.status_map.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
                     f"{self.dsp_name}: Job {beaker_id} has errored with status "
                     f"{status} and result {resource['result']}"
@@ -264,11 +264,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         resource.update({"JobID": beaker_id, "req_name": req_name})
         return resource
 
-    async def delete_host(self, job_id):
+    async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"{self.dsp_name}: Deleting host by cancelling Job {job_id}")
+        logger.info(f"{self.dsp_name}: Deleting host by cancelling Job {host_id}")
         return self.hub.taskactions.stop(
-            job_id, "cancel", "Job has been stopped by mrack."
+            host_id, "cancel", "Job has been stopped by mrack."
         )
 
     def to_host(self, provisioning_result, username=None):

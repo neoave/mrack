@@ -61,27 +61,27 @@ class Podman:
             args.extend(["--network", network])
         args.append(image)
 
-        stdout, stderr, process = await self._run_podman(args)
+        stdout, _stderr, _process = await self._run_podman(args)
         container_id = stdout.strip()
         return container_id
 
     async def inspect(self, container_id):
         """Inspects a container returns data loaded from JSON structure."""
         args = ["inspect", container_id]
-        stdout, stderr, process = await self._run_podman(args)
+        stdout, _stderr, _process = await self._run_podman(args)
         inspect_data = json.loads(stdout)
         return inspect_data
 
-    async def rm(self, container_id, force=False):
+    async def rm(self, container_id, force=False):  # pylint: disable=invalid-name
         """Remove a container."""
         args = ["rm"]
         if force:
             args.append("-f")
         args.append(container_id)
-        stdout, stderr, process = await self._run_podman(args, raise_on_err=False)
+        _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
         return process.returncode == 0
 
     def interactive(self, container_id):
         """Create interactive session."""
         args = [self.program, "exec", "-ti", container_id, "bash"]
-        subprocess.run(args, text=True)
+        subprocess.run(args, text=True, check=True)

@@ -36,8 +36,8 @@ class OpenStackTransformer(Transformer):
 
     def _is_network_type(self, name):
         """Check if name is a configured network type in provisioning config."""
-        nt = self.config["networks"].get(name)
-        return bool(nt)
+        network_type = self.config["networks"].get(name)
+        return bool(network_type)
 
     def _aggregate_networks(self, hosts):
         """
@@ -45,21 +45,21 @@ class OpenStackTransformer(Transformer):
 
         Returns: dict where keys are network types and values are total count.
         """
-        nts = {}
+        network_types = {}
         for host in hosts:
             # skip hosts which have low-level network names defined
             # this can be extended to pick network type based on the network name
             names = host.get("networks")
             if names:
                 continue
-            nt = host.get("network")
-            if not self._is_network_type(nt):
+            network_type = host.get("network")
+            if not self._is_network_type(network_type):
                 continue
 
-            count = nts.get(nt, 0)
+            count = network_types.get(network_type, 0)
             count += 1
-            nts[nt] = count
-        return nts
+            network_types[network_type] = count
+        return network_types
 
     def _pick_network(self, network_type, count):
         """
@@ -119,13 +119,13 @@ class OpenStackTransformer(Transformer):
             if names:
                 continue
 
-            nt = host.get("network")
+            network_type = host.get("network")
 
             # skip if nt is not network type
-            if not self.config["networks"].get(nt):
+            if not self.config["networks"].get(network_type):
                 continue
 
-            network_name = nt_map[nt]
+            network_name = nt_map[network_type]
             host["network"] = network_name
 
     def _get_network_type(self, host):
