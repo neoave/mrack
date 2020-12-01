@@ -124,7 +124,7 @@ METADATA = "metadata"
 @click.group()
 @click.option("-c", "--mrack-config", type=click.Path(exists=True))
 @click.option("-p", "--provisioning-config", type=click.Path(exists=True))
-@click.option("-d", "--db", type=click.Path(exists=True))
+@click.option("-d", "--db")  # db file may not exist
 @click.option("--debug", default=False, is_flag=True)
 @click.pass_context
 def mrackcli(ctx, mrack_config, provisioning_config, db, debug):
