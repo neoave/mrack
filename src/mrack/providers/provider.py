@@ -129,7 +129,7 @@ class Provider:
         logger.debug(f"{self.dsp_name}: Checking provisioned hosts for errors")
         for host in hosts:
             logger.debug(f"{self.dsp_name}: Host - {host.id}\tStatus - {host.status}")
-            if self.STATUS_MAP.get(host.status, STATUS_OTHER) == STATUS_ERROR:
+            if host.status == STATUS_ERROR:
                 errors.append(host.error)
 
         return errors
