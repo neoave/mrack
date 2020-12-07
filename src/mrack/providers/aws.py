@@ -88,6 +88,12 @@ class AWSProvider(Provider):
 
             try:
                 aws_image = self.ec2.Image(req_img)
+                if not aws_image:  # user is not authorized to use ami - None returned
+                    raise ValidationError(
+                        f"{self.dsp_name}: User does not have enough permissions "
+                        f"to use image: {req_img}"
+                    )
+
                 logger.info(
                     f"{self.dsp_name}: Requested provisioning of {aws_image.name} image"
                 )
@@ -98,7 +104,7 @@ class AWSProvider(Provider):
                 )
                 logger.error(err_msg)
                 err_resp = image_err.response["Error"]["Message"]
-                raise ValidationError(f"{err_msg} Request failed with {err_resp}")
+                raise ValidationError(f"{err_msg}. Request failed with {err_resp}")
 
         return
 
