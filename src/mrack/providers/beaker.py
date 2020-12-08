@@ -101,7 +101,7 @@ class BeakerProvider(Provider):
 
     def _allow_ssh_key(self, ssh_key):
 
-        with open(ssh_key, "r") as key_file:
+        with open(os.path.expanduser(ssh_key), "r") as key_file:
             key_content = key_file.read()
 
         return [
