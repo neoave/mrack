@@ -94,7 +94,12 @@ class PytestMultihostOutput:
                 ip = provisioned_host.ip
                 dns_record = resolve_hostname(ip)
                 host["ip"] = ip
-                host["external_hostname"] = dns_record
+
+                # Using IP as backup for external host name as pytest-multihost is using
+                # external_hostname as the host to use in ssh command.
+                # If it is not available it uses hostname, but we assume here that
+                # hostname is internal and thus not resolvable. IP should be resolvable.
+                host["external_hostname"] = dns_record or ip
 
                 if host["group"] == "ad_root":
                     mhcfg["ad_top_domain"] = domain["name"]
