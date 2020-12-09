@@ -35,7 +35,7 @@ from mrack.host import (
     STATUS_OTHER,
     STATUS_PROVISIONING,
 )
-from mrack.providers.provider import Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ class BeakerProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Beaker"
+        self.strategy = STRATEGY_ABORT
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.keypair = None

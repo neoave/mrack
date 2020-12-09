@@ -25,7 +25,7 @@ from simple_rest_client.exceptions import NotFoundError
 
 from mrack.errors import ServerNotFoundError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
-from mrack.providers.provider import Provider
+from mrack.providers.provider import STRATEGY_RETRY, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,8 @@ class OpenStackProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "OpenStack"
+        self.strategy = STRATEGY_RETRY
+        self.max_attempts = 5  # provisioning retries
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}

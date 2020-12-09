@@ -24,7 +24,7 @@ from botocore.exceptions import ClientError
 
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
-from mrack.providers.provider import Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ class AWSProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "AWS"
+        self.strategy = STRATEGY_ABORT
         self.ami_ids: typing.List[str] = []
         self.ssh_key = None
         self.sec_group = None
