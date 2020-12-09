@@ -14,6 +14,7 @@
 
 """Ansible inventory output module."""
 import logging
+import os
 import typing
 from copy import deepcopy
 
@@ -156,7 +157,7 @@ class AnsibleInventoryOutput:
             host_info["meta_parent_domain"] = meta_domain["parent"]
 
         if ssh_key:
-            host_info["ansible_ssh_private_key_file"] = ssh_key
+            host_info["ansible_ssh_private_key_file"] = os.path.abspath(ssh_key)
 
         if password:
             host_info["ansible_password"] = password
