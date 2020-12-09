@@ -16,7 +16,7 @@
 
 from mrack.errors import ValidationError
 from mrack.host import STATUS_ACTIVE, Host
-from mrack.providers.provider import Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 
 PROVISIONER_KEY = "static"
 
@@ -32,6 +32,7 @@ class StaticProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
+        self.strategy = STRATEGY_ABORT
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
