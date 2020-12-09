@@ -341,7 +341,8 @@ class OpenStackProvider(Provider):
         * 'network': uuid or name of network to use. Will be added to networks
                      list if present
         """
-        logger.info(f"{self.dsp_name}: Creating server")
+        name = req.get("name")
+        logger.info(f"{self.dsp_name}: Creating server {name}")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         flavor = self._translate_flavor(req)
