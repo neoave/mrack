@@ -19,7 +19,7 @@ import os
 from copy import deepcopy
 
 from mrack.outputs.utils import resolve_hostname
-from mrack.utils import get_password, save_yaml
+from mrack.utils import get_password, get_username, is_windows_host, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
 
@@ -100,6 +100,17 @@ class PytestMultihostOutput:
                 # If it is not available it uses hostname, but we assume here that
                 # hostname is internal and thus not resolvable. IP should be resolvable.
                 host["external_hostname"] = dns_record or ip
+
+                if is_windows_host(host):
+                    # Set username for Windows, as default for multihost is often 'root'
+                    # which doesn't usually work there. But do not set it for other OSes
+                    # due to:
+                    #  7bb230e170ac0a2373a2316ef23a26bfcb681ad9
+                    # TODO: come up with a configurable mechanism which is not based on
+                    # so many assumptions.
+                    username = get_username(provisioned_host, host, self._config)
+                    if username:
+                        host["username"] = username
 
                 if host["group"] == "ad_root":
                     mhcfg["ad_top_domain"] = domain["name"]
