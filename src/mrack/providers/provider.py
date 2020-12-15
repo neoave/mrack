@@ -58,6 +58,10 @@ class Provider:
         """Wait till resource is provisioned."""
         raise NotImplementedError()
 
+    async def prepare_provisioning(self, reqs):
+        """Prepare provisioning."""
+        raise NotImplementedError()
+
     async def _provision_base(self, reqs):
         """Provision hosts based on list of host requirements.
 
@@ -117,6 +121,9 @@ class Provider:
 
         Return list of information about provisioned servers.
         """
+        logger.info(f"{self.dsp_name}: Preparing provider resources")
+        await self.prepare_provisioning(reqs)
+
         logger.info(f"{self.dsp_name}: Validating hosts definitions")
         await self.validate_hosts(reqs)
 

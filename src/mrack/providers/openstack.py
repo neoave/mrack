@@ -278,6 +278,25 @@ class OpenStackProvider(Provider):
 
         return True
 
+    async def prepare_provisioning(self, reqs):
+        """
+        Prepare provisioning.
+
+        Load missing images if they are not in provisioning-config.yaml
+        """
+        prepare_images = list(
+            set([req["image"] for req in reqs if req["image"] not in self.images])
+        )
+        if prepare_images:
+            if len(prepare_images) > 1:
+                im_list = ", ".join(prepare_images)
+            else:
+                im_list = prepare_images.pop()
+
+            logger.debug(f"{self.dsp_name}: Loading image info for: '{im_list}'")
+            await self.load_images(list(prepare_images))
+            logger.debug(f"{self.dsp_name}: Loading images info done.")
+
     async def validate_hosts(self, reqs):
         """Validate that all hosts requirements contains existing required objects."""
         for req in reqs:
