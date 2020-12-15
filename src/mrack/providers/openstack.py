@@ -288,11 +288,7 @@ class OpenStackProvider(Provider):
             set([req["image"] for req in reqs if req["image"] not in self.images])
         )
         if prepare_images:
-            if len(prepare_images) > 1:
-                im_list = ", ".join(prepare_images)
-            else:
-                im_list = prepare_images.pop()
-
+            im_list = ", ".join(prepare_images)
             logger.debug(f"{self.dsp_name}: Loading image info for: '{im_list}'")
             await self.load_images(list(prepare_images))
             logger.debug(f"{self.dsp_name}: Loading images info done.")
