@@ -72,6 +72,10 @@ class AWSProvider(Provider):
         self.sec_group = sec_group
         self.instance_tags = instance_tags
 
+    async def prepare_provisioning(self, reqs):
+        """Prepare provisioning."""
+        pass
+
     async def validate_hosts(self, hosts):
         """Validate that host requirements are well specified."""
         for req in hosts:
