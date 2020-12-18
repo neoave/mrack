@@ -208,14 +208,13 @@ async def ssh(ctx, hostname, metadata):
 
 
 @mrackcli.group()
-async def eh():
+def eh():
     """Commands to update /etc/hosts file."""
 
 
 @eh.command()
 @click.pass_context
-@async_run
-async def add(ctx):
+def add(ctx):
     """Add active hosts to /etc/hosts file."""
     eh_action = EtcHostsUpdate(ctx.obj[DB])
     eh_action.update()
@@ -223,8 +222,7 @@ async def add(ctx):
 
 @eh.command()
 @click.pass_context
-@async_run
-async def clear(ctx):
+def clear(ctx):
     """Remove all mrack hosts from /etc/hosts file."""
     eh_action = EtcHostsUpdate(ctx.obj[DB])
     eh_action.clear()
