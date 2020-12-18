@@ -155,7 +155,7 @@ To provision system from the metadata.yaml either run:
 ```
 mrack up
 ```
-or use `up` command's option ``/`-m` to orverride path to the metadata file.
+or use `up` command's option `--metadata`/`-m` to orverride path to the metadata file.
 ```
 mrack up --metadata other-metadata.yaml
 ```
