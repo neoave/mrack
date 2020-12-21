@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.5.2 (2020-12-21)
+### Fix
+* Mrack eh add no longer complains about coroutine 'eh' not awaited ([`7dbdd6a`](https://github.com/neoave/mrack/commit/7dbdd6a6f54331078907081527c944dd5899ab19))
+* Error for non authorized user reading image ([`a5c355d`](https://github.com/neoave/mrack/commit/a5c355da2a0b7d37e5865fb3a78558c26b163b3f))
+* Mrack.conf '~' causes no such file or directory ([`4b8dee8`](https://github.com/neoave/mrack/commit/4b8dee8d710a9a0d978561733dfcd898d96c2c67))
+* Load possible missing image specified in metadata ([`19103c0`](https://github.com/neoave/mrack/commit/19103c0a44311ba95409560877a48e0585795c01))
+
 ## v0.5.1 (2020-12-14)
 ### Fix
 * Set user for Windows host in pytest-multihost config ([`e36138c`](https://github.com/neoave/mrack/commit/e36138c8f80e18eb235981ffd7eeb4840cac0855))
