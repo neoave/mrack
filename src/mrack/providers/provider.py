@@ -18,7 +18,7 @@ import logging
 from datetime import datetime
 
 from mrack.errors import ProvisioningError, ValidationError
-from mrack.host import STATUS_ERROR, STATUS_OTHER, Host
+from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
 
 logger = logging.getLogger(__name__)
 
@@ -191,8 +191,9 @@ class Provider:
                 f"{self.dsp_name}: Host - {host.host_id}\tStatus - {host.status}"
             )
 
-            if host.status == STATUS_ERROR:
+            if host.status != STATUS_ACTIVE:
                 errors.append(host)
+
         return errors
 
     async def abort_and_delete(self, hosts_to_delete, error_hosts):
