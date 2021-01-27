@@ -225,17 +225,9 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         return resources[0] if len(resources) == 1 else []
 
-    async def wait_till_provisioned(
-        self, bkr_id_req_name, timeout=None, poll_sleep=None, max_attempts=None
-    ):
+    async def wait_till_provisioned(self, bkr_id_req_name):
         """Wait for Beaker provisioning result."""
         beaker_id, req_name = bkr_id_req_name
-
-        if not poll_sleep:
-            poll_sleep = self.poll_sleep
-        if not max_attempts:
-            max_attempts = self.max_attempts
-
         resource = {}
         attempts = 0
         prev_status = ""
