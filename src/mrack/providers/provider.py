@@ -134,7 +134,7 @@ class Provider:
 
         if error_hosts:
             hosts_to_delete = success_hosts + error_hosts
-            self.abort_and_delete(hosts_to_delete, error_hosts)
+            await self.abort_and_delete(hosts_to_delete, error_hosts)
 
         logger.info(f"{self.dsp_name}: Printing provisioned hosts")
         for host in success_hosts:
