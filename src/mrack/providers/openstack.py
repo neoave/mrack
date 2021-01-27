@@ -21,9 +21,9 @@ from datetime import datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
 from asyncopenstackclient import AuthPassword, GlanceClient
-from simple_rest_client.exceptions import NotFoundError
+from simple_rest_client.exceptions import NotFoundError, ServerError
 
-from mrack.errors import ServerNotFoundError, ValidationError
+from mrack.errors import ProvisioningError, ServerNotFoundError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_RETRY, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 PROVISIONER_KEY = "openstack"
+SERVER_ERROR_RETRY = 5
 
 
 class OpenStackProvider(Provider):
@@ -424,14 +425,21 @@ class OpenStackProvider(Provider):
         # do not check the state immediately, it will take some time
         await asyncio.sleep(poll_sleep_initial)
 
+        error_attempts = 0
+        logger.debug(f"Waiting for: {uuid}")
         while datetime.now() < timeout_time:
             try:
                 resp = await self.nova.servers.get(uuid)
+                server = resp["server"]
+                if server["status"] in done_states:
+                    break
             except NotFoundError:
                 raise ServerNotFoundError(uuid)
-            server = resp["server"]
-            if server["status"] in done_states:
-                break
+            except ServerError as e:
+                logger.debug(e)
+                error_attempts += 1
+                if error_attempts > SERVER_ERROR_RETRY:
+                    raise ProvisioningError(uuid)
 
             await asyncio.sleep(poll_sleep)
 
