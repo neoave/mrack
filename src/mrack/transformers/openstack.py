@@ -72,10 +72,14 @@ class OpenStackTransformer(Transformer):
         usable = []
         for network in networks:
             ips = self._provider.get_ips(ref=network.get("id"))
+
             available = ips["total_ips"] - ips["used_ips"]
+            logger.debug(f"Network: {network['name']}")
+            logger.debug(f"  total: {ips['total_ips']}")
+            logger.debug(f"  used: {ips['used_ips']}")
+            logger.debug(f"  available: {available}")
             if available > count:
                 usable.append((network["name"], available))
-
         if not usable:
             logger.error(
                 f"{self.dsp_name}: Error: no usable network"
