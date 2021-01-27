@@ -18,6 +18,7 @@ import asyncio
 import logging
 from copy import deepcopy
 from datetime import datetime, timedelta
+from random import random
 from urllib.parse import parse_qs, urlparse
 
 from asyncopenstackclient import AuthPassword, GlanceClient
@@ -66,6 +67,8 @@ class OpenStackProvider(Provider):
         self.timeout = 60  # minutes
         self.poll_sleep_initial = 15  # seconds
         self.poll_sleep = 7  # seconds
+        self.poll_init_adj = 0  # set based on # of hosts to provisions
+        self.poll_adj = 0  # set based on # of hosts to provisions
         self.STATUS_MAP = {
             "ACTIVE": STATUS_ACTIVE,
             "BUILD": STATUS_PROVISIONING,
@@ -279,6 +282,23 @@ class OpenStackProvider(Provider):
 
         return True
 
+    def _set_poll_sleep_times(self, reqs):
+        """
+        Compute polling sleep times based on number of hosts.
+
+        So that we don't create unnecessary load on server while still checking returns
+        (initial_sleep, sleep)
+        """
+        count = len(reqs)
+
+        # initial poll is the biggest performance saver it should be around
+        # time when more than half of host is in ACTIVE state
+        self.poll_init_adj = 0.65 * count
+
+        # poll time should ask often enough, to not create unnecessary delays
+        # while not that many to not load the server much
+        self.poll_adj = 0.22 * count
+
     async def prepare_provisioning(self, reqs):
         """
         Prepare provisioning.
@@ -293,6 +313,8 @@ class OpenStackProvider(Provider):
             logger.debug(f"{self.dsp_name}: Loading image info for: '{im_list}'")
             await self.load_images(list(prepare_images))
             logger.debug(f"{self.dsp_name}: Loading images info done.")
+
+        self._set_poll_sleep_times(reqs)
 
     async def validate_hosts(self, reqs):
         """Validate that all hosts requirements contains existing required objects."""
@@ -392,9 +414,7 @@ class OpenStackProvider(Provider):
             )
             pass
 
-    async def wait_till_provisioned(
-        self, instance, timeout=None, poll_sleep=None, poll_sleep_initial=None
-    ):
+    async def wait_till_provisioned(self, instance):
         """
         Wait till server is provisioned.
 
@@ -411,18 +431,20 @@ class OpenStackProvider(Provider):
         Return information about provisioned server.
         """
         uuid = instance.get("id")
-        if not poll_sleep_initial:
-            poll_sleep_initial = self.poll_sleep_initial
-        if not poll_sleep:
-            poll_sleep = self.poll_sleep
-        if not timeout:
-            timeout = self.timeout
+
+        poll_sleep_initial = self.poll_sleep_initial + self.poll_init_adj
+        poll_sleep_initial = (
+            poll_sleep_initial / 2 + poll_sleep_initial * random() * 1.5
+        )
+        poll_sleep = self.poll_sleep + self.poll_adj
+        timeout = self.timeout
 
         start = datetime.now()
         timeout_time = start + timedelta(minutes=timeout)
         done_states = ["ACTIVE", "ERROR"]
 
         # do not check the state immediately, it will take some time
+        logger.debug(f"{uuid}: sleeping for {poll_sleep_initial} seconds")
         await asyncio.sleep(poll_sleep_initial)
 
         error_attempts = 0
@@ -441,6 +463,8 @@ class OpenStackProvider(Provider):
                 if error_attempts > SERVER_ERROR_RETRY:
                     raise ProvisioningError(uuid)
 
+            poll_sleep += 0.5  # increase delays to check the longer it takes
+            logger.debug(f"{uuid}: sleeping for {poll_sleep} seconds")
             await asyncio.sleep(poll_sleep)
 
         done_time = datetime.now()
