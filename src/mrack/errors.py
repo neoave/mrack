@@ -75,3 +75,9 @@ class ProvisioningError(ProviderError):
     """Error happened during provisioning of resources."""
 
     pass
+
+
+class NotAuthenticatedError(ProviderError):
+    """Provided is not authenticated."""
+
+    pass
