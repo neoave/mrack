@@ -23,7 +23,12 @@ from urllib.parse import parse_qs, urlparse
 from asyncopenstackclient import AuthPassword, GlanceClient
 from simple_rest_client.exceptions import NotFoundError, ServerError
 
-from mrack.errors import ProvisioningError, ServerNotFoundError, ValidationError
+from mrack.errors import (
+    NotAuthenticatedError,
+    ProvisioningError,
+    ServerNotFoundError,
+    ValidationError,
+)
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_RETRY, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
@@ -87,7 +92,14 @@ class OpenStackProvider(Provider):
         """
         # session expects that credentials will be set via env variables
         logger.info(f"{self.dsp_name}: Initializing provider")
-        self.session = AuthPassword()
+        try:
+            self.session = AuthPassword()
+        except TypeError:
+            err = (
+                "OpenStack credentials not provided. Load OpenStack RC file with valid "
+                "credentials and try again. E.g.: $ source PROJECT-openrc.sh"
+            )
+            raise NotAuthenticatedError(err)
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
         self.neutron = NeutronClient(session=self.session)
