@@ -16,6 +16,9 @@ version_variable = [
     "src/mrack/__init__.py:__version__",
     "docs/conf.py:release",
 ]
+version_pattern = [
+    "mrack.spec:Version:\\s+{version}",
+]
 branch = "master"
 commit = true
 tag = true
