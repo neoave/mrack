@@ -85,8 +85,16 @@ class Transformer:
         return image
 
     def _get_flavor(self, host):
-        """Get flavor by host group."""
+        """
+        Get flavor from host metadata definition.
+
+        Get the flavor from host metadata.
+        If not specified, get the flavor by host group defined in provisioning config.
+        """
         # TODO: add sizes
+
+        if host.get("flavor"):  # allow to override flavor in host record in metadata
+            return host["flavor"]
         flavor = get_config_value(self.config["flavors"], host["group"])
         logger.debug(f"{self.dsp_name}: Loaded flavor for {host['name']}: '{flavor}'")
         return flavor
