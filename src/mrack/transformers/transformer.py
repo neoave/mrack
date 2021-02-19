@@ -85,9 +85,18 @@ class Transformer:
         return image
 
     def _get_flavor(self, host):
-        """Get flavor by host group."""
-        # TODO: add sizes
-        flavor = get_config_value(self.config["flavors"], host["group"])
+        """
+        Get VM flavor from host metadata definition or based on host group.
+
+        Get the flavor from 'size' definition in host metadata.
+        If 'size' is not specified, get the flavor based on host groups
+        which are defined in provisioning config.
+        """
+        if host.get("size"):  # allow to override size by pointing to group in metadata
+            flavor = get_config_value(self.config["flavors"], host["size"])
+        else:  # default action based on host group define the flavor of instance
+            flavor = get_config_value(self.config["flavors"], host["group"])
+
         logger.debug(f"{self.dsp_name}: Loaded flavor for {host['name']}: '{flavor}'")
         return flavor
 
