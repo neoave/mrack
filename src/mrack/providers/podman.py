@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 from mrack.errors import ProvisioningError, ServerNotFoundError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_OTHER
-from mrack.providers.provider import Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.podman import Podman
 from mrack.utils import object2json
 
@@ -36,7 +36,13 @@ class PodmanProvider(Provider):
         """Initialize provider."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Podman"
+        self.strategy = STRATEGY_ABORT
         self.podman = Podman()
+        self.status_map = {
+            STATUS_ACTIVE: STATUS_ACTIVE,
+            STATUS_DELETED: STATUS_DELETED,
+            STATUS_ERROR: STATUS_ERROR,
+        }
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""

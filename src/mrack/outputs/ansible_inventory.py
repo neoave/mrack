@@ -165,7 +165,7 @@ class AnsibleInventoryOutput:
         if db_host.provider.name in ("docker", "podman"):
             host_info.update(
                 {
-                    "ansible_host": db_host.id,
+                    "ansible_host": db_host.host_id,
                     "ansible_connection": db_host.provider.name,
                     "ansible_user": "root",  # TODO make it configurable in provider
                 },
