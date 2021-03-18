@@ -36,11 +36,33 @@ jobs:
     needs: [pre-commit, test]
     if: github.repository == 'neoave/mrack'
     steps:
+      - name: Set up changelog date to use later
+        run: echo "TODAY=`date "+%a %b %d %Y"`" >> ${GITHUB_ENV}
+      - name: Set RELEASE_ACTOR
+        env:
+          RELEASE_ACTOR_TIBORIS: ${{ secrets.RELEASE_ACTOR_TIBORIS }}
+          RELEASE_ACTOR_NETOARMANDO: ${{ secrets.RELEASE_ACTOR_NETOARMANDO }}
+          RELEASE_ACTOR_PVOBORNI: ${{ secrets.RELEASE_ACTOR_PVOBORNI }}
+        run: |
+          RELEASE_ACTOR=RELEASE_ACTOR_$(echo ${GITHUB_ACTOR^^})
+          echo "RELEASE_ACTOR=${!RELEASE_ACTOR}" >> ${GITHUB_ENV}
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Get the new version using python-semantic-releaseq
+        run: |
+          pip3 install python-semantic-release==7.15.0
+          echo "NEW_VERSION="`semantic-release print-version --noop` >> ${GITHUB_ENV}
+      - name: Update the mrack.spec changelog with initiator and basic message
+        run: |
+          CHANGELOG_BODY="- Released upstream version $NEW_VERSION"
+          sed -ri \
+          "s/\%changelog/\%changelog\\n\*\ $TODAY\ $RELEASE_ACTOR\ -\ $NEW_VERSION-1\\n$CHANGELOG_BODY\\n/" \
+          mrack.spec
+      - name: Add specfile to commit
+        run: git add mrack.spec
       - name: Python Semantic Release
-        uses: relekang/python-semantic-release@v7.3.0
+        uses: relekang/python-semantic-release@v7.15.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pypi_token: ${{ secrets.PYPI_TOKEN }}
