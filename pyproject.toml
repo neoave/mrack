@@ -12,6 +12,8 @@ markers = [
 
 [tool.semantic_release]
 version_source = "commit"
+commit_subject = "chore: Release version {version}"
+commit_message = "Releasing mrack version {version}"
 version_variable = [
     "src/mrack/__init__.py:__version__",
     "docs/conf.py:release",

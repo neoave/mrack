@@ -1,5 +1,5 @@
 ---
-name: commit-msg-check
+name: Check commit message and PR header format
 
 on:
   pull_request:
