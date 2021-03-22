@@ -2,6 +2,21 @@
 
 <!--next-version-placeholder-->
 
+## v0.7.0 (2021-03-22)
+### Feature
+* Add RPM spec file ([`17aebbb`](https://github.com/neoave/mrack/commit/17aebbbb41453cace25258695eef795320477869))
+* OpenStack: increase polling time based on number of hosts ([`7558969`](https://github.com/neoave/mrack/commit/755896999e17b4b94336349ec98438a9bd532f3c))
+
+### Fix
+* Handle ServerError in all Openstack calls ([`585543a`](https://github.com/neoave/mrack/commit/585543a476debfbc9a2106e9fee2ed25014b7c82))
+* Handle timeout state and treat it as an error ([`a6b9738`](https://github.com/neoave/mrack/commit/a6b9738749d3392fae99d4d1b3df9e19fc118c89))
+* Podman ansible inventory and status_map ([`503a680`](https://github.com/neoave/mrack/commit/503a6802418bf8ac33cf08c0fd3468b13e7d5b74))
+* Fix pylint isssues and reuse existing methods ([`788b2ff`](https://github.com/neoave/mrack/commit/788b2ff520f26a7e50601d8c450ad74c2c7a9feb))
+* If mrack is run first time db may not exist ([`bd51176`](https://github.com/neoave/mrack/commit/bd51176b025390e32d3012aec26c56e055771be0))
+* Require beaker version with support for python 3.9 ([`6f22bea`](https://github.com/neoave/mrack/commit/6f22bea70c963ad717b8c8ce53bb85f848b0be88))
+* OpenStack provider does not crash if no credentials are provided ([`6115c1a`](https://github.com/neoave/mrack/commit/6115c1af4e8a8cb73624c7182259161e797910aa))
+* Provider: await abort_and_delete ([`8f361f5`](https://github.com/neoave/mrack/commit/8f361f5525bbfc9b3fba574825518dbc1ad3c2cd))
+
 ## v0.6.0 (2021-01-27)
 ### Feature
 * Podman support in SSH action ([`10a43f1`](https://github.com/neoave/mrack/commit/10a43f1bdaa328fad0a4fb2ad4ae57cd7ef41878))
