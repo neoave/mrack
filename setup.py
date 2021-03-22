@@ -47,7 +47,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Petr Vobornik",
     author_email="pvoborni@redhat.com",
-    url="https://github.com/pvoborni/mrack",
+    url="https://github.com/neoave/mrack",
     license="Apache License 2.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
