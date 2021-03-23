@@ -1,6 +1,6 @@
 # mrack
 
-![pypi_badge](https://img.shields.io/pypi/v/mrack?label=PyPI&logo=pypi) ![readthedocs_badge](https://img.shields.io/readthedocs/mrack?label=Read%20the%20Docs&logo=read-the-docs)
+![pypi_badge](https://img.shields.io/pypi/v/mrack?label=PyPI&logo=pypi) ![readthedocs_badge](https://img.shields.io/readthedocs/mrack?label=Read%20the%20Docs&logo=read-the-docs) ![badge](https://copr.fedorainfracloud.org/coprs/g/freeipa/neoave/package/mrack/status_image/last_build.png)
 
 **Important**: most of the described below is not implemented yet
 
@@ -122,7 +122,7 @@ pip install mrack
 
 In order to use the mrack utility a mrack.conf (e.g. [mrack.conf] from the repository(repo/blob/master/src/mrack/data/mrack.conf)) is needed.
 
-Mrack looks for the config file in following order:
+mrack looks for the config file in following order:
 - `./` actual directory
 - `~/.mrack/` home directory
 - `/etc/mrack/` system directory
@@ -169,7 +169,7 @@ or use `destroy` command's option `--metadata`/`-m` to orverride path to the met
 mrack destroy --metadata other-metadata.yaml
 ```
 
-### mrack as pyhon library
+### mrack as python library
 
 ```python
 import mrack
