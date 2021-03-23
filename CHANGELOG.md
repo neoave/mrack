@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.7.1 (2021-03-23)
+### Fix
+* Update project homepage ([`1a1a0c2`](https://github.com/neoave/mrack/commit/1a1a0c2082ede76c74a14ccee0a7e364a2cc0a5d))
+
+### Documentation
+* Add copr build badge and fix some typos ([`f85e236`](https://github.com/neoave/mrack/commit/f85e2366ee3fb5f952a03291bd4768099f298d23))
+
 ## v0.7.0 (2021-03-22)
 ### Feature
 * Add RPM spec file ([`17aebbb`](https://github.com/neoave/mrack/commit/17aebbbb41453cace25258695eef795320477869))
