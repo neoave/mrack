@@ -114,8 +114,17 @@ all:
 
 ## Installation
 
+mrack can be installed via pip, from PyPI:
+
 ```
 pip install mrack
+```
+
+It is also available for Fedora 32+ via COPR:
+
+```
+sudo dnf copr enable @freeipa/neoave
+sudo dnf install mrack
 ```
 
 ## Run mrack
