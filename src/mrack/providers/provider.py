@@ -47,7 +47,7 @@ class Provider:
         raise NotImplementedError()
 
     async def can_provision(self, hosts):
-        """Check that provider has enough resources to provison hosts."""
+        """Check that provider has enough resources to provision hosts."""
         raise NotImplementedError()
 
     async def create_server(self, req):
