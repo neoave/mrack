@@ -44,6 +44,17 @@ class PodmanProvider(Provider):
             STATUS_ERROR: STATUS_ERROR,
         }
 
+    async def init(self, container_images, default_network, container_options):
+        """Initialize Podman provider with data from config."""
+        logger.info(f"{self.dsp_name}: Initializing provider")
+        login_start = datetime.now()
+        self.images = container_images
+        self.default_network = default_network
+        self.podman_options = container_options
+        login_end = datetime.now()
+        login_duration = login_end - login_start
+        logger.info(f"{self.dsp_name}: Init duration {login_duration}")
+
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
         pass
@@ -60,10 +71,18 @@ class PodmanProvider(Provider):
         """Request and create resource on selected provider."""
         hostname = req["name"]
         logger.info(f"{self.dsp_name}: Creating container for host: {hostname}")
-        hostname = req["name"]
+
         image = req["image"]
-        network = req.get("network")
-        container_id = await self.podman.run(image, hostname, network)
+        network = req.get("network", self.default_network)
+        await self.podman.network_create(network)
+
+        container_id = await self.podman.run(
+            image,
+            hostname,
+            network,
+            extra_options=self.podman_options,
+            remove_at_stop=True,
+        )
         return container_id
 
     async def wait_till_provisioned(self, resource):
@@ -105,7 +124,15 @@ class PodmanProvider(Provider):
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
+        insp_data = await self.podman.inspect(host_id)
+
         deleted = await self.podman.rm(host_id, force=True)
+
+        networks = insp_data[0]["NetworkSettings"]["Networks"]
+
+        for net in networks:
+            await self.podman.network_remove(net)
+
         return deleted
 
     def get_status(self, state):
@@ -128,12 +155,19 @@ class PodmanProvider(Provider):
         result["id"] = prov_result.get("Id")
         result["name"] = prov_result["Config"]["Hostname"]
 
-        ip_addr = None
         network_set = prov_result.get("NetworkSettings")
-        if network_set:
-            ip_addr = network_set.get("IPAddress")
 
-        result["addresses"] = [ip_addr]
+        result["addresses"] = []
+        if network_set:
+            try:  # TODO self.network_name
+                for net in network_set["Networks"]:
+                    result["addresses"].append(
+                        network_set["Networks"][net]["IPAddress"]
+                    )
+            except KeyError as kerror:
+                raise ProvisioningError(
+                    f"{self.dsp_name}: Container state improper"
+                ) from kerror
 
         status = self.get_status(prov_result.get("State"))
         error_obj = None

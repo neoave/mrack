@@ -25,7 +25,19 @@ class PodmanTransformer(Transformer):
     _config_key = CONFIG_KEY
     _required_config_attrs = [
         "images",
+        "default_network",
+        "podman_options",
     ]
+
+    async def init_provider(self):
+        """Initialize associate provider and transformer display name."""
+        self.dsp_name = "Podman"
+
+        await self._provider.init(
+            container_images=self.config["images"].values(),
+            default_network=self.config["default_network"],
+            container_options=self.config["podman_options"],
+        )
 
     def create_host_requirement(self, host):
         """Create single input for podman provisioner."""
