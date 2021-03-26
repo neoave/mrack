@@ -66,3 +66,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pypi_token: ${{ secrets.PYPI_TOKEN }}
+      - name: Trigger COPR build
+        run: curl -X POST ${{ secrets.COPR_WEBHOOK_URL }}
