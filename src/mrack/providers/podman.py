@@ -59,7 +59,7 @@ class PodmanProvider(Provider):
     async def create_server(self, req):
         """Request and create resource on selected provider."""
         hostname = req["name"]
-        logger.info(f"Creating container for host: {hostname}")
+        logger.info(f"{self.dsp_name}: Creating container for host: {hostname}")
         hostname = req["name"]
         image = req["image"]
         network = req.get("network")
@@ -78,7 +78,7 @@ class PodmanProvider(Provider):
             try:
                 inspect = await self.podman.inspect(cont_id)
             except ProvisioningError as err:
-                logger.error(object2json(err))
+                logger.error(f"{self.dsp_name}: {object2json(err)}")
                 raise ServerNotFoundError(cont_id) from err
             server = inspect[0]
             running = server["State"]["Running"]
@@ -92,12 +92,15 @@ class PodmanProvider(Provider):
 
         if datetime.now() >= timeout_time:
             logger.warning(
-                f"{cont_id} was not provisioned within a timeout of" f" {timeout} mins"
+                f"{self.dsp_name}: {cont_id} was not provisioned within a timeout of"
+                f" {timeout} mins"
             )
         else:
-            logger.info(f"{cont_id} was provisioned in {prov_duration:.1f}s")
+            logger.info(
+                f"{self.dsp_name}: {cont_id} was provisioned in {prov_duration:.1f}s"
+            )
 
-        logger.debug(object2json(server))
+        logger.debug(f"{self.dsp_name}: Resource: {object2json(server)}")
         return server
 
     async def delete_host(self, host_id):
