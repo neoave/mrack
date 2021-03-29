@@ -25,6 +25,7 @@ class PodmanTransformer(Transformer):
     _config_key = CONFIG_KEY
     _required_config_attrs = [
         "images",
+        "pubkey",
         "default_network",
         "podman_options",
     ]
@@ -35,6 +36,7 @@ class PodmanTransformer(Transformer):
 
         await self._provider.init(
             container_images=self.config["images"].values(),
+            ssh_key=self.config["pubkey"],
             default_network=self.config["default_network"],
             container_options=self.config["podman_options"],
         )

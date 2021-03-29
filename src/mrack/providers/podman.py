@@ -16,6 +16,7 @@
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta
 
 from mrack.errors import ProvisioningError, ServerNotFoundError
@@ -44,12 +45,13 @@ class PodmanProvider(Provider):
             STATUS_ERROR: STATUS_ERROR,
         }
 
-    async def init(self, container_images, default_network, container_options):
+    async def init(self, container_images, default_network, ssh_key, container_options):
         """Initialize Podman provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
         self.images = container_images
         self.default_network = default_network
+        self.ssh_key = ssh_key
         self.podman_options = container_options
         login_end = datetime.now()
         login_duration = login_end - login_start
@@ -75,6 +77,13 @@ class PodmanProvider(Provider):
         image = req["image"]
         network = req.get("network", self.default_network)
         await self.podman.network_create(network)
+
+        if not await self.podman.image_exists(image):
+            logger.info(f"{self.dsp_name}: Pulling image {image}")
+            if not await self.podman.pull(image):
+                logger.error(f"{self.dsp_name}: Image {image} failed to pull")
+        else:
+            logger.info(f"{self.dsp_name}: Image {image} present")
 
         container_id = await self.podman.run(
             image,
@@ -120,18 +129,36 @@ class PodmanProvider(Provider):
             )
 
         logger.debug(f"{self.dsp_name}: Resource: {object2json(server)}")
+
+        with open(os.path.expanduser(self.ssh_key), "r") as key_file:
+            key_content = key_file.read()
+
+        if not await self.podman.exec_command(cont_id, "mkdir -p /root/.ssh/"):
+            raise ProvisioningError(f"Could not copy public key to container {cont_id}")
+
+        if not await self.podman.exec_command(
+            cont_id, f'echo "{key_content}" >> /root/.ssh/authorized_keys'
+        ):
+            raise ProvisioningError(f"Could not copy public key to container {cont_id}")
+
+        if not await self.podman.exec_command(cont_id, "systemctl restart sshd"):
+            raise ProvisioningError(
+                f"Failed restarting sshd service in container {cont_id}"
+            )
+
         return server
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
+        # first we inspect the container to find its networks
         insp_data = await self.podman.inspect(host_id)
-
-        deleted = await self.podman.rm(host_id, force=True)
-
         networks = insp_data[0]["NetworkSettings"]["Networks"]
-
+        # then we destroy the container
+        deleted = await self.podman.rm(host_id, force=True)  # TODO use stop and then rm
+        # after that we cleanup the network
         for net in networks:
-            await self.podman.network_remove(net)
+            if await self.podman.network_remove(net):
+                logger.info(f"{self.dsp_name}: Removed network '{net}'")
 
         return deleted
 
