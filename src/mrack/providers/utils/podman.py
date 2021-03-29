@@ -81,7 +81,6 @@ class Podman:
             args.extend(["--name", hostname.split(".")[0]])
 
         args.append(image)
-
         stdout, _stderr, _process = await self._run_podman(args)
         container_id = stdout.strip()
         return container_id
@@ -113,6 +112,13 @@ class Podman:
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
         return process.returncode == 0
 
+    async def exec_command(self, container_id, command):
+        """Execute command in selected container."""
+        args = ["exec", container_id, "sh", "-c"]
+        args.append(command)
+        _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
+        return process.returncode == 0
+
     async def network_exists(self, network):
         """Check the existence of podman network on system using inspect command."""
         args = ["network", "inspect", network]
@@ -141,6 +147,18 @@ class Podman:
         args = ["network", "remove", network]
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
 
+        return process.returncode == 0
+
+    async def pull(self, image):
+        """Pull a container image."""
+        args = ["pull", image]
+        _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
+        return process.returncode == 0
+
+    async def image_exists(self, image):
+        """Check if a container image exists in local storage."""
+        args = ["image", "exists", image]
+        _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
         return process.returncode == 0
 
     def interactive(self, container_id):
