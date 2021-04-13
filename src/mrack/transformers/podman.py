@@ -15,6 +15,7 @@
 """Podman transformer module."""
 
 from mrack.transformers.transformer import Transformer
+from mrack.utils import get_host_from_metadata
 
 CONFIG_KEY = "podman"
 
@@ -43,8 +44,10 @@ class PodmanTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for podman provisioner."""
+        _host, domain = get_host_from_metadata(self._metadata, host["name"])
         return {
             "name": host["name"],
             "image": self._get_image(host["os"]),
             "hostname": host["name"],
+            "domain": domain["name"],
         }

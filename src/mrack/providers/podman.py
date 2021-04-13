@@ -75,7 +75,9 @@ class PodmanProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating container for host: {hostname}")
 
         image = req["image"]
-        network = req.get("network", self.default_network)
+        network = req.get(
+            "network", f"{self.default_network}-{req['domain'].replace('.', '-')}"
+        )
         await self.podman.network_create(network)
 
         if not await self.podman.image_exists(image):

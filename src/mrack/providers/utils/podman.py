@@ -78,7 +78,7 @@ class Podman:
 
         if hostname:
             args.extend(["-h", hostname])
-            args.extend(["--name", hostname.split(".")[0]])
+            args.extend(["--name", f"{hostname.replace('.', '-')}-{network}"])
 
         args.append(image)
         stdout, _stderr, _process = await self._run_podman(args)
