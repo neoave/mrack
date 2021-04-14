@@ -52,7 +52,7 @@ class BeakerProvider(Provider):
         self.strategy = STRATEGY_ABORT
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
-        self.keypair = None
+        self.pubkey = None
         self.status_map = {
             "Reserved": STATUS_ACTIVE,
             "New": STATUS_PROVISIONING,
@@ -67,14 +67,14 @@ class BeakerProvider(Provider):
             "Completed": STATUS_OTHER,
         }
 
-    async def init(self, distros, max_attempts, reserve_duration, keypair):
+    async def init(self, distros, max_attempts, reserve_duration, pubkey):
         """Initialize provider with data from Beaker configuration."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         self.distros = distros
         # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
         self.max_attempts = max_attempts
         self.reserve_duration = reserve_duration
-        self.keypair = keypair
+        self.pubkey = pubkey
         login_start = datetime.now()
         default_config = os.path.expanduser(
             os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
@@ -104,9 +104,9 @@ class BeakerProvider(Provider):
         """Check that hosts can be provisioned."""
         return True
 
-    def _allow_ssh_key(self, ssh_key):
+    def _allow_ssh_key(self, pubkey):
 
-        with open(os.path.expanduser(ssh_key), "r") as key_file:
+        with open(os.path.expanduser(pubkey), "r") as key_file:
             key_content = key_file.read()
 
         return [
@@ -133,7 +133,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         specs.update({"priority": "Normal"})
 
         # Add allowed keys
-        specs.update({"ks_append": self._allow_ssh_key(self.keypair)})
+        specs.update({"ks_append": self._allow_ssh_key(self.pubkey)})
 
         # Use ks_meta
         specs.update({"ks_meta": "harness='restraint-rhts beakerlib-redhat'"})
