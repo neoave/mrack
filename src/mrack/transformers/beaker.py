@@ -26,7 +26,7 @@ class BeakerTransformer(Transformer):
     _config_key = CONFIG_KEY
     _required_config_attrs = [
         "distros",
-        "keypair",
+        "pubkey",
         "reserve_duration",
         "max_attempts",
     ]  # List[str]
@@ -38,7 +38,7 @@ class BeakerTransformer(Transformer):
             distros=self.config["distros"].values(),
             max_attempts=self.config["max_attempts"],
             reserve_duration=self.config["reserve_duration"],
-            keypair=self.config["keypair"],
+            pubkey=self.config["pubkey"],
         )
 
     def _get_bkr_variant(self, host):

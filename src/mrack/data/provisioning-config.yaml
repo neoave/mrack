@@ -58,7 +58,7 @@ beaker:  # beaker provider specific values
         fedora-32: Fedora-32%
 
     # path to public ssh key which is later uploaded to the machine for access
-    keypair: id_rsa.pub
+    pubkey: id_rsa.pub
     # default reservation time for the beaker job
     reserve_duration: 86400
     # default max_attepmts value for the beaker job
