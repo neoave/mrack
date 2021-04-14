@@ -1,4 +1,35 @@
 ---
+podman:
+    images:
+        # example: systemd enabled container images from: https://github.com/Tiboris/snappeas
+        fedora-rawhide: tdudlak/snappeas:fedora-rawhide
+
+    pubkey: config/id_rsa.pub
+
+    # this will be used as prefix for the network name
+    default_network: mrack
+
+    # advanced podman options to be passed to every execution of podman run eg:
+    # NOTE: when 'key' in podman_options has list assigned as value
+    #       the option specidfied by the 'key' is added multiple times
+    #       if it has only one value the option is used once
+    podman_options:
+        # Add Linux capabilities.
+        "--cap-add":
+            - "ALL"
+        # Allowed syscall list seccomp JSON file to be used as a seccomp filter
+        "--security-opt": "seccomp=src/mrack/data/seccomp.json"
+        # Mount a temporary filesystems (tmpfs) into a container
+        "--tmpfs":
+            - "/tmp"
+            - "/run"
+            - "/run/lock"
+        # Use /sys/fs/cgroup in container as read only volume
+        "-v":
+            - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+        # Adding ipv6 support to network
+        "--network": "enable_ipv6=true"
+
 aws:  # aws provider config
     images:
         # list of ami images key is used in metadata ami image is used for provider e.g.
