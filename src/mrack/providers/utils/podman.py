@@ -164,4 +164,8 @@ class Podman:
     def interactive(self, container_id):
         """Create interactive session."""
         args = [self.program, "exec", "-ti", container_id, "bash"]
-        subprocess.run(args, text=True, check=True)
+        try:
+            subprocess.run(args, text=True, check=True)
+        except subprocess.CalledProcessError as callerr:
+            if callerr.returncode != 130:
+                raise  # when it was not killed by ctrl + D (signal 2)

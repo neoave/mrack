@@ -93,7 +93,7 @@ class SSH:
         """Simulate SSH by attaching an interactive session to a container."""
         if host.provider.name == "podman":
             podman = Podman()
-            podman.interactive(host.id)
+            podman.interactive(host.host_id)
         else:
             raise NotImplementedError("Docker is not yet supported.")
 
