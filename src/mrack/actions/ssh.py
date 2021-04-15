@@ -15,13 +15,11 @@
 """SSH action module."""
 
 import logging
-import os
-import subprocess
 
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
 from mrack.providers.utils.podman import Podman
-from mrack.utils import get_host_from_metadata, get_password, get_ssh_key, get_username
+from mrack.utils import ssh_to_host as utils_ssh_to_host
 
 logger = logging.getLogger(__name__)
 
@@ -85,39 +83,7 @@ class SSH:
 
     def ssh_to_host(self, host):
         """SSH to the selected host."""
-        my_env = os.environ.copy()
-
-        run_args = {
-            "env": my_env,
-            "shell": True,
-        }
-
-        cmd = ["ssh"]
-        cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
-        cmd.extend(["-o", "'UserKnownHostsFile=/dev/null'"])
-
-        meta_host, _domain = get_host_from_metadata(self._metadata, host.name)
-        username = get_username(host, meta_host, self._config)
-        password = get_password(host, meta_host, self._config)
-        ssh_key = get_ssh_key(host, meta_host, self._config)
-
-        if username:
-            cmd.extend(["-l", username])
-        if ssh_key:
-            cmd.extend(["-i", ssh_key])
-        psw_input = None
-        if password and not ssh_key:
-            cmd.extend("-o", "'PasswordAuthentication'")
-            psw_input = f"{password}\n"
-
-        cmd.append(host.ip_addr)  # Destination
-
-        cmd = " ".join(cmd)
-
-        logger.info(cmd)
-        process = subprocess.Popen(cmd, **run_args)
-        process.communicate(input=psw_input)
-        return process.returncode
+        return utils_ssh_to_host(host)
 
     def is_container_env(self, host):
         """Check if host is using local container technology."""

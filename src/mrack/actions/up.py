@@ -20,7 +20,7 @@ import logging
 from mrack.errors import MetadataError
 from mrack.providers import providers
 from mrack.transformers import transformers
-from mrack.utils import validate_dict_attrs
+from mrack.utils import global_context, validate_dict_attrs
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,14 @@ class Up:
     async def init(self, config, metadata, default_provider, db_driver):
         """Initialize the Up action."""
         self._transformers = {}
+
         self._config = config
         self._metadata = metadata
         self._db_driver = db_driver
         self._required_domain_attrs = ["name", "hosts"]
+
+        global_context["metadata"] = metadata
+        global_context["config"] = config
 
         self.validate_topology()
         default_provider_name = self._config.get("provider", default_provider)
