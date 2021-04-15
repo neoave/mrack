@@ -207,3 +207,8 @@ class PodmanProvider(Provider):
         result["status"] = status
 
         return result
+
+    def to_host(self, provisioning_result, username=None):
+        """Transform provisioning result into Host object."""
+        # for containers use always root user
+        return super().to_host(provisioning_result, username="root")
