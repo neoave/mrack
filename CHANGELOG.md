@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.8.0 (2021-04-15)
+### Feature
+* Use ssh to check VM availability after provisioning ([`7af47ec`](https://github.com/neoave/mrack/commit/7af47ec4a161c6b6e7f521d06ea3a23ca859ed51))
+
+### Documentation
+* Add info on how to install on Fedora ([`90a52bc`](https://github.com/neoave/mrack/commit/90a52bc2661598da698f40c0a1cd5e730ec65bed))
+
 ## v0.7.1 (2021-03-23)
 ### Fix
 * Update project homepage ([`1a1a0c2`](https://github.com/neoave/mrack/commit/1a1a0c2082ede76c74a14ccee0a7e364a2cc0a5d))
