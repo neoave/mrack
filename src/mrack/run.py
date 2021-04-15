@@ -207,7 +207,7 @@ async def ssh(ctx, hostname, metadata):
     init_metadata(ctx, metadata)
     ssh_action = SSH()
     ssh_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
-    ssh_action.ssh(hostname)
+    return ssh_action.ssh(hostname)
 
 
 @mrackcli.group()

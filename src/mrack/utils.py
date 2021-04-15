@@ -21,13 +21,18 @@ import datetime
 import json
 import logging
 import os
+import subprocess
 import sys
+from typing import Dict
 
 import yaml
 
 from mrack.errors import ConfigError
 
 logger = logging.getLogger(__name__)
+
+# Singleton context holder
+global_context: Dict = {}
 
 
 def get_config_value(config_dict, key, default=None):
@@ -199,6 +204,51 @@ def get_ssh_key(host, meta_host, config):
     ssh_key = ssh_key or provider_config.get(ssh_key_attr)
     ssh_key = ssh_key or config.get(ssh_key_attr)
     return ssh_key
+
+
+def ssh_to_host(
+    host,
+    execute=None,
+    username=None,
+    password=None,
+    ssh_key=None,
+):
+    """SSH to the selected host."""
+    my_env = os.environ.copy()
+
+    run_args = {
+        "env": my_env,
+        "shell": True,
+    }
+
+    cmd = ["ssh"]
+    cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
+    cmd.extend(["-o", "'UserKnownHostsFile=/dev/null'"])
+
+    meta_host, _domain = get_host_from_metadata(global_context["metadata"], host.name)
+    username = username or get_username(host, meta_host, global_context["config"])
+    ssh_key = ssh_key or get_ssh_key(host, meta_host, global_context["config"])
+
+    if username:
+        cmd.extend(["-l", username])
+    if ssh_key:
+        cmd.extend(["-i", ssh_key])
+    psw_input = None
+    if password and not ssh_key:
+        cmd.extend(["-o", "'PasswordAuthentication'"])
+        psw_input = f"{password}\n"
+
+    cmd.append(host.ip_addr)  # Destination
+
+    if execute:
+        cmd.extend(["-C", execute])
+
+    cmd = " ".join(cmd)
+
+    logger.info(cmd)
+    process = subprocess.Popen(cmd, **run_args)
+    process.communicate(input=psw_input)
+    return process.returncode == 0
 
 
 class NoSuchFileHandler:

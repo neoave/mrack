@@ -15,10 +15,12 @@
 """General Provider interface."""
 import asyncio
 import logging
-from datetime import datetime
+import socket
+from datetime import datetime, timedelta
 
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
+from mrack.utils import ssh_to_host
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,37 @@ class Provider:
         """Prepare provisioning."""
         raise NotImplementedError()
 
+    async def _wait_for_ssh(self, host, port=22, timeout=1200):
+        """
+        Wait until a port starts accepting TCP connections.
+
+        Args:
+            port (int): Port number.
+            host (str): Host address on which the port should exist.
+            timeout (float): In seconds. How long to wait before raising errors.
+        Raises:
+            TimeoutError: The port isn't accepting connection after specified `timeout`.
+        """
+        start_time = datetime.now()
+        while True:
+            try:
+                with socket.create_connection((host.ip_addr, port), timeout=timeout):
+                    break
+            except OSError:
+                await asyncio.sleep(10)
+                logger.info(
+                    f"{self.dsp_name}: Waiting for the port {port} "
+                    f"on host {host.ip_addr} to start accepting connections."
+                )
+                if datetime.now() - start_time >= timedelta(minutes=timeout):
+                    logger.error(
+                        f"{self.dsp_name}: Waited too long for the port {port} "
+                        f"on host {host.ip_addr} to start accepting connections."
+                    )
+
+        # success ssh return 0 else 1 so we treat it as error in provisioning
+        return ssh_to_host(host, execute="echo mrack")
+
     async def _provision_base(self, reqs):  # pylint disable=too-many-locals
         """Provision hosts based on list of host requirements.
 
@@ -91,7 +124,7 @@ class Provider:
         create_resps = await asyncio.gather(*create_servers)
         logger.info(f"{self.dsp_name}: Provisioning issued")
 
-        logger.info(f"{self.dsp_name}: Waiting for all hosts to be available")
+        logger.info(f"{self.dsp_name}: Waiting for all hosts to be active")
         wait_servers = []
         for create_resp in create_resps:
             awaitable = self.wait_till_provisioned(create_resp)
@@ -107,7 +140,7 @@ class Provider:
         logger.info(f"{self.dsp_name}: Provisioning duration: {provisioned - started}")
 
         hosts = [self.to_host(srv) for srv in server_results]
-        error_hosts = self.parse_error_hosts(hosts)
+        error_hosts = await self.parse_error_hosts(hosts)
         success_hosts = [h for h in hosts if h not in error_hosts]
         missing_reqs = [
             req for req in reqs if req["name"] in [host.name for host in error_hosts]
@@ -182,7 +215,7 @@ class Provider:
         """Provisioning strategy to try once and then abort."""
         return await self._provision_base(reqs)
 
-    def parse_error_hosts(self, hosts):
+    async def parse_error_hosts(self, hosts):
         """Parse provisioning errors from provider result."""
         errors = []
         logger.debug(f"{self.dsp_name}: Checking provisioned hosts for errors")
@@ -191,7 +224,9 @@ class Provider:
                 f"{self.dsp_name}: Host - {host.host_id}\tStatus - {host.status}"
             )
 
-            if host.status != STATUS_ACTIVE:
+            # self._wait_for_ssh checks the host's capability to be
+            # connected to using ssh; if the check fails we reprovision
+            if host.status != STATUS_ACTIVE or not await self._wait_for_ssh(host):
                 errors.append(host)
 
         return errors
