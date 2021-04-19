@@ -155,6 +155,7 @@ class OpenStackTransformer(Transformer):
             "image": required_image,
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
+            "config_drive": self.config.get("enable_config_drive", False),
         }
 
     def create_host_requirements(self):
