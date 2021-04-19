@@ -144,6 +144,11 @@ class Host:
         """Get host error object."""
         return self._error
 
+    @error.setter
+    def error(self, value):
+        """Set host error object."""
+        self._error = value
+
     @property
     def username(self):
         """Get username for connecting to host."""

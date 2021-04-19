@@ -76,21 +76,29 @@ class Provider:
             TimeoutError: The port isn't accepting connection after specified `timeout`.
         """
         start_time = datetime.now()
+        info_msg = (
+            f"{self.dsp_name}: Waiting for the port {port} "
+            f"on host {host.ip_addr} to start accepting connections"
+        )
+        logger.info(info_msg)
+
         while True:
             try:
                 with socket.create_connection((host.ip_addr, port), timeout=timeout):
+                    logger.info(
+                        f"{self.dsp_name}: Port {port} on host "
+                        f" {host.ip_addr} is now open"
+                    )
                     break
             except OSError:
                 await asyncio.sleep(10)
-                logger.info(
-                    f"{self.dsp_name}: Waiting for the port {port} "
-                    f"on host {host.ip_addr} to start accepting connections."
-                )
+                logger.debug(info_msg)
                 if datetime.now() - start_time >= timedelta(minutes=timeout):
                     logger.error(
                         f"{self.dsp_name}: Waited too long for the port {port} "
-                        f"on host {host.ip_addr} to start accepting connections."
+                        f"on host {host.ip_addr} to start accepting connections"
                     )
+                    break
 
         # success ssh return 0 else 1 so we treat it as error in provisioning
         return ssh_to_host(host, command="echo mrack")
@@ -224,9 +232,17 @@ class Provider:
                 f"{self.dsp_name}: Host - {host.host_id}\tStatus - {host.status}"
             )
 
+            if host.status != STATUS_ACTIVE:
+                errors.append(host)
+                continue
+
             # self._wait_for_ssh checks the host's capability to be
             # connected to using ssh; if the check fails we reprovision
-            if host.status != STATUS_ACTIVE or not await self._wait_for_ssh(host):
+            if not await self._wait_for_ssh(host):
+                host.error = (
+                    "Could not establish ssh connection to host "
+                    f"{host.host_id} with IP {host.ip_addr}"
+                )
                 errors.append(host)
 
         return errors
