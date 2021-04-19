@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.9.0 (2021-04-19)
+### Feature
+* Enable config drive in OpenStack ([`3cdb54b`](https://github.com/neoave/mrack/commit/3cdb54b0ce64c97fb884c9d83ba46576fa8bbae7))
+
 ## v0.8.0 (2021-04-15)
 ### Feature
 * Use ssh to check VM availability after provisioning ([`7af47ec`](https://github.com/neoave/mrack/commit/7af47ec4a161c6b6e7f521d06ea3a23ca859ed51))
