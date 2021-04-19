@@ -58,6 +58,9 @@ openstack:  # OpenStack provider specific values
     # credentials profile to use from file
     profile: devstack
 
+    # Enable Config drive to fetch metadata from a mounted volume instead of Metadata Service
+    # enable_config_drive: True
+
 # default user per image from the any of provider configuration
 users:
     fedora-32: fedora
