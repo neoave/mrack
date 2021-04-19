@@ -208,10 +208,10 @@ def get_ssh_key(host, meta_host, config):
 
 def ssh_to_host(
     host,
-    execute=None,
     username=None,
     password=None,
     ssh_key=None,
+    command=None,
 ):
     """SSH to the selected host."""
     my_env = os.environ.copy()
@@ -240,8 +240,8 @@ def ssh_to_host(
 
     cmd.append(host.ip_addr)  # Destination
 
-    if execute:
-        cmd.extend(["-C", execute])
+    if command:
+        cmd.append(command)
 
     cmd = " ".join(cmd)
 
