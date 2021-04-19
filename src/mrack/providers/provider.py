@@ -93,7 +93,7 @@ class Provider:
                     )
 
         # success ssh return 0 else 1 so we treat it as error in provisioning
-        return ssh_to_host(host, execute="echo mrack")
+        return ssh_to_host(host, command="echo mrack")
 
     async def _provision_base(self, reqs):  # pylint disable=too-many-locals
         """Provision hosts based on list of host requirements.
