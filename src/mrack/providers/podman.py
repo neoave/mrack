@@ -58,8 +58,29 @@ class PodmanProvider(Provider):
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")
 
     async def prepare_provisioning(self, reqs):
-        """Prepare provisioning."""
-        pass
+        """Pull missing images to prepare provisioning for podman."""
+        image_list = set()
+
+        for req in reqs:
+            image_list.add(req["image"])
+
+        logger.info(f"{self.dsp_name}: Pulling missing images {image_list}")
+
+        awaitables = []
+        for image in image_list:
+            if not await self.podman.image_exists(image):
+                logger.debug(f"{self.dsp_name}: Pull of image '{image}' required")
+                awaitables.append(self.podman.pull(image))
+
+        pull_results = await asyncio.gather(*awaitables)
+        success = all(pull_results)
+
+        if success:
+            logger.info(f"{self.dsp_name}: All required images present")
+        else:
+            logger.error(f"{self.dsp_name}: Pulling of missing images failed")
+
+        return success
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -79,13 +100,6 @@ class PodmanProvider(Provider):
             "network", f"{self.default_network}-{req['domain'].replace('.', '-')}"
         )
         await self.podman.network_create(network)
-
-        if not await self.podman.image_exists(image):
-            logger.info(f"{self.dsp_name}: Pulling image {image}")
-            if not await self.podman.pull(image):
-                logger.error(f"{self.dsp_name}: Image {image} failed to pull")
-        else:
-            logger.info(f"{self.dsp_name}: Image {image} present")
 
         container_id = await self.podman.run(
             image,
@@ -157,7 +171,7 @@ class PodmanProvider(Provider):
         networks = insp_data[0]["NetworkSettings"]["Networks"]
         # then we destroy the container
         deleted = await self.podman.rm(host_id, force=True)  # TODO use stop and then rm
-        # after that we cleanup the network
+        # after that we cleanup the podman network
         for net in networks:
             if await self.podman.network_remove(net):
                 logger.info(f"{self.dsp_name}: Removed network '{net}'")
