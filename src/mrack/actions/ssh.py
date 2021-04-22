@@ -19,6 +19,7 @@ import logging
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
 from mrack.providers.utils.podman import Podman
+from mrack.utils import global_context
 from mrack.utils import ssh_to_host as utils_ssh_to_host
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,9 @@ class SSH:
         self._config = config
         self._metadata = metadata
         self._db = db_driver
+
+        global_context["metadata"] = metadata
+        global_context["config"] = config
 
     def pick_host_interactively(self, hosts):
         """Print list of host and let user to choose one."""
