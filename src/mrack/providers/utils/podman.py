@@ -30,6 +30,7 @@ class Podman:
     def __init__(self, program="podman"):
         """Init the instance."""
         self.program = program
+        self.dsp_name = program.capitalize()
 
     async def _run_podman(self, args, raise_on_err=True):
         """Util method to execute podman process."""
@@ -128,7 +129,7 @@ class Podman:
     async def network_create(self, network):
         """Create a podman network if it does not exist."""
         if await self.network_exists(network):
-            logger.debug(f"Podman network '{network}' is present")
+            logger.debug(f"{self.dsp_name} network '{network}' is present")
             return 0
 
         logger.info(f"Creating podman network {network}")
@@ -140,10 +141,11 @@ class Podman:
     async def network_remove(self, network):
         """Remove a podman network if it does exist."""
         if not await self.network_exists(network):
-            logger.debug(f"Podman network '{network}' does not exists")
+            logger.debug(
+                f"{self.dsp_name}: {self.dsp_name} network '{network}' does not exists"
+            )
             return 0
 
-        logger.info(f"Removing podman network {network}")
         args = ["network", "remove", network]
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
 
@@ -152,7 +154,15 @@ class Podman:
     async def pull(self, image):
         """Pull a container image."""
         args = ["pull", image]
+        logger.info(
+            f"{self.dsp_name}: Pulling image '{image}'. This may take a while..."
+        )
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
+        if process.returncode == 0:
+            logger.info(f"{self.dsp_name}: Pull of image '{image}' succeeded")
+        else:
+            logger.error(f"{self.dsp_name}: Pull of image '{image}' failed")
+
         return process.returncode == 0
 
     async def image_exists(self, image):
