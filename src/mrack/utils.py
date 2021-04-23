@@ -232,6 +232,7 @@ def ssh_to_host(
     if username:
         cmd.extend(["-l", username])
     if ssh_key:
+        cmd.extend(["-o", "'PasswordAuthentication=no'"])
         cmd.extend(["-i", ssh_key])
     psw_input = None
     if password and not ssh_key:
