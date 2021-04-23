@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 STRATEGY_ABORT = "abort"
 STRATEGY_RETRY = "retry"
+RET_CODE = 0
+HOST_OBJ = 1
 
 
 class Provider:
@@ -70,7 +72,7 @@ class Provider:
 
         Args:
             port (int): Port number.
-            host (str): Host address on which the port should exist.
+            host (Host): Host object to get its address on which the port should exist.
             timeout (float): In seconds. How long to wait before raising errors.
         Raises:
             TimeoutError: The port isn't accepting connection after specified `timeout`.
@@ -100,10 +102,32 @@ class Provider:
                     )
                     break
 
-        # success ssh return 0 else 1 so we treat it as error in provisioning
-        return ssh_to_host(host, command="echo mrack")
+        # Wait also for the ssh key to be accepted for a half timeout time
+        start_ssh = datetime.now()
 
-    async def _provision_base(self, reqs):  # pylint disable=too-many-locals
+        while True:
+            res = ssh_to_host(host, command="echo mrack")
+            duration = datetime.now() - start_ssh
+            if res:
+                logger.info(
+                    f"{self.dsp_name}: SSH to host '{host.ip_addr}' successful "
+                    f"after {duration:.1f}s"
+                )
+                break
+
+            if datetime.now() - start_ssh >= timedelta(minutes=(timeout / 2)):
+                logger.error(
+                    f"{self.dsp_name}: SSH to host '{host.ip_addr}' "
+                    f"timed out after {duration:.1f}s"
+                )
+                break
+
+            # wait 10 seconds to retry the ssh connection
+            await asyncio.sleep(10)
+
+        return res, host
+
+    async def _provision_base(self, reqs):  # pylint: disable=too-many-locals
         """Provision hosts based on list of host requirements.
 
         Main function which does provisioning and not any validation.
@@ -149,7 +173,28 @@ class Provider:
 
         hosts = [self.to_host(srv) for srv in server_results]
         error_hosts = await self.parse_error_hosts(hosts)
-        success_hosts = [h for h in hosts if h not in error_hosts]
+        active_hosts = [h for h in hosts if h not in error_hosts]
+        # check ssh connectivity to succeeded hosts
+        wait_ssh = []
+        for host in active_hosts:
+            awaitable = self._wait_for_ssh(host)
+            wait_ssh.append(awaitable)
+
+        ssh_results = await asyncio.gather(*wait_ssh)
+        # We distinguish the success hosts and new error hosts from active by using:
+        # res[RET_CODE] 0 - the result of operation returned from self._wait_for_ssh()
+        # res[HOST_OBJ] 1 - the host object returned from self._wait_for_ssh()
+        success_hosts = []
+        for res in ssh_results:
+            if res[RET_CODE]:
+                success_hosts.append(res[HOST_OBJ])
+            else:
+                res[HOST_OBJ].error = (
+                    "Could not establish ssh connection to host "
+                    f"{res[HOST_OBJ].host_id} with IP {res[HOST_OBJ].ip_addr}"
+                )
+                error_hosts.append(res[HOST_OBJ])
+
         missing_reqs = [
             req for req in reqs if req["name"] in [host.name for host in error_hosts]
         ]
@@ -233,16 +278,6 @@ class Provider:
             )
 
             if host.status != STATUS_ACTIVE:
-                errors.append(host)
-                continue
-
-            # self._wait_for_ssh checks the host's capability to be
-            # connected to using ssh; if the check fails we reprovision
-            if not await self._wait_for_ssh(host):
-                host.error = (
-                    "Could not establish ssh connection to host "
-                    f"{host.host_id} with IP {host.ip_addr}"
-                )
                 errors.append(host)
 
         return errors
