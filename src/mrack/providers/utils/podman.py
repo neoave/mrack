@@ -129,10 +129,10 @@ class Podman:
     async def network_create(self, network):
         """Create a podman network if it does not exist."""
         if await self.network_exists(network):
-            logger.debug(f"{self.dsp_name} network '{network}' is present")
+            logger.debug(f"{self.dsp_name}: Network '{network}' is present")
             return 0
 
-        logger.info(f"Creating podman network {network}")
+        logger.info(f"{self.dsp_name}: Creating podman network '{network}'")
         args = ["network", "create", network]
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
 
@@ -141,10 +141,8 @@ class Podman:
     async def network_remove(self, network):
         """Remove a podman network if it does exist."""
         if not await self.network_exists(network):
-            logger.debug(
-                f"{self.dsp_name}: {self.dsp_name} network '{network}' does not exists"
-            )
-            return 0
+            logger.debug(f"{self.dsp_name}: Network '{network}' does not exists")
+            return True
 
         args = ["network", "remove", network]
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)

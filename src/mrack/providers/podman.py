@@ -58,11 +58,36 @@ class PodmanProvider(Provider):
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")
 
     async def prepare_provisioning(self, reqs):
-        """Pull missing images to prepare provisioning for podman."""
+        """Prepare podman network and pull missing images to prepare provisioning."""
         image_list = set()
+        network_list = set()
 
         for req in reqs:
+            # First create list of podman network(s) to be created
+            # podman network(s) should be always created no matter what
+            network = req.get(
+                "network", f"{self.default_network}-{req['domain'].replace('.', '-')}"
+            )
+            # store the used network per requirement to be later accessed
+            req["network"] = network
+            network_list.add(network)
+
+            # Prepare image_list to be pulled later
             image_list.add(req["image"])
+
+        if network_list:
+            logger.info(f"{self.dsp_name}: Preparing network(s) {network_list}")
+            awaitables = []
+            for network in network_list:
+                if not await self.podman.network_exists(network):
+                    awaitables.append(self.podman.network_create(network))
+
+            network_results = await asyncio.gather(*awaitables)
+            success = all(network_results)
+
+            if not success:
+                logger.error(f"{self.dsp_name}: Creation of networks failed")
+                return False
 
         logger.info(f"{self.dsp_name}: Pulling missing images {image_list}")
 
@@ -96,10 +121,12 @@ class PodmanProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating container for host: {hostname}")
 
         image = req["image"]
-        network = req.get(
-            "network", f"{self.default_network}-{req['domain'].replace('.', '-')}"
-        )
-        await self.podman.network_create(network)
+        network = req.get("network")  # preparation method should set this value
+        if not network:
+            logger.error(
+                f"{self.dsp_name}: Failed to load network requirement from: {req}"
+            )
+            raise ProvisioningError("Could not set up podman network for some host(s)")
 
         container_id = await self.podman.run(
             image,
