@@ -158,14 +158,20 @@ class OpenStackTransformer(Transformer):
     def create_host_requirement(self, host):
         """Create single input for OpenStack provisioner."""
         required_image = host.get("image") or self._get_image(host["os"])
-        return {
+        req = {
             "name": host["name"],
             "flavor": self._get_flavor(host),
             "image": required_image,
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
-            "config_drive": self.config.get("enable_config_drive", False),
         }
+
+        # do not add this requirement at all if it is not required
+        config_drive_req = self.config.get("enable_config_drive")
+        if config_drive_req:
+            req.update({"config_drive": config_drive_req})
+
+        return req
 
     def create_host_requirements(self):
         """Create inputs for all host for OpenStack provisioner.
