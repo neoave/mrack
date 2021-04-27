@@ -17,17 +17,17 @@
 import asyncio
 import logging
 
+from mrack.actions.action import Action
 from mrack.errors import MetadataError, ProvisioningError
 from mrack.providers import providers
-from mrack.transformers import transformers
-from mrack.utils import global_context, validate_dict_attrs
+from mrack.utils import validate_dict_attrs
 
 PROVIDER_NAME_INDEX = 1
 
 logger = logging.getLogger(__name__)
 
 
-class Up:
+class Up(Action):
     """
     Up action.
 
@@ -43,18 +43,13 @@ class Up:
     inventory.
     """
 
-    async def init(self, config, metadata, default_provider, db_driver):
+    def __init__(self, config=None, metadata=None, db_driver=None):
         """Initialize the Up action."""
-        self._transformers = {}
-
-        self._config = config
-        self._metadata = metadata
-        self._db_driver = db_driver
+        super().__init__(config=config, metadata=metadata, db_driver=db_driver)
         self._required_domain_attrs = ["name", "hosts"]
 
-        global_context["metadata"] = metadata
-        global_context["config"] = config
-
+    async def init(self, default_provider):
+        """Initialize the Up action for the topology."""
         self.validate_topology()
         default_provider_name = self._config.get("provider", default_provider)
         default_provider_name = self._metadata.get("provider", default_provider_name)
@@ -64,17 +59,6 @@ class Up:
                 transformer = await self._get_transformer(provider_name)
                 transformer.validate_host(host)
                 transformer.add_host(host)
-
-    async def _get_transformer(self, provider_name):
-        """Get a transformer by name, initialize a new one if not yet done."""
-        transformer = self._transformers.get(provider_name)
-        if not transformer:
-            transformer = transformers.get(provider_name)
-            await transformer.init(self._config, self._metadata)
-            if not transformer:
-                raise MetadataError(f"Invalid provider: {provider_name}")
-            self._transformers[provider_name] = transformer
-        return transformer
 
     def validate_topology(self):
         """Validate topology part of job metadata.
