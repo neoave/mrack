@@ -24,16 +24,13 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Dict
+from functools import update_wrapper
 
 import yaml
 
 from mrack.errors import ConfigError, ProvisioningError
 
 logger = logging.getLogger(__name__)
-
-# Singleton context holder
-global_context: Dict = {}
 
 
 def get_config_value(config_dict, key, default=None):
@@ -208,6 +205,15 @@ def get_ssh_key(host, meta_host, config):
     return ssh_key
 
 
+def get_username_pass_and_ssh_key(host, context):
+    """Return username password and ssh_key to be later used for ssh connections."""
+    meta_host, _domain = get_host_from_metadata(context.METADATA, host.name)
+    username = get_username(host, meta_host, context.PROV_CONFIG)
+    ssh_key = get_ssh_key(host, meta_host, context.PROV_CONFIG)
+    password = None if ssh_key else get_password(host, meta_host, context.PROV_CONFIG)
+    return username, password, ssh_key
+
+
 def ssh_to_host(
     host,
     username=None,
@@ -216,9 +222,6 @@ def ssh_to_host(
     command=None,
 ):
     """SSH to the selected host."""
-    meta_host, _domain = get_host_from_metadata(global_context["metadata"], host.name)
-    username = username or get_username(host, meta_host, global_context["config"])
-    ssh_key = ssh_key or get_ssh_key(host, meta_host, global_context["config"])
     psw = host.password or password
 
     run_args = {
@@ -282,6 +285,17 @@ async def exec_async_subprocess(program, args, raise_on_err=True):
     if process.returncode != 0 and raise_on_err:
         raise ProvisioningError(stderr)
     return stdout, stderr, process
+
+
+def async_run(func):
+    """Decorate click actions to run as async."""
+    func = asyncio.coroutine(func)
+
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(func(*args, **kwargs))
+
+    return update_wrapper(wrapper, func)
 
 
 class NoSuchFileHandler:

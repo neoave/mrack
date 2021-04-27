@@ -17,6 +17,7 @@
 import getpass
 import logging
 
+from mrack.actions.action import DBAction
 from mrack.errors import ApplicationError, ConfigError
 from mrack.host import STATUS_ACTIVE
 
@@ -118,12 +119,12 @@ class EtcHostsUpdater:
             raise ApplicationError(err) from perm_err
 
 
-class EtcHostsUpdate:
+class EtcHostsUpdate(DBAction):
     """Add active vms to /etc/hosts file."""
 
-    def __init__(self, db_driver):
+    def __init__(self, db_driver=None):
         """Initialize the /etc/hosts update action."""
-        self._db_driver = db_driver
+        super().__init__(db_driver=db_driver)
         self.updater = EtcHostsUpdater()
 
     def update(self):

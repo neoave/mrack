@@ -108,8 +108,7 @@ def init_metadata(ctx, user_defined_path):
 async def generate_outputs(ctx):
     """Init and run output action."""
     config = ctx.obj[CONFIG]
-    output_action = Output()
-    await output_action.init(
+    output_action = Output(
         ctx.obj[PROV_CONFIG],
         ctx.obj[METADATA],
         ctx.obj[DB],
@@ -163,8 +162,8 @@ async def up(ctx, metadata, provider):  # pylint: disable=invalid-name
     """
     init_metadata(ctx, metadata)
 
-    up_action = Up()
-    await up_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], provider, ctx.obj[DB])
+    up_action = Up(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    await up_action.init(provider)
     await up_action.provision()
 
     await generate_outputs(ctx)
@@ -177,8 +176,7 @@ async def up(ctx, metadata, provider):  # pylint: disable=invalid-name
 async def destroy(ctx, metadata):
     """Destroy provisioned hosts."""
     init_metadata(ctx, metadata)
-    destroy_action = Destroy()
-    await destroy_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    destroy_action = Destroy(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     await destroy_action.destroy()
 
 
@@ -197,8 +195,7 @@ async def output(ctx, metadata):
 @async_run
 async def list(ctx):  # pylint: disable=redefined-builtin
     """List host tracked by."""
-    list_action = List()
-    list_action.init(ctx.obj[DB])
+    list_action = List(ctx.obj[DB])
     list_action.list()
 
 
@@ -210,8 +207,7 @@ async def list(ctx):  # pylint: disable=redefined-builtin
 async def ssh(ctx, hostname, metadata):
     """SSH to host."""
     init_metadata(ctx, metadata)
-    ssh_action = SSH()
-    ssh_action.init(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    ssh_action = SSH(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
     return ssh_action.ssh(hostname)
 
 

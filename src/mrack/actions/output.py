@@ -15,6 +15,8 @@
 """Output action."""
 import logging
 
+from mrack.actions.action import Action
+from mrack.context import global_context
 from mrack.errors import MetadataError
 from mrack.outputs.ansible_inventory import AnsibleInventoryOutput
 from mrack.outputs.pytest_multihost import PytestMultihostOutput
@@ -22,22 +24,33 @@ from mrack.outputs.pytest_multihost import PytestMultihostOutput
 logger = logging.getLogger(__name__)
 
 
-class Output:
+class Output(Action):
     """
     Output action.
 
     Test action to run output modules from data in database.
     """
 
-    async def init(
-        self, config, metadata, db_driver, ansible_path, pytest_multihost_path
-    ):
+    def __init__(
+        self,
+        config=None,
+        metadata=None,
+        db_driver=None,
+        ansible_path=None,
+        pytest_multihost_path=None,
+    ):  # pylint: disable=arguments-differ
         """Initialize the Output action."""
-        self._config = config
-        self._metadata = metadata
-        self._db_driver = db_driver
-        self._ansible_path = ansible_path
-        self._pytest_multihost_path = pytest_multihost_path
+        super().__init__(config=config, metadata=metadata, db_driver=db_driver)
+
+        if global_context.CONFIG:
+            global_ansible_path = global_context.CONFIG.ansible_inventory_path()
+            global_multihost_path = global_context.CONFIG.pytest_multihost_path()
+        else:
+            global_ansible_path = None
+            global_multihost_path = None
+
+        self._ansible_path = ansible_path or global_ansible_path
+        self._pytest_multihost_path = pytest_multihost_path or global_multihost_path
 
     async def generate_outputs(self):
         """Generate outputs."""

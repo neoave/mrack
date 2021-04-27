@@ -17,25 +17,17 @@
 import asyncio
 import logging
 
-from mrack.errors import MetadataError
+from mrack.actions.action import Action
 from mrack.host import STATUS_DELETED
-from mrack.transformers import transformers
 
 logger = logging.getLogger(__name__)
 
 
-class Destroy:
+class Destroy(Action):
     """Destroy action.
 
     Destroy all still active provisioned host. Save the state to DB.
     """
-
-    async def init(self, config, metadata, db_driver):
-        """Initialize the destroy action."""
-        self._config = config
-        self._metadata = metadata
-        self._db_driver = db_driver
-        self._transformers = {}
 
     async def destroy(self):
         """Execute the destroy action."""
@@ -64,14 +56,3 @@ class Destroy:
         providers = set(providers)
         aws = [self._get_transformer(provider) for provider in providers]
         await asyncio.gather(*aws)
-
-    async def _get_transformer(self, provider_name):
-        """Get a transformer by name, initialize a new one if not yet done."""
-        transformer = self._transformers.get(provider_name)
-        if not transformer:
-            transformer = transformers.get(provider_name)
-            await transformer.init(self._config, self._metadata)
-            if not transformer:
-                raise MetadataError(f"Invalid provider: {provider_name}")
-            self._transformers[provider_name] = transformer
-        return transformer

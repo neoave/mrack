@@ -18,9 +18,10 @@ import logging
 import socket
 from datetime import datetime, timedelta
 
+from mrack.context import global_context
 from mrack.errors import ProvisioningError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
-from mrack.utils import global_context, ssh_to_host
+from mrack.utils import get_username_pass_and_ssh_key, ssh_to_host
 
 logger = logging.getLogger(__name__)
 
@@ -107,10 +108,21 @@ class Provider:
 
         # Wait also for the ssh key to be accepted for a half timeout time
         start_ssh = datetime.now()
+        # load stuff from configs: like:
+        username, password, ssh_key = get_username_pass_and_ssh_key(
+            host, global_context
+        )
 
         while True:
-            res = ssh_to_host(host, command="echo mrack")
+            res = ssh_to_host(
+                host,
+                username=username,
+                password=password,
+                ssh_key=ssh_key,
+                command="echo mrack",
+            )
             duration = (datetime.now() - start_ssh).total_seconds()
+
             if res:
                 logger.info(
                     f"{self.dsp_name}: SSH to host '{host.ip_addr}' successful "
@@ -235,7 +247,7 @@ class Provider:
         active_hosts = [h for h in hosts if h not in error_hosts]
         success_hosts = []
 
-        if global_context["config"].get("post_provisioning_ssh_check", True):
+        if global_context.PROV_CONFIG.get("post_provisioning_ssh_check", True):
             # check ssh connectivity to succeeded hosts
             wait_ssh = []
             for host in active_hosts:

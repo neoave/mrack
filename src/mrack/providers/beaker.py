@@ -28,6 +28,7 @@ from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
 
+from mrack.context import global_context
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
@@ -37,7 +38,6 @@ from mrack.host import (
     STATUS_PROVISIONING,
 )
 from mrack.providers.provider import STRATEGY_ABORT, Provider
-from mrack.utils import global_context
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +194,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         recipe.addDistroRequires(arch_node)
 
         # Specify the custom xml distro_tag node with values from provisioning config
-        distro_tags = global_context["config"]["beaker"].get("distro_tags")
+        distro_tags = global_context.PROV_CONFIG["beaker"].get("distro_tags")
         if distro_tags:
             for tag in distro_tags.get(specs["distro"], []):
                 tag_node = xml_doc().createElement("distro_tag")
