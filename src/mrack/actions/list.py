@@ -15,18 +15,16 @@
 """List action module."""
 import logging
 
+from mrack.actions.action import DBAction
+
 logger = logging.getLogger(__name__)
 
 
-class List:
+class List(DBAction):
     """List action.
 
     List hosts from DB.
     """
-
-    def init(self, db_driver):
-        """Initialize the List action."""
-        self._db_driver = db_driver
 
     def list(self):
         """Execute the List action."""

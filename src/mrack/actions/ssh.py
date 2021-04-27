@@ -16,29 +16,22 @@
 
 import logging
 
+from mrack.actions.action import Action
+from mrack.context import global_context
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
 from mrack.providers.utils.podman import Podman
-from mrack.utils import global_context
+from mrack.utils import get_username_pass_and_ssh_key
 from mrack.utils import ssh_to_host as utils_ssh_to_host
 
 logger = logging.getLogger(__name__)
 
 
-class SSH:
+class SSH(Action):
     """SSH action.
 
     SSH all still active provisioned host. Save the state to DB.
     """
-
-    def init(self, config, metadata, db_driver):
-        """Initialize the SSH action."""
-        self._config = config
-        self._metadata = metadata
-        self._db = db_driver
-
-        global_context["metadata"] = metadata
-        global_context["config"] = config
 
     def pick_host_interactively(self, hosts):
         """Print list of host and let user to choose one."""
@@ -64,7 +57,7 @@ class SSH:
 
     def find_host(self, hostname):
         """Find active host based on hostname or interactively."""
-        hosts = self._db.hosts
+        hosts = self._db_driver.hosts
         active_hosts = [h for h in hosts.values() if h.status == STATUS_ACTIVE]
 
         if not hosts:
@@ -87,7 +80,12 @@ class SSH:
 
     def ssh_to_host(self, host):
         """SSH to the selected host."""
-        return utils_ssh_to_host(host)
+        username, password, ssh_key = get_username_pass_and_ssh_key(
+            host, global_context
+        )
+        return utils_ssh_to_host(
+            host, username=username, password=password, ssh_key=ssh_key
+        )
 
     def is_container_env(self, host):
         """Check if host is using local container technology."""
