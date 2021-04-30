@@ -14,6 +14,8 @@
 
 """mrack default app."""
 #  pylint: disable=no-name-in-module
+__version__ = "0.10.0"
+
 import asyncio
 import logging
 import os
@@ -126,6 +128,7 @@ METADATA = "metadata"
 @click.option("-p", "--provisioning-config", type=click.Path(exists=True))
 @click.option("-d", "--db", "db_file")  # db file may not exist
 @click.option("--debug", default=False, is_flag=True)
+@click.version_option(version=__version__)
 @click.pass_context
 def mrackcli(ctx, mrack_config, provisioning_config, db_file, debug):
     """Multihost human friendly provisioner."""
