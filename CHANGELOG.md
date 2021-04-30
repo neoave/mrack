@@ -2,6 +2,29 @@
 
 <!--next-version-placeholder-->
 
+## v0.10.0 (2021-04-30)
+### Feature
+* Create podman networks in preparation ([`c6791ce`](https://github.com/neoave/mrack/commit/c6791cedc49148200761f3540778fe6a999110f5))
+* Pull podman images in preparation ([`c19b230`](https://github.com/neoave/mrack/commit/c19b230da6c7fa01ef3200853aecd115ed2badc2))
+* Check ssh connectivity outside of pares_error_hosts more than once ([`ecd5470`](https://github.com/neoave/mrack/commit/ecd5470babfec8868263127d4b1cdf42b7bc52b6))
+* Use always root user for provisioned containers ([`311a8a5`](https://github.com/neoave/mrack/commit/311a8a576af821ccd2c49ef615a38521b1a7d67b))
+* Use more flexible way of defining podman names ([`a94d922`](https://github.com/neoave/mrack/commit/a94d922fc6aa83e65c538cb09edfd139487caf35))
+* Use ssh public key to access container instead of podman id ([`87c1ff0`](https://github.com/neoave/mrack/commit/87c1ff04215d120f90d6e8785d7c2478da92ec13))
+* Add capability to use custom podman options ([`d05a41f`](https://github.com/neoave/mrack/commit/d05a41f542861ff404113af68de52041779f0d72))
+
+### Fix
+* The type of duration is not correct ([`dbdc25c`](https://github.com/neoave/mrack/commit/dbdc25ceae5a5e7985d1ece7eb253f0729b560fa))
+* Ssh action crashes as it misses global_context ([`a210f6e`](https://github.com/neoave/mrack/commit/a210f6eef895441198706b44697f7c3638630e94))
+* Log error when ssh fails after provisioning ([`76af86e`](https://github.com/neoave/mrack/commit/76af86ebe85a1ba500c89fed48fb3bf55cc692bd))
+* Do not use compression when trying ssh to machine ([`26d89be`](https://github.com/neoave/mrack/commit/26d89be9e643d7a9b8ea0ca929331b77af165bf9))
+* Mrack ssh action needs host.host_id for podman ([`c4daabd`](https://github.com/neoave/mrack/commit/c4daabda53bcace5a5d69dbe6e24f9fd62991bf2))
+* Use pubkey instead of keypair for beaker ([`abc2a84`](https://github.com/neoave/mrack/commit/abc2a843c872a04a32908c931e5302def9879ca0))
+* Podman provider logger does not use Podman prefix ([`ef7dd59`](https://github.com/neoave/mrack/commit/ef7dd598d4ba9b86b5ba2037acaf06190e88289e))
+
+### Documentation
+* Add example provisioning config for podman ([`f54b2e9`](https://github.com/neoave/mrack/commit/f54b2e96d24e91c57c161f1cf8c1f62cde1b7899))
+* Fix typo in docstring ([`255032b`](https://github.com/neoave/mrack/commit/255032b9ed38c083250cffae710f6330a543414e))
+
 ## v0.9.0 (2021-04-19)
 ### Feature
 * Enable config drive in OpenStack ([`3cdb54b`](https://github.com/neoave/mrack/commit/3cdb54b0ce64c97fb884c9d83ba46576fa8bbae7))
