@@ -29,6 +29,7 @@ libraries, the aim is to be able to describe host from application perspective.
 
 Requires:       python3-AsyncOpenStackClient
 Requires:       beaker-client
+Requires:       podman
 Requires:       python3-boto3
 Requires:       python3-botocore
 Requires:       python3-click
