@@ -267,6 +267,7 @@ def exception_handler(func):
 @exception_handler
 def run():
     """Run the app."""
+    logger.debug(f"mrack version: {VERSION}")
     mrackcli(obj={})  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
 
 
