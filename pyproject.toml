@@ -16,6 +16,7 @@ commit_subject = "chore: Release version {version}"
 commit_message = "Releasing mrack version {version}"
 version_variable = [
     "src/mrack/__init__.py:__version__",
+    "src/mrack/run.py:__version__",
     "docs/conf.py:release",
 ]
 version_pattern = [
