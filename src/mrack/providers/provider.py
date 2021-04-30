@@ -107,7 +107,7 @@ class Provider:
 
         while True:
             res = ssh_to_host(host, command="echo mrack")
-            duration = datetime.now() - start_ssh
+            duration = (datetime.now() - start_ssh).total_seconds()
             if res:
                 logger.info(
                     f"{self.dsp_name}: SSH to host '{host.ip_addr}' successful "
