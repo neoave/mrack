@@ -455,7 +455,7 @@ class OpenStackProvider(Provider):
                 await asyncio.sleep(SERVER_ERROR_SLEEP)
             except NotFoundError:
                 logger.warning(
-                    f"{self.dsp_name}: Server '{uuid}' no found, probably already "
+                    f"{self.dsp_name}: Server '{uuid}' not found, probably already "
                     "deleted"
                 )
                 break
