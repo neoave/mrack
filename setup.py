@@ -24,10 +24,8 @@ with open("README.md") as f:
 with open("requirements.txt") as req:
     reqs = req.readlines()
 
-with open("src/mrack/__init__.py", "r") as fd:
-    version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
-    )
+with open("src/mrack/version.py", "r") as fd:
+    version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE)
     if version is None:
         sys.stderr.write("Could not parse the version string.\n")
         sys.exit(1)
