@@ -104,11 +104,14 @@ class VirtProvider(Provider):
         hostname = req["name"]
         logger.info(f"{self.dsp_name}: Creating virtual machine for host: {hostname}")
 
+        host_id = req["run_id"] + "-" + hostname
         out, err, _proc = await self.testcloud.create(
-            hostname,
+            host_id,
             **req,
         )
-        info = self.testcloud.info(hostname)
+        info = self.testcloud.info(host_id)
+        info["id"] = host_id
+        info["name"] = hostname
         info["output"] = out
         if info["state"] != "running":
             info["error"] = err
@@ -126,7 +129,7 @@ class VirtProvider(Provider):
     def prov_result_to_host_data(self, prov_result):
         """Get needed host information from podman provisioning result."""
         result = {}
-        result["id"] = prov_result.get("name")
+        result["id"] = prov_result.get("id")
         result["name"] = prov_result.get("name")
         result["addresses"] = [prov_result.get("ip")]
         result["status"] = prov_result["state"]
