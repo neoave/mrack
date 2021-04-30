@@ -14,8 +14,6 @@
 
 """mrack default app."""
 #  pylint: disable=no-name-in-module
-__version__ = "0.10.0"
-
 import asyncio
 import logging
 import os
@@ -51,6 +49,7 @@ from mrack.providers.podman import PodmanProvider
 from mrack.providers.static import PROVISIONER_KEY as STATIC
 from mrack.providers.static import StaticProvider
 from mrack.utils import NoSuchFileHandler, load_yaml
+from mrack.version import VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +127,7 @@ METADATA = "metadata"
 @click.option("-p", "--provisioning-config", type=click.Path(exists=True))
 @click.option("-d", "--db", "db_file")  # db file may not exist
 @click.option("--debug", default=False, is_flag=True)
-@click.version_option(version=__version__)
+@click.version_option(version=VERSION)
 @click.pass_context
 def mrackcli(ctx, mrack_config, provisioning_config, db_file, debug):
     """Multihost human friendly provisioner."""
