@@ -2,6 +2,14 @@
 
 <!--next-version-placeholder-->
 
+## v0.11.0 (2021-05-07)
+### Feature
+* Log mrack version into mrack.log ([`8ffa3c6`](https://github.com/neoave/mrack/commit/8ffa3c6610535c7fae8f4fa7d8d7a833bb200cab))
+* Add --version option to mrack cli ([`1863b79`](https://github.com/neoave/mrack/commit/1863b79c97ea00bc9277bba0fec1c78d7b42fbf8))
+
+### Fix
+* Decrease and insanely long timeout ([`2d8ed4e`](https://github.com/neoave/mrack/commit/2d8ed4ec115a9c2ac5ea2f904035b5042dbe570b))
+
 ## v0.10.0 (2021-04-30)
 ### Feature
 * Create podman networks in preparation ([`c6791ce`](https://github.com/neoave/mrack/commit/c6791cedc49148200761f3540778fe6a999110f5))
