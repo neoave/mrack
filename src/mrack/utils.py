@@ -178,10 +178,11 @@ def is_windows_host(meta_host):
 def get_username(host, meta_host, config):
     """Find username from sources db/metadata/config."""
     username = host.username or meta_host.get("username")
-    if is_windows_host(meta_host):
-        username = username or "Administrator"
-
     default_user = get_config_value(config["users"], meta_host["os"])
+
+    if is_windows_host(meta_host):
+        default_user = default_user or "Administrator"
+
     username = username or default_user
     return username
 

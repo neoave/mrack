@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
-from mrack.utils import ssh_to_host
+from mrack.utils import global_context, ssh_to_host
 
 logger = logging.getLogger(__name__)
 
@@ -174,26 +174,32 @@ class Provider:
         hosts = [self.to_host(srv) for srv in server_results]
         error_hosts = await self.parse_error_hosts(hosts)
         active_hosts = [h for h in hosts if h not in error_hosts]
-        # check ssh connectivity to succeeded hosts
-        wait_ssh = []
-        for host in active_hosts:
-            awaitable = self._wait_for_ssh(host)
-            wait_ssh.append(awaitable)
-
-        ssh_results = await asyncio.gather(*wait_ssh)
-        # We distinguish the success hosts and new error hosts from active by using:
-        # res[RET_CODE] 0 - the result of operation returned from self._wait_for_ssh()
-        # res[HOST_OBJ] 1 - the host object returned from self._wait_for_ssh()
         success_hosts = []
-        for res in ssh_results:
-            if res[RET_CODE]:
-                success_hosts.append(res[HOST_OBJ])
-            else:
-                res[HOST_OBJ].error = (
-                    "Could not establish ssh connection to host "
-                    f"{res[HOST_OBJ].host_id} with IP {res[HOST_OBJ].ip_addr}"
-                )
-                error_hosts.append(res[HOST_OBJ])
+
+        if global_context["config"].get("post_provisioning_ssh_check", True):
+            # check ssh connectivity to succeeded hosts
+            wait_ssh = []
+            for host in active_hosts:
+                awaitable = self._wait_for_ssh(host)
+                wait_ssh.append(awaitable)
+
+            ssh_results = await asyncio.gather(*wait_ssh)
+            # We distinguish the success hosts and new error hosts from active by using:
+            # res[RET_CODE] 0
+            #   - the result of operation returned from self._wait_for_ssh()
+            # res[HOST_OBJ] 1
+            #   - the host object returned from self._wait_for_ssh()
+            for res in ssh_results:
+                if res[RET_CODE]:
+                    success_hosts.append(res[HOST_OBJ])
+                else:
+                    res[HOST_OBJ].error = (
+                        "Could not establish ssh connection to host "
+                        f"{res[HOST_OBJ].host_id} with IP {res[HOST_OBJ].ip_addr}"
+                    )
+                    error_hosts.append(res[HOST_OBJ])
+        else:  # we do not check the ssh connection to VMs
+            success_hosts = active_hosts
 
         missing_reqs = [
             req for req in reqs if req["name"] in [host.name for host in error_hosts]
