@@ -95,7 +95,7 @@ class Provider:
             except OSError:
                 await asyncio.sleep(10)
                 logger.debug(info_msg)
-                if datetime.now() - start_time >= timedelta(minutes=timeout):
+                if datetime.now() - start_time >= timedelta(seconds=timeout):
                     logger.error(
                         f"{self.dsp_name}: Waited too long for the port {port} "
                         f"on host {host.ip_addr} to start accepting connections"
@@ -115,7 +115,7 @@ class Provider:
                 )
                 break
 
-            if datetime.now() - start_ssh >= timedelta(minutes=(timeout / 2)):
+            if datetime.now() - start_ssh >= timedelta(seconds=(timeout / 2)):
                 logger.error(
                     f"{self.dsp_name}: SSH to host '{host.ip_addr}' "
                     f"timed out after {duration:.1f}s"
