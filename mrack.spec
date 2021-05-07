@@ -34,6 +34,8 @@ Requires:       python3-boto3
 Requires:       python3-botocore
 Requires:       python3-click
 Requires:       python3-pyyaml
+Requires:       testcloud
+Requires:       sshpass
 
 %prep
 %autosetup -n %{srcname}-%{version}

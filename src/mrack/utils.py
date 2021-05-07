@@ -15,6 +15,7 @@
 
 """Module with utility and helper functions."""
 
+import asyncio
 import base64
 import contextlib
 import datetime
@@ -27,7 +28,7 @@ from typing import Dict
 
 import yaml
 
-from mrack.errors import ConfigError
+from mrack.errors import ConfigError, ProvisioningError
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +215,11 @@ def ssh_to_host(
     command=None,
 ):
     """SSH to the selected host."""
+    meta_host, _domain = get_host_from_metadata(global_context["metadata"], host.name)
+    username = username or get_username(host, meta_host, global_context["config"])
+    ssh_key = ssh_key or get_ssh_key(host, meta_host, global_context["config"])
+    psw = host.password or password
+
     my_env = os.environ.copy()
 
     run_args = {
@@ -225,19 +231,15 @@ def ssh_to_host(
     cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
     cmd.extend(["-o", "'UserKnownHostsFile=/dev/null'"])
 
-    meta_host, _domain = get_host_from_metadata(global_context["metadata"], host.name)
-    username = username or get_username(host, meta_host, global_context["config"])
-    ssh_key = ssh_key or get_ssh_key(host, meta_host, global_context["config"])
+    if psw:
+        cmd.extend(["-o", "'PasswordAuthentication=yes'"])
+        cmd = ["sshpass", "-p", psw] + cmd
+    elif ssh_key:
+        cmd.extend(["-o", "'PasswordAuthentication=no'"])
+        cmd.extend(["-i", ssh_key])
 
     if username:
         cmd.extend(["-l", username])
-    if ssh_key:
-        cmd.extend(["-o", "'PasswordAuthentication=no'"])
-        cmd.extend(["-i", ssh_key])
-    psw_input = None
-    if password and not ssh_key:
-        cmd.extend(["-o", "'PasswordAuthentication'"])
-        psw_input = f"{password}\n"
 
     cmd.append(host.ip_addr)  # Destination
 
@@ -248,8 +250,30 @@ def ssh_to_host(
 
     logger.info(cmd)
     process = subprocess.Popen(cmd, **run_args)
-    process.communicate(input=psw_input)
+    process.communicate()
     return process.returncode == 0
+
+
+async def exec_async_subprocess(program, args, raise_on_err=True):
+    """Util method to execute subprocess asynchronously."""
+    process = await asyncio.create_subprocess_exec(
+        program,
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    if stdout:
+        stdout = stdout.decode()
+    if stdout is None:
+        stdout = ""
+    if stderr:
+        stderr = stderr.decode()
+    if stdout is None:
+        stderr = ""
+    if process.returncode != 0 and raise_on_err:
+        raise ProvisioningError(stderr)
+    return stdout, stderr, process
 
 
 class NoSuchFileHandler:
