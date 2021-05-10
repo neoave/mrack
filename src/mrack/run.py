@@ -16,7 +16,6 @@
 #  pylint: disable=no-name-in-module
 import asyncio
 import logging
-import os
 import sys
 from functools import update_wrapper
 
@@ -28,8 +27,7 @@ from mrack.actions.list import List
 from mrack.actions.output import Output
 from mrack.actions.ssh import SSH
 from mrack.actions.up import Up
-from mrack.config import MrackConfig, ProvisioningConfig
-from mrack.dbdrivers.file import FileDBDriver
+from mrack.context import GlobalContext, global_context
 from mrack.errors import (
     ApplicationError,
     ConfigError,
@@ -50,7 +48,6 @@ from mrack.providers.static import PROVISIONER_KEY as STATIC
 from mrack.providers.static import StaticProvider
 from mrack.providers.virt import PROVISIONER_KEY as VIRT
 from mrack.providers.virt import VirtProvider
-from mrack.utils import NoSuchFileHandler, load_yaml
 from mrack.version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -77,51 +74,17 @@ def init_providers():
     providers.register(VIRT, VirtProvider)
 
 
-def init_db(path):
-    """Initialize file database."""
-    db_file = FileDBDriver(path)
-    return db_file
-
-
-@NoSuchFileHandler(error="Provisioning config file not found: {path}")
-def init_prov_config(path):
-    """Load and initialize provisioning configuration."""
-    config_data = load_yaml(path)
-    config = ProvisioningConfig(config_data)
-    return config
-
-
-def init_metadata(ctx, user_defined_path):
-    """Load and initialize job metadata."""
-    config = ctx.obj[CONFIG]
-    meta_path = user_defined_path or config.metadata_path()
-    if not meta_path:
-        raise ConfigError("Job metadata file path not provided.")
-    if not os.path.exists(meta_path):
-        raise ConfigError(f"Job metadata file not found: {meta_path}")
-    metadata_data = load_yaml(meta_path)
-    ctx.obj[METADATA] = metadata_data
-
-    return metadata_data
-
-
 async def generate_outputs(ctx):
     """Init and run output action."""
-    config = ctx.obj[CONFIG]
+    config = ctx.obj.CONFIG
     output_action = Output(
-        ctx.obj[PROV_CONFIG],
-        ctx.obj[METADATA],
-        ctx.obj[DB],
+        ctx.obj.PROV_CONFIG,
+        ctx.obj.METADATA,
+        ctx.obj.DB,
         config.ansible_inventory_path(),
         config.pytest_multihost_path(),
     )
     await output_action.generate_outputs()
-
-
-DB = "db"
-CONFIG = "config"
-PROV_CONFIG = "provconfig"
-METADATA = "metadata"
 
 
 @click.group()
@@ -136,18 +99,10 @@ def mrackcli(ctx, mrack_config, provisioning_config, db_file, debug):
     if debug:
         logging.getLogger("mrack").setLevel(logging.DEBUG)
 
-    config = MrackConfig(mrack_config)
-    config.load()
-    db_path = db_file or config.db_path("./.mrackdb.json")
-    p_config_path = provisioning_config or config.provisioning_config_path(
-        "./provisioning-config.yaml"
-    )
-
     init_providers()
-    ctx.ensure_object(dict)
-    ctx.obj[CONFIG] = config
-    ctx.obj[DB] = init_db(db_path)
-    ctx.obj[PROV_CONFIG] = init_prov_config(p_config_path)
+    ctx.ensure_object(GlobalContext)
+    global_context.init(mrack_config, provisioning_config, db_file)
+    ctx.obj = global_context
 
 
 @mrackcli.command()
@@ -160,9 +115,9 @@ async def up(ctx, metadata, provider):  # pylint: disable=invalid-name
 
     Based on provided job metadata file and provisioning configuration.
     """
-    init_metadata(ctx, metadata)
+    ctx.obj.init_metadata(metadata)
 
-    up_action = Up(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    up_action = Up(ctx.obj.PROV_CONFIG, ctx.obj.METADATA, ctx.obj.DB)
     await up_action.init(provider)
     await up_action.provision()
 
@@ -175,8 +130,8 @@ async def up(ctx, metadata, provider):  # pylint: disable=invalid-name
 @async_run
 async def destroy(ctx, metadata):
     """Destroy provisioned hosts."""
-    init_metadata(ctx, metadata)
-    destroy_action = Destroy(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    ctx.obj.init_metadata(metadata)
+    destroy_action = Destroy(ctx.obj.PROV_CONFIG, ctx.obj.METADATA, ctx.obj.DB)
     await destroy_action.destroy()
 
 
@@ -186,7 +141,7 @@ async def destroy(ctx, metadata):
 @async_run
 async def output(ctx, metadata):
     """Create outputs - such as Ansible inventory."""
-    init_metadata(ctx, metadata)
+    ctx.obj.init_metadata(metadata)
     await generate_outputs(ctx)
 
 
@@ -195,7 +150,7 @@ async def output(ctx, metadata):
 @async_run
 async def list(ctx):  # pylint: disable=redefined-builtin
     """List host tracked by."""
-    list_action = List(ctx.obj[DB])
+    list_action = List(ctx.obj.DB)
     list_action.list()
 
 
@@ -206,8 +161,8 @@ async def list(ctx):  # pylint: disable=redefined-builtin
 @async_run
 async def ssh(ctx, hostname, metadata):
     """SSH to host."""
-    init_metadata(ctx, metadata)
-    ssh_action = SSH(ctx.obj[PROV_CONFIG], ctx.obj[METADATA], ctx.obj[DB])
+    ctx.obj.init_metadata(metadata)
+    ssh_action = SSH(ctx.obj.PROV_CONFIG, ctx.obj.METADATA, ctx.obj.DB)
     return ssh_action.ssh(hostname)
 
 
@@ -220,7 +175,7 @@ def eh():  # pylint: disable=invalid-name
 @click.pass_context
 def add(ctx):
     """Add active hosts to /etc/hosts file."""
-    eh_action = EtcHostsUpdate(ctx.obj[DB])
+    eh_action = EtcHostsUpdate(ctx.obj.DB)
     eh_action.update()
 
 
@@ -228,7 +183,7 @@ def add(ctx):
 @click.pass_context
 def clear(ctx):
     """Remove all mrack hosts from /etc/hosts file."""
-    eh_action = EtcHostsUpdate(ctx.obj[DB])
+    eh_action = EtcHostsUpdate(ctx.obj.DB)
     eh_action.clear()
 
 
