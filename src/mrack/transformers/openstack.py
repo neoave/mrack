@@ -14,6 +14,7 @@
 
 """OpenStack transformer module."""
 import logging
+import random
 
 from mrack.errors import ProvisioningConfigError
 from mrack.transformers.transformer import Transformer
@@ -90,12 +91,20 @@ class OpenStackTransformer(Transformer):
         # sort networks by number of available IPs
         usable = sorted(usable, key=lambda u: u[1])
         logger.debug(f"{self.dsp_name}: Listing usable networks: {usable}")
-        res_network = usable[-1][0]
-        logger.debug(
-            f"{self.dsp_name}: Picking network "
-            f"with the most available adresses: {res_network}"
-        )
-        return res_network  # Pick the one with most IPs
+
+        # Do not always pick the best, but randomize from good ones to spread
+        # load for high number of parallel jobs. E.g. if running mrack 100 times
+        # where each needs 3-4 hosts and best network has 250 IPs then we risk
+        # to pass the check intially but later fail as the check was not done
+        # with all the others on mind (race-condition).
+
+        # Good == has at least 50% of IPs as the best.
+        best = usable[-1]
+        goods = [n for n in usable if n[1] / best[1] > 0.5]
+        logger.debug(f'{self.dsp_name}: Picking randomly from "good" networks: {goods}')
+        chosen = random.choice(goods)[0]
+        logger.debug(f"{self.dsp_name}: Network picked: {chosen}")
+        return chosen
 
     def translate_network_types(self, hosts):
         """Pick the right OpenStack networks for all hosts.
