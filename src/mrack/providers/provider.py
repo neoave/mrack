@@ -224,9 +224,6 @@ class Provider:
         logger.info(f"{self.dsp_name}: Preparing provider resources")
         await self.prepare_provisioning(reqs)
 
-        logger.info(f"{self.dsp_name}: Validating hosts definitions")
-        await self.validate_hosts(reqs)
-
         if self.strategy == STRATEGY_RETRY:
             success_hosts, error_hosts, _missing_reqs = await self.strategy_retry(reqs)
         else:
