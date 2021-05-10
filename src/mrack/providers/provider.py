@@ -204,6 +204,7 @@ class Provider:
         missing_reqs = [
             req for req in reqs if req["name"] in [host.name for host in error_hosts]
         ]
+
         return (success_hosts, error_hosts, missing_reqs)
 
     async def provision_hosts(self, reqs):

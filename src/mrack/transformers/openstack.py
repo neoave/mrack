@@ -14,7 +14,6 @@
 
 """OpenStack transformer module."""
 import logging
-import random
 
 from mrack.errors import ProvisioningConfigError
 from mrack.transformers.transformer import Transformer
@@ -33,109 +32,10 @@ class OpenStackTransformer(Transformer):
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
         self.dsp_name = "OpenStack"
-        await self._provider.init(image_names=self.config["images"].values())
-
-    def _is_network_type(self, name):
-        """Check if name is a configured network type in provisioning config."""
-        network_type = self.config["networks"].get(name)
-        return bool(network_type)
-
-    def _aggregate_networks(self, hosts):
-        """
-        Get how many host require each used network type.
-
-        Returns: dict where keys are network types and values are total count.
-        """
-        network_types = {}
-        for host in hosts:
-            # skip hosts which have low-level network names defined
-            # this can be extended to pick network type based on the network name
-            names = host.get("networks")
-            if names:
-                continue
-            network_type = host.get("network")
-            if not self._is_network_type(network_type):
-                continue
-
-            count = network_types.get(network_type, 0)
-            count += 1
-            network_types[network_type] = count
-        return network_types
-
-    def _pick_network(self, network_type, count):
-        """
-        Pick network based network type and needed amount.
-
-        Usable network with most IPs available is picked.
-        """
-        possible_networks = self.config["networks"][network_type]
-        networks = [self._provider.get_network(net) for net in possible_networks]
-        usable = []
-        for network in networks:
-            ips = self._provider.get_ips(ref=network.get("id"))
-
-            available = ips["total_ips"] - ips["used_ips"]
-            logger.debug(f"Network: {network['name']}")
-            logger.debug(f"  total: {ips['total_ips']}")
-            logger.debug(f"  used: {ips['used_ips']}")
-            logger.debug(f"  available: {available}")
-            if available > count:
-                usable.append((network["name"], available))
-        if not usable:
-            logger.error(
-                f"{self.dsp_name}: Error: no usable network"
-                f" for {count} hosts with {network_type}"
-            )
-            return None
-
-        # sort networks by number of available IPs
-        usable = sorted(usable, key=lambda u: u[1])
-        logger.debug(f"{self.dsp_name}: Listing usable networks: {usable}")
-
-        # Do not always pick the best, but randomize from good ones to spread
-        # load for high number of parallel jobs. E.g. if running mrack 100 times
-        # where each needs 3-4 hosts and best network has 250 IPs then we risk
-        # to pass the check intially but later fail as the check was not done
-        # with all the others on mind (race-condition).
-
-        # Good == has at least 50% of IPs as the best.
-        best = usable[-1]
-        goods = [n for n in usable if n[1] / best[1] > 0.5]
-        logger.debug(f'{self.dsp_name}: Picking randomly from "good" networks: {goods}')
-        chosen = random.choice(goods)[0]
-        logger.debug(f"{self.dsp_name}: Network picked: {chosen}")
-        return chosen
-
-    def translate_network_types(self, hosts):
-        """Pick the right OpenStack networks for all hosts.
-
-        Pick the network based on network type, networks configured for the
-        type and the available IP addresses. Process all hosts to
-        be able to pick the network which have enough addresses for all hosts.
-
-        All hosts will have either "networks" attribute or "network"
-        host attribute set with OpenStack network name or ID.
-        """
-        nt_requirements = self._aggregate_networks(hosts)
-        nt_map = {}
-        for network_type, count in nt_requirements.items():
-            network_name = self._pick_network(network_type, count)
-            nt_map[network_type] = network_name
-
-        for host in hosts:
-            # skip hosts which have low-level network names defined
-            names = host.get("networks")
-            if names:
-                continue
-
-            network_type = host.get("network")
-
-            # skip if nt is not network type
-            if not self.config["networks"].get(network_type):
-                continue
-
-            network_name = nt_map[network_type]
-            host["network"] = network_name
+        await self._provider.init(
+            image_names=self.config["images"].values(),
+            networks=self.config["networks"],
+        )
 
     def _get_network_type(self, host):
         """Get network type from host object definition.
@@ -172,13 +72,3 @@ class OpenStackTransformer(Transformer):
             req.update({"config_drive": config_drive_req})
 
         return req
-
-    def create_host_requirements(self):
-        """Create inputs for all host for OpenStack provisioner.
-
-        This includes picking the right network and checking if it has
-        available IP addresses.
-        """
-        reqs = super().create_host_requirements()
-        self.translate_network_types(reqs)
-        return reqs

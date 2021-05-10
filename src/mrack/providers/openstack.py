@@ -18,7 +18,7 @@ import asyncio
 import logging
 from copy import deepcopy
 from datetime import datetime, timedelta
-from random import random
+from random import choice, random
 from urllib.parse import parse_qs, urlparse
 
 from asyncopenstackclient import AuthPassword, GlanceClient
@@ -34,6 +34,7 @@ from mrack.errors import (
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_RETRY, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
+from mrack.utils import object2json
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
-    async def init(self, image_names=None):
+    async def init(self, image_names=None, networks=None):
         """Initialize provider with data from OpenStack.
 
         Load:
@@ -118,6 +119,7 @@ class OpenStackProvider(Provider):
         login_end = datetime.now()
         logger.info(f"{self.dsp_name}: Login duration {login_end - login_start}")
 
+        self.network_pools = networks
         object_start = datetime.now()
         _, _, limits, _, _ = await asyncio.gather(
             self.load_flavors(),
@@ -144,6 +146,114 @@ class OpenStackProvider(Provider):
         for image in images:
             self.images[image["name"]] = image
             self.images_by_ref[image["id"]] = image
+
+    def _is_network_type(self, name):
+        """Check if name is a configured network type in provisioning config."""
+        network_type = self.network_pools.get(name)
+        return bool(network_type)
+
+    def _aggregate_networks(self, hosts):
+        """
+        Get how many host require each used network type.
+
+        Returns: dict where keys are network types and values are total count.
+        """
+        network_types = {}
+        for host in hosts:
+            # skip hosts which have low-level network names defined
+            # this can be extended to pick network type based on the network name
+            names = host.get("networks")
+            if names:
+                continue
+            network_type = host.get("network")
+            if not self._is_network_type(network_type):
+                continue
+
+            count = network_types.get(network_type, 0)
+            count += 1
+            network_types[network_type] = count
+
+        return network_types
+
+    def _pick_network(self, network_type, count):
+        """
+        Pick network based network type and needed amount.
+
+        Usable network with most IPs available is picked.
+        """
+        possible_networks = self.network_pools[network_type]
+        networks = [self.get_network(net) for net in possible_networks]
+        usable = []
+        for network in networks:
+            ips = self.get_ips(ref=network.get("id"))
+
+            available = ips["total_ips"] - ips["used_ips"]
+            logger.debug(f"Network: {network['name']}")
+            logger.debug(f"  total: {ips['total_ips']}")
+            logger.debug(f"  used: {ips['used_ips']}")
+            logger.debug(f"  available: {available}")
+            if available > count:
+                usable.append((network["name"], available))
+        if not usable:
+            logger.error(
+                f"{self.dsp_name}: Error: no usable network"
+                f" for {count} hosts with {network_type}"
+            )
+            return None
+
+        # sort networks by number of available IPs
+        usable = sorted(usable, key=lambda u: u[1])
+        logger.debug(f"{self.dsp_name}: Listing usable networks: {usable}")
+
+        # Do not always pick the best, but randomize from good ones to spread
+        # load for high number of parallel jobs. E.g. if running mrack 100 times
+        # where each needs 3-4 hosts and best network has 250 IPs then we risk
+        # to pass the check intially but later fail as the check was not done
+        # with all the others on mind (race-condition).
+
+        # Good == has at least 50% of IPs as the best.
+        best_pool = usable[-1]
+        satisfying = [n for n in usable if n[1] / best_pool[1] > 0.5]
+        logger.debug(
+            f"{self.dsp_name}: Picking randomly from network pools which satisfy "
+            f"requirement (size_of_pool/size_of_biggest > 0.5): {satisfying}"
+        )
+        chosen = choice(satisfying)
+        logger.debug(
+            f"{self.dsp_name}: Network picked: {chosen[0]} with {chosen[1]} addresses"
+        )
+        return chosen[0]
+
+    def translate_network_types(self, hosts):
+        """Pick the right OpenStack networks for all hosts.
+
+        Pick the network based on network type, networks configured for the
+        type and the available IP addresses. Process all hosts to
+        be able to pick the network which have enough addresses for all hosts.
+
+        All hosts will have either "networks" attribute or "network"
+        host attribute set with OpenStack network name or ID.
+        """
+        nt_requirements = self._aggregate_networks(hosts)
+        nt_map = {}
+        for network_type, count in nt_requirements.items():
+            network_name = self._pick_network(network_type, count)
+            nt_map[network_type] = network_name
+
+        for host in hosts:
+            # skip hosts which have low-level network names defined
+            names = host.get("networks")
+            if names:
+                continue
+
+            network_type = host.get("network")
+
+            # skip if network_type is not network type
+            if not self.network_pools.get(network_type):
+                continue
+
+            network_name = nt_map[network_type]
+            host["network"] = network_name
 
     def _set_networks(self, networks):
         """Extend provider configuration with list of networks."""
@@ -280,6 +390,7 @@ class OpenStackProvider(Provider):
             network = self.get_network(name=network_req, ref=network_req)
             if not network:
                 raise ValidationError(f"Network not found: {network_req}")
+
             network_specs.append({"uuid": network["id"]})
             networks.append(network)
 
@@ -332,8 +443,13 @@ class OpenStackProvider(Provider):
 
     async def validate_hosts(self, reqs):
         """Validate that all hosts requirements contains existing required objects."""
+        # translate network type to actual network and check network availabilities
+        self.translate_network_types(reqs)
+
         for req in reqs:
+            logger.info(f"{self.dsp_name}: Validating host: {object2json(req)}")
             self.validate_host(req)
+            logger.info(f"{self.dsp_name}: {req['name']} - OK")
 
     def get_host_requirements(self, req):
         """Get vCPU and memory requirements for host requirement."""
