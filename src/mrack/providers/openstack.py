@@ -44,8 +44,9 @@ logger = logging.getLogger(__name__)
 
 
 PROVISIONER_KEY = "openstack"
-SERVER_ERROR_RETRY = 5
-SERVER_ERROR_SLEEP = 10
+SERVER_ERROR_RETRY = 5  # number of times to retry server creation
+SERVER_ERROR_SLEEP = 10  # seconds
+SERVER_RES_SLEEP = 10  # minutes
 
 
 class OpenStackProvider(Provider):
@@ -545,13 +546,38 @@ class OpenStackProvider(Provider):
             except ServerError as exc:
                 logger.debug(exc)
                 error_attempts += 1
-                if error_attempts > SERVER_ERROR_RETRY:
-                    raise ProvisioningError(
-                        f"{self.dsp_name}: Fail to create server", specs
-                    ) from exc
-                await asyncio.sleep(SERVER_ERROR_SLEEP)
+                if error_attempts <= SERVER_ERROR_RETRY:
+                    await asyncio.sleep(SERVER_ERROR_SLEEP)
+                    continue  # Try again due to ServerError
+
+            if error_attempts > SERVER_ERROR_RETRY:
+                # now we are past to what we would like to wait fail now
+                raise ProvisioningError(
+                    f"{self.dsp_name}: Failed to create server {object2json(specs)}"
+                )
+
+            fault = response["server"].get("fault", {})
+
+            if fault.get("code") == 500:
+                # In such scenario OpenStack might run out of hosts to provision
+                # This is not related to reaching OpenStack quota but to OpenStack
+                # itself being fully loaded and without free resources to provide
+                logger.info(
+                    f"{self.dsp_name}: Unable to allocate resources for the required "
+                    f"server (all available resources busy)"
+                )
+                error_attempts += 1
+                logger.info(
+                    f"{self.dsp_name}: Retrying request in {SERVER_RES_SLEEP} minutes"
+                )
+                # We should wait for OpenStack for reasonable time to try to reprovision
+                # This sleep time should be longer for higher probability for Openstack
+                # having freed some resources for us even when we are not reaching quota
+                await asyncio.sleep(SERVER_RES_SLEEP * 60)  # * 60 - sleep for minutes
             else:
+                # provisioning seems to pass correctly break to return result
                 break
+
         return response.get("server")
 
     async def delete_server(self, uuid):
