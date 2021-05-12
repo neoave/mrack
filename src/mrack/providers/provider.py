@@ -212,10 +212,7 @@ class Provider:
 
         Main provider method for provisioning.
 
-        First it validates that host requirements are valid and that
-        provider has enough resources(quota).
-
-        Then issues provisioning and waits for it succeed. Raises exception if any of
+        Issues provisioning and waits for it succeed. Raises exception if any of
         the servers was not successfully provisioned. If that happens it issues deletion
         of all already provisioned resources.
 
