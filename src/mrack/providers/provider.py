@@ -127,10 +127,16 @@ class Provider:
 
         return res, host
 
-    async def _provision_base(self, reqs):  # pylint: disable=too-many-locals
+    async def _provision_base(
+        self, reqs, res_check_timeout=60, res_busy_sleep=10
+    ):  # pylint: disable=too-many-locals
         """Provision hosts based on list of host requirements.
 
-        Main function which does provisioning and not any validation.
+        Main function which does provisioning and validation.
+        Parameters:
+            reqs - dictionary with requirements for provider
+            res_check_timeout (default 60) - timeout (minutes) to wait for resources
+            res_busy_sleep (default 10) - time to wait before checking again (minutes)
         """
         logger.info(f"{self.dsp_name}: Validating hosts definitions")
         if not reqs:
@@ -143,8 +149,13 @@ class Provider:
 
         logger.info(f"{self.dsp_name}: Checking available resources")
 
-        if not await self.can_provision(reqs):
-            raise ValidationError(f"{self.dsp_name}: Not enough resources to provision")
+        res_check_start = datetime.now()
+        while not await self.can_provision(reqs):
+            await asyncio.sleep(res_busy_sleep * 60)
+            if datetime.now() - res_check_start >= timedelta(minutes=res_check_timeout):
+                raise ValidationError(
+                    f"{self.dsp_name}: Not enough resources to provision"
+                )
         logger.info(f"{self.dsp_name}: Resource availability: OK")
         started = datetime.now()
 
