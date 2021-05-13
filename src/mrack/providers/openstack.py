@@ -553,7 +553,8 @@ class OpenStackProvider(Provider):
             if error_attempts > SERVER_ERROR_RETRY:
                 # now we are past to what we would like to wait fail now
                 raise ProvisioningError(
-                    f"{self.dsp_name}: Failed to create server {object2json(specs)}"
+                    f"{self.dsp_name}: Failed to create server {req['name']}",
+                    req,  # add the requirement dictionary to traceback for later
                 )
 
             fault = response["server"].get("fault", {})

@@ -126,7 +126,9 @@ class PodmanProvider(Provider):
             logger.error(
                 f"{self.dsp_name}: Failed to load network requirement from: {req}"
             )
-            raise ProvisioningError("Could not set up podman network for some host(s)")
+            raise ProvisioningError(
+                "Could not set up podman network for some host(s)", req
+            )
 
         container_id = await self.podman.run(
             image,
