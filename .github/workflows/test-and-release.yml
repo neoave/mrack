@@ -18,8 +18,8 @@ jobs:
     name: run tox tests
     runs-on: ubuntu-latest
     steps:
-      - name: Install krb5-config
-        run: sudo apt update && sudo apt-get install libkrb5-dev  # krb5-config missing distro dependency
+      - name: Install krb5-config libvirt-dev # missing distro dependencies
+        run: sudo apt update && sudo apt-get install libkrb5-dev libvirt-dev
       - uses: actions/checkout@v2
       - name: Setup Python
         uses: actions/setup-python@v2
