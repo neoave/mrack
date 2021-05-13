@@ -2,6 +2,26 @@
 
 <!--next-version-placeholder-->
 
+## v0.12.0 (2021-05-13)
+### Feature
+* Gracefully destroy servers after traceback ([`ab22410`](https://github.com/neoave/mrack/commit/ab22410cf07785c2e430464a5e933807a6d785dc))
+* Wait for provider resources up to hour ([`b9612cf`](https://github.com/neoave/mrack/commit/b9612cfaa194fe99a691529b42c5549010a21e03))
+* **OpenStack:** Check openstack response for resources issue ([`328e0c9`](https://github.com/neoave/mrack/commit/328e0c9262e9a577a11817975218259ddf1ebd91))
+* **Virt:** Use generated run IDs for parallel jobs ([`60292ea`](https://github.com/neoave/mrack/commit/60292eaca1ff2f83746718c2f6aa2fc25ab0cbdf))
+* Password authentication in ssh_to_host ([`dd151b5`](https://github.com/neoave/mrack/commit/dd151b524eac0eaecf9faf35d81073a0724f9d1e))
+* Virt a local virtual machine provider ([`b2f917e`](https://github.com/neoave/mrack/commit/b2f917e3a17802ac238508e2326d0b262f02f6fd))
+* **OpenStack:** Move network translation to provider ([`5d5146b`](https://github.com/neoave/mrack/commit/5d5146b098c268bed8fe277c1cba30dd0a514317))
+* Add capability to disable ssh check ([`efc5061`](https://github.com/neoave/mrack/commit/efc5061c93f28510d56ca53d5be53b5f709e3ff8))
+* **OpenStack:** Distribute choosing of networks ([`b28acca`](https://github.com/neoave/mrack/commit/b28acca76cd095a5c70e8417ffe9321b8aa671c0))
+
+### Fix
+* Remove redundant host validation ([`baa2a06`](https://github.com/neoave/mrack/commit/baa2a06c27ece44302848a9f36fcd24681034e8f))
+* Change priority of hardcoding Administrator to Win hosts ([`3a5f19f`](https://github.com/neoave/mrack/commit/3a5f19ffc0b995814182bec335e002147fe670c2))
+* Do not add the config_drive_req to req ([`db1f82a`](https://github.com/neoave/mrack/commit/db1f82ae6a108fc8da38961cb0efe6dafede8726))
+
+### Documentation
+* Update method docsting as it does not Validate hosts anymore ([`46e725c`](https://github.com/neoave/mrack/commit/46e725ca64223da5560948a144a5798f0e8499ed))
+
 ## v0.11.0 (2021-05-07)
 ### Feature
 * Log mrack version into mrack.log ([`8ffa3c6`](https://github.com/neoave/mrack/commit/8ffa3c6610535c7fae8f4fa7d8d7a833bb200cab))
