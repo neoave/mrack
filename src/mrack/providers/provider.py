@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 
 STRATEGY_ABORT = "abort"
 STRATEGY_RETRY = "retry"
-RET_CODE = 0
-HOST_OBJ = 1
+RET_CODE = 0  # index to access return code from _wait_for_ssh
+HOST_OBJ = 1  # index to access host object from _wait_for_ssh
+SPECS = 1  # default index to access host specs which caused ProvisioningError
 
 
 class Provider:
@@ -129,7 +130,7 @@ class Provider:
 
     async def _provision_base(
         self, reqs, res_check_timeout=60, res_busy_sleep=10
-    ):  # pylint: disable=too-many-locals
+    ):  # pylint: disable=too-many-locals, too-many-branches
         """Provision hosts based on list of host requirements.
 
         Main function which does provisioning and validation.
@@ -164,14 +165,35 @@ class Provider:
         for req in reqs:
             awaitable = self.create_server(req)
             create_servers.append(awaitable)
-        create_resps = await asyncio.gather(*create_servers)
+
+        # expect the exception in return data to be parsed later
+        create_resps = await asyncio.gather(*create_servers, return_exceptions=True)
+
         logger.info(f"{self.dsp_name}: Provisioning issued")
 
         logger.info(f"{self.dsp_name}: Waiting for all hosts to be active")
+
+        error_hosts = []
         wait_servers = []
-        for create_resp in create_resps:
-            awaitable = self.wait_till_provisioned(create_resp)
-            wait_servers.append(awaitable)
+        for response in create_resps:
+            if not isinstance(response, ProvisioningError):
+                # response might be okay so let us wait for result
+                awaitable = self.wait_till_provisioned(response)
+                wait_servers.append(awaitable)
+            else:
+                # use ProvisioningError arguments to create missing Host object
+                # which we append to error hosts list for later usage
+                error_hosts.append(
+                    Host(
+                        provider=self,
+                        host_id=None,
+                        name=response.args[SPECS]["name"],
+                        ip_addrs=[],
+                        status=STATUS_OTHER,
+                        rawdata=response.args,
+                        error_obj=response.args,
+                    )
+                )
 
         server_results = await asyncio.gather(*wait_servers)
         provisioned = datetime.now()
@@ -182,8 +204,9 @@ class Provider:
         )
         logger.info(f"{self.dsp_name}: Provisioning duration: {provisioned - started}")
 
-        hosts = [self.to_host(srv) for srv in server_results]
-        error_hosts = await self.parse_error_hosts(hosts)
+        hosts = [self.to_host(srv) for srv in server_results if srv]
+
+        error_hosts += await self.parse_error_hosts(hosts)
         active_hosts = [h for h in hosts if h not in error_hosts]
         success_hosts = []
 
