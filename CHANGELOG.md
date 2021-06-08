@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v0.13.0 (2021-06-08)
+### Feature
+* Support size definition in metadata ([`b3923ba`](https://github.com/neoave/mrack/commit/b3923baf2b4969946a935536c2509dee349bc27f))
+
+### Fix
+* Use BaseOS as variant for RHEL9.0 in Beaker ([`9908257`](https://github.com/neoave/mrack/commit/9908257f01a417a22e36d3768502530b254c7a0b))
+
 ## v0.12.0 (2021-05-13)
 ### Feature
 * Gracefully destroy servers after traceback ([`ab22410`](https://github.com/neoave/mrack/commit/ab22410cf07785c2e430464a5e933807a6d785dc))
