@@ -45,7 +45,7 @@ class BeakerTransformer(Transformer):
         """Get variant for the host system to reqirement."""
         if "beaker_variant" in host:
             variant = host["beaker_variant"]
-        elif re.match(r"(rhel-8)", host["os"]):
+        elif re.match(r"(rhel-[8|9])", host["os"]):
             variant = "BaseOS"
         else:  # Default to Server for RHEL7 and Fedora systems
             variant = "Server"
