@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.14.0 (2021-07-01)
+### Feature
+* **Beaker:** Add distro tag from provisioning conf ([`762e88a`](https://github.com/neoave/mrack/commit/762e88a00c79be2c1194a459a7404f2eb3513e19))
+
 ## v0.13.0 (2021-06-08)
 ### Feature
 * Support size definition in metadata ([`b3923ba`](https://github.com/neoave/mrack/commit/b3923baf2b4969946a935536c2509dee349bc27f))
