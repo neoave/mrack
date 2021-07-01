@@ -36,6 +36,7 @@ from mrack.host import (
     STATUS_PROVISIONING,
 )
 from mrack.providers.provider import STRATEGY_ABORT, Provider
+from mrack.utils import global_context
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,15 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         arch_node.setAttribute("op", "=")
         arch_node.setAttribute("value", specs["arch"])
         recipe.addDistroRequires(arch_node)
+
+        # Specify the custom xml distro_tag node with values from provisioning config
+        distro_tags = global_context["config"]["beaker"].get("distro_tags")
+        if distro_tags:
+            for tag in distro_tags.get(specs["distro"], []):
+                tag_node = xml_doc().createElement("distro_tag")
+                tag_node.setAttribute("op", "=")
+                tag_node.setAttribute("value", tag)
+                recipe.addDistroRequires(tag_node)
 
         # Add ReserveSys element to reserve system after provisioning
         recipe.addReservesys(duration=str(self.reserve_duration))
