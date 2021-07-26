@@ -122,6 +122,11 @@ class AWSProvider(Provider):
         The req object can contain following additional attributes:
         * 'image': ami or name of image
         * 'flavor': flavor to use
+
+        Returns:
+            A tuple containing, respectively, a string (<aws machine id>)
+            and a string (<required host name for the VM>)
+            :rtype: (str, str)
         """
         logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
@@ -145,8 +150,8 @@ class AWSProvider(Provider):
 
         self.ec2.create_tags(Resources=ids, Tags=taglist)
 
-        # returns id of provisioned instance
-        return ids[0]
+        # returns id of provisioned instance and required host name
+        return (ids[0], req["name"])
 
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""
@@ -163,8 +168,9 @@ class AWSProvider(Provider):
 
         return result
 
-    async def wait_till_provisioned(self, aws_id):  # pylint: disable=arguments-differ
+    async def wait_till_provisioned(self, resource):
         """Wait for AWS provisioning result."""
+        aws_id, name = resource
         instance = self.ec2.Instance(aws_id)
         instance.wait_until_running()
         response = self.client.describe_instances(InstanceIds=[aws_id])
@@ -173,7 +179,7 @@ class AWSProvider(Provider):
             result = response["Reservations"][0]["Instances"][0]
         except (KeyError, IndexError) as data_err:
             raise ProvisioningError(
-                "Unexpected data format in response of provisioned instance."
+                f"Unexpected data format in response of provisioned instance '{name}'"
             ) from data_err
 
         return result

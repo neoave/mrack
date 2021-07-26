@@ -16,7 +16,7 @@
 
 from mrack.errors import ValidationError
 from mrack.host import STATUS_ACTIVE
-from mrack.providers.provider import STRATEGY_ABORT, Provider
+from mrack.providers.provider import SPECS, STRATEGY_ABORT, Provider
 
 PROVISIONER_KEY = "static"
 
@@ -41,7 +41,8 @@ class StaticProvider(Provider):
 
     async def create_server(self, req):
         """Request and create resource on selected provider."""
-        return req
+        # we shall return same tuple as with other providers
+        return (req, req["name"])
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -64,7 +65,7 @@ class StaticProvider(Provider):
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
-        return resource
+        return resource[SPECS]
 
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""

@@ -579,7 +579,7 @@ class OpenStackProvider(Provider):
                 # provisioning seems to pass correctly break to return result
                 break
 
-        return response.get("server")
+        return (response.get("server"), req["name"])
 
     async def delete_server(self, uuid):
         """Issue deletion of server.
@@ -619,6 +619,7 @@ class OpenStackProvider(Provider):
 
         Return information about provisioned server.
         """
+        resource, req_name = resource
         uuid = resource.get("id")
 
         poll_sleep_initial = self.poll_sleep_initial + self.poll_init_adj
@@ -626,17 +627,16 @@ class OpenStackProvider(Provider):
             poll_sleep_initial / 2 + poll_sleep_initial * random() * 1.5
         )
         poll_sleep = self.poll_sleep + self.poll_adj
-        timeout = self.timeout
 
         start = datetime.now()
-        timeout_time = start + timedelta(minutes=timeout)
+        timeout_time = start + timedelta(minutes=self.timeout)
 
         # do not check the state immediately, it will take some time
         logger.debug(f"{uuid}: sleeping for {poll_sleep_initial} seconds")
         await asyncio.sleep(poll_sleep_initial)
 
         resp = {}
-        logger.debug(f"Waiting for: {uuid}")
+        logger.debug(f"Waiting for '{req_name}': {uuid}")
         error_attempts = 0
         while datetime.now() < timeout_time:
             try:
@@ -663,7 +663,7 @@ class OpenStackProvider(Provider):
         if datetime.now() >= timeout_time:
             logger.warning(
                 f"{self.dsp_name}: Host {uuid} was not provisioned "
-                f"within a timeout of {timeout} mins"
+                f"within a timeout of {self.timeout} mins"
             )
         else:
             logger.info(
