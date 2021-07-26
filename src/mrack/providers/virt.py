@@ -21,7 +21,7 @@ import logging
 import os
 from datetime import datetime
 
-from mrack.errors import ValidationError
+from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.testcloud import Testcloud
@@ -105,20 +105,32 @@ class VirtProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating virtual machine for host: {hostname}")
 
         host_id = req["run_id"] + "-" + hostname
-        out, err, _proc = await self.testcloud.create(
-            host_id,
-            **req,
-        )
+        try:
+            out, err, _proc = await self.testcloud.create(
+                host_id,
+                **req,
+            )
+        except ProvisioningError as virt_err:
+            req.update({"host_id": host_id})
+            raise ProvisioningError(
+                # split traceback string to find Error causing failure
+                # index 1 should point to the Error string
+                str(virt_err).split("Error:")[1].strip(),
+                req,
+            ) from virt_err
+
         info = self.testcloud.info(host_id)
         info["id"] = host_id
         info["name"] = hostname
         info["output"] = out
         if info["state"] != "running":
             info["error"] = err
-        return info
+
+        return (info, req["name"])
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
+        resource, _req_name = resource
         return resource
 
     async def delete_host(self, host_id):

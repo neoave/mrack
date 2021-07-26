@@ -137,11 +137,13 @@ class PodmanProvider(Provider):
             extra_options=self.podman_options,
             remove_at_stop=True,
         )
-        return container_id
+
+        return (container_id, req["name"])
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
-        cont_id = resource
+        # access fist item from tuple resource which should be id
+        cont_id = resource[0]
 
         start = datetime.now()
         timeout = 20

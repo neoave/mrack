@@ -191,6 +191,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         * 'distro':     beaker distribution to use
         * 'arch':       architecture to request from beaker
         * 'variant':    variant of the system
+
+        Returns:
+            A tuple containing, respectively, a string (<created beaker job id>)
+            and a string (<required host name for the VM>)
+            :rtype: (str, str)
         """
         logger.info(f"{self.dsp_name}: Creating server")
 
