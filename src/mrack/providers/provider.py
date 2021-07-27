@@ -101,7 +101,8 @@ class Provider:
                         f"{self.dsp_name}: Waited too long for the port {port} "
                         f"on host {host.ip_addr} to start accepting connections"
                     )
-                    break
+                    # do not continue to try ssh connection after port is not open
+                    return False, host
 
         # Wait also for the ssh key to be accepted for a half timeout time
         start_ssh = datetime.now()
