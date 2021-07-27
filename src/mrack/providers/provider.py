@@ -28,6 +28,7 @@ STRATEGY_ABORT = "abort"
 STRATEGY_RETRY = "retry"
 RET_CODE = 0  # index to access return code from _wait_for_ssh
 HOST_OBJ = 1  # index to access host object from _wait_for_ssh
+ERROR_OBJ = 0  # default index to access host error which caused ProvisioningError
 SPECS = 1  # default index to access host specs which caused ProvisioningError
 
 
@@ -187,12 +188,12 @@ class Provider:
                 error_hosts.append(
                     Host(
                         provider=self,
-                        host_id=None,
-                        name=response.args[SPECS]["name"],
+                        host_id=response.args[SPECS].get("host_id"),
+                        name=response.args[SPECS].get("name"),
                         ip_addrs=[],
                         status=STATUS_OTHER,
                         rawdata=response.args,
-                        error_obj=response.args,
+                        error_obj=response.args[ERROR_OBJ],
                     )
                 )
 
@@ -326,7 +327,9 @@ class Provider:
 
         logger.info(f"{self.dsp_name}: Given the error, will delete hosts")
         await self.delete_hosts(hosts_to_delete)
-        raise ProvisioningError(error_hosts)
+        raise ProvisioningError(
+            f"Failed to provision {len(error_hosts)} host(s) due to provisioning error."
+        )
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
