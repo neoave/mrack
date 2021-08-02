@@ -66,6 +66,7 @@ class BeakerProvider(Provider):
             "Cancelled": STATUS_DELETED,
             "Aborted": STATUS_ERROR,
             "Completed": STATUS_OTHER,
+            "MRACK_MAX_ATTEMPTS_REACHED_TIMEOUT": STATUS_ERROR,
         }
 
     async def init(self, distros, max_attempts, reserve_duration, pubkey):
@@ -275,6 +276,16 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                     f"status {status} with result {resource['result']}"
                 )
                 break
+
+        if attempts >= self.max_attempts:
+            # In this case we failed to provision host in time:
+            # we need to create failed host object for mrack
+            # to delete the resource by cancelling the beaker job.
+            resource.update(
+                {
+                    "status": "MRACK_MAX_ATTEMPTS_REACHED_TIMEOUT",
+                }
+            )
 
         resource.update({"JobID": beaker_id, "req_name": req_name})
         return resource
