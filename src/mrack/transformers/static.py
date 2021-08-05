@@ -32,10 +32,6 @@ class StaticTransformer(Transformer):
     _required_config_attrs: typing.List[str] = []
     _required_host_attrs = ["name", "os", "group", "ip"]
 
-    async def init_provider(self):
-        """Initialize associate provider."""
-        pass
-
     def create_host_requirement(self, host):
         """Create single input for Static provisioner."""
         return deepcopy(host)
