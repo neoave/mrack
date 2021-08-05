@@ -14,6 +14,7 @@
 
 """AWS transformer module."""
 
+from mrack.providers.provider import STRATEGY_ABORT
 from mrack.transformers.transformer import Transformer
 
 CONFIG_KEY = "aws"
@@ -41,6 +42,7 @@ class AWSTransformer(Transformer):
             ssh_key=self.config["keypair"],
             sec_group=self.config["security_group"],
             instance_tags=self.config["instance_tags"],
+            strategy=self.config.get("strategy", STRATEGY_ABORT),
         )
 
     def create_host_requirement(self, host):

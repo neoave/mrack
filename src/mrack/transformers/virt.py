@@ -16,6 +16,7 @@
 
 import secrets
 
+from mrack.providers.provider import STRATEGY_ABORT
 from mrack.transformers.transformer import Transformer
 
 CONFIG_KEY = "virt"
@@ -34,7 +35,9 @@ class VirtTransformer(Transformer):
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
         self.dsp_name = "Virt"
-        await self._provider.init()
+        await self._provider.init(
+            strategy=self.config.get("strategy", STRATEGY_ABORT),
+        )
 
     def _get_host_option(self, host, name):
         default_options = self.config["options"]
