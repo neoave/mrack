@@ -37,7 +37,6 @@ class PodmanProvider(Provider):
         """Initialize provider."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Podman"
-        self.strategy = STRATEGY_ABORT
         self.podman = Podman()
         self.status_map = {
             STATUS_ACTIVE: STATUS_ACTIVE,
@@ -45,10 +44,18 @@ class PodmanProvider(Provider):
             STATUS_ERROR: STATUS_ERROR,
         }
 
-    async def init(self, container_images, default_network, ssh_key, container_options):
+    async def init(
+        self,
+        container_images,
+        default_network,
+        ssh_key,
+        container_options,
+        strategy=STRATEGY_ABORT,
+    ):
         """Initialize Podman provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
+        self.strategy = strategy
         self.images = container_images
         self.default_network = default_network
         self.ssh_key = ssh_key

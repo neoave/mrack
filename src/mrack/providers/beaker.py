@@ -20,7 +20,7 @@ import os
 import socket
 import xml.etree.ElementTree as eTree
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from xml.dom.minidom import Document as xml_doc
 
 from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
@@ -50,7 +50,6 @@ class BeakerProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Beaker"
-        self.strategy = STRATEGY_ABORT
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.pubkey = None
@@ -66,12 +65,15 @@ class BeakerProvider(Provider):
             "Cancelled": STATUS_DELETED,
             "Aborted": STATUS_ERROR,
             "Completed": STATUS_OTHER,
-            "MRACK_MAX_ATTEMPTS_REACHED_TIMEOUT": STATUS_ERROR,
+            "MRACK_REACHED_TIMEOUT": STATUS_ERROR,
         }
 
-    async def init(self, distros, max_attempts, reserve_duration, pubkey):
+    async def init(
+        self, distros, max_attempts, reserve_duration, pubkey, strategy=STRATEGY_ABORT
+    ):
         """Initialize provider with data from Beaker configuration."""
         logger.info(f"{self.dsp_name}: Initializing provider")
+        self.strategy = strategy
         self.distros = distros
         # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
         self.max_attempts = max_attempts
@@ -245,11 +247,13 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         """Wait for Beaker provisioning result."""
         beaker_id, req_name = resource
         resource = {}
-        attempts = 0
         prev_status = ""
 
-        while attempts < self.max_attempts:
-            attempts += 1
+        # let us use timeout variable which is in minutes to define
+        # maximum time to wait for beaker recipe to provide VM
+        timeout_time = datetime.now() + timedelta(minutes=self.timeout)
+
+        while datetime.now() < timeout_time:
             resource = self._get_recipe_info(beaker_id)
             status = resource["status"]
 
@@ -282,13 +286,13 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 )
                 break
 
-        if attempts >= self.max_attempts:
+        else:
             # In this case we failed to provision host in time:
             # we need to create failed host object for mrack
             # to delete the resource by cancelling the beaker job.
             resource.update(
                 {
-                    "status": "MRACK_MAX_ATTEMPTS_REACHED_TIMEOUT",
+                    "status": "MRACK_REACHED_TIMEOUT",
                 }
             )
 

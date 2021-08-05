@@ -38,7 +38,6 @@ class VirtProvider(Provider):
         """Initialize provider."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Virt"
-        self.strategy = STRATEGY_ABORT
         self.testcloud = Testcloud()
         self.status_map = {
             "running": STATUS_ACTIVE,
@@ -46,10 +45,11 @@ class VirtProvider(Provider):
             "undefined": STATUS_OTHER,
         }
 
-    async def init(self):
+    async def init(self, strategy=STRATEGY_ABORT):
         """Initialize Virt provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
+        self.strategy = strategy
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")

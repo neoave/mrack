@@ -38,7 +38,6 @@ class AWSProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "AWS"
-        self.strategy = STRATEGY_ABORT
         self.ami_ids: typing.List[str] = []
         self.ssh_key = None
         self.sec_group = None
@@ -57,20 +56,23 @@ class AWSProvider(Provider):
         """Get provider name."""
         return self._name
 
-    async def init(self, ami_ids, ssh_key, sec_group, instance_tags):
+    async def init(
+        self, ami_ids, ssh_key, sec_group, instance_tags, strategy=STRATEGY_ABORT
+    ):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
+        self.strategy = strategy
         self.ec2 = boto3.resource("ec2")
         self.client = boto3.client("ec2")
-        login_end = datetime.now()
-        login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
         self.ami_ids = ami_ids
         self.ssh_key = ssh_key
         self.sec_group = sec_group
         self.instance_tags = instance_tags
+        login_end = datetime.now()
+        login_duration = login_end - login_start
+        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""

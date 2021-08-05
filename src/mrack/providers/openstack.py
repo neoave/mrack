@@ -32,7 +32,7 @@ from mrack.errors import (
     ValidationError,
 )
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
-from mrack.providers.provider import STRATEGY_RETRY, Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
 from mrack.utils import object2json
 
@@ -61,7 +61,6 @@ class OpenStackProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "OpenStack"
-        self.strategy = STRATEGY_RETRY
         self.max_attempts = 5  # provisioning retries
         self.flavors = {}
         self.flavors_by_ref = {}
@@ -87,7 +86,7 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
-    async def init(self, image_names=None, networks=None):
+    async def init(self, image_names=None, networks=None, strategy=STRATEGY_ABORT):
         """Initialize provider with data from OpenStack.
 
         Load:
@@ -99,6 +98,7 @@ class OpenStackProvider(Provider):
         """
         # session expects that credentials will be set via env variables
         logger.info(f"{self.dsp_name}: Initializing provider")
+        self.strategy = strategy
         try:
             self.session = AuthPassword()
         except TypeError as terr:

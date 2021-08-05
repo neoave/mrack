@@ -16,6 +16,7 @@
 import logging
 
 from mrack.errors import ProvisioningConfigError
+from mrack.providers.provider import STRATEGY_ABORT
 from mrack.transformers.transformer import Transformer
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class OpenStackTransformer(Transformer):
         await self._provider.init(
             image_names=self.config["images"].values(),
             networks=self.config["networks"],
+            strategy=self.config.get("strategy", STRATEGY_ABORT),
         )
 
     def _get_network_type(self, host):

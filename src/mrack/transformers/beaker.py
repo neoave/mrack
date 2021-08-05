@@ -15,6 +15,7 @@
 """Beaker transformer module."""
 import re
 
+from mrack.providers.provider import STRATEGY_ABORT
 from mrack.transformers.transformer import Transformer
 
 CONFIG_KEY = "beaker"
@@ -39,6 +40,7 @@ class BeakerTransformer(Transformer):
             max_attempts=self.config["max_attempts"],
             reserve_duration=self.config["reserve_duration"],
             pubkey=self.config["pubkey"],
+            strategy=self.config.get("strategy", STRATEGY_ABORT),
         )
 
     def _get_bkr_variant(self, host):
