@@ -272,7 +272,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 break
             else:
                 logger.error(
-                    f"{self.dsp_name}: Job {beaker_id} has swithced to unexpected "
+                    f"{self.dsp_name}: Job {beaker_id} has switched to unexpected "
                     f"status {status} with result {resource['result']}"
                 )
                 break
