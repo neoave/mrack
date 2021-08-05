@@ -42,6 +42,7 @@ class AWSProvider(Provider):
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None
+        self.max_attempts = 3 # for retry strategy
         self.status_map = {
             "running": STATUS_ACTIVE,
             "pending": STATUS_PROVISIONING,

@@ -37,6 +37,7 @@ class PodmanProvider(Provider):
         """Initialize provider."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "Podman"
+        self.max_attempts = 1 # for retry strategy
         self.podman = Podman()
         self.status_map = {
             STATUS_ACTIVE: STATUS_ACTIVE,

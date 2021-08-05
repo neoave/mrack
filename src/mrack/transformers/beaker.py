@@ -29,7 +29,7 @@ class BeakerTransformer(Transformer):
         "distros",
         "pubkey",
         "reserve_duration",
-        "max_attempts",
+        "timeout",
     ]  # List[str]
 
     async def init_provider(self):
@@ -37,7 +37,7 @@ class BeakerTransformer(Transformer):
         self.dsp_name = "Beaker"
         await self._provider.init(
             distros=self.config["distros"].values(),
-            max_attempts=self.config["max_attempts"],
+            timeout=self.config["timeout"],
             reserve_duration=self.config["reserve_duration"],
             pubkey=self.config["pubkey"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
