@@ -53,6 +53,7 @@ class BeakerProvider(Provider):
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.pubkey = None
+        self.max_attempts = 3 # for retry strategy
         self.status_map = {
             "Reserved": STATUS_ACTIVE,
             "New": STATUS_PROVISIONING,
@@ -69,14 +70,13 @@ class BeakerProvider(Provider):
         }
 
     async def init(
-        self, distros, max_attempts, reserve_duration, pubkey, strategy=STRATEGY_ABORT
+        self, distros, timeout, reserve_duration, pubkey, strategy=STRATEGY_ABORT
     ):
         """Initialize provider with data from Beaker configuration."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         self.strategy = strategy
         self.distros = distros
-        # eg: 240 attempts * 30s timeout - 2h timeout for job to complete
-        self.max_attempts = max_attempts
+        self.timeout = timeout
         self.reserve_duration = reserve_duration
         self.pubkey = pubkey
         login_start = datetime.now()

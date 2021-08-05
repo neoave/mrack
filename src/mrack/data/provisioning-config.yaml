@@ -76,8 +76,8 @@ beaker:  # beaker provider specific values
     pubkey: id_rsa.pub
     # default reservation time for the beaker job
     reserve_duration: 86400
-    # default max_attepmts value for the beaker job
-    max_attempts: 240
+    # default timeout value for the beaker job in minutes
+    timeout: 120
 
 
 openstack:  # OpenStack provider specific values

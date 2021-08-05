@@ -39,6 +39,7 @@ class VirtProvider(Provider):
         self._name = PROVISIONER_KEY
         self.dsp_name = "Virt"
         self.testcloud = Testcloud()
+        self.max_attempts = 1 # for retry strategy
         self.status_map = {
             "running": STATUS_ACTIVE,
             "shutoff": STATUS_OTHER,
