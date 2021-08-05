@@ -255,8 +255,9 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
             if prev_status != status:
                 logger.info(
-                    f"{self.dsp_name}: Job {beaker_id} has changed "
-                    f"status ({prev_status} -> {status})"
+                    f"{self.dsp_name}: Job "
+                    f"{self.hub._hub_url}jobs/"  # pylint: disable=protected-access
+                    f"{resource['id']} has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
 
@@ -266,14 +267,18 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 break
             elif self.status_map.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
-                    f"{self.dsp_name}: Job {beaker_id} has errored with status "
-                    f"{status} and result {resource['result']}"
+                    f"{self.dsp_name}: Job "
+                    f"{self.hub._hub_url}"  # pylint: disable=protected-access
+                    f"jobs/{resource['id']} has errored with status"
+                    f" {status} and result {resource['result']}"
                 )
                 break
             else:
                 logger.error(
-                    f"{self.dsp_name}: Job {beaker_id} has switched to unexpected "
-                    f"status {status} with result {resource['result']}"
+                    f"{self.dsp_name}: Job "
+                    f"{self.hub._hub_url}"  # pylint: disable=protected-access
+                    f"jobs/{resource['id']} has switched to unexpected"
+                    f" status {status} with result {resource['result']}"
                 )
                 break
 
@@ -292,7 +297,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
-        logger.info(f"{self.dsp_name}: Deleting host by cancelling Job {host_id}")
+        logger.info(
+            f"{self.dsp_name}: Deleting host by cancelling Job "
+            f"{self.hub._hub_url}"  # pylint: disable=protected-access
+            f"jobs/{host_id.split(':')[1]}"
+        )
         return self.hub.taskactions.stop(
             host_id, "cancel", "Job has been stopped by mrack."
         )
