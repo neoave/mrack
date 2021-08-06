@@ -15,7 +15,7 @@
 """Podman transformer module."""
 
 from mrack.providers.provider import STRATEGY_ABORT
-from mrack.transformers.transformer import Transformer
+from mrack.transformers.transformer import DEFAULT_ATTEMPTS, Transformer
 from mrack.utils import get_host_from_metadata
 
 CONFIG_KEY = "podman"
@@ -42,6 +42,7 @@ class PodmanTransformer(Transformer):
             default_network=self.config["default_network"],
             container_options=self.config["podman_options"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
+            max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
     def create_host_requirement(self, host):

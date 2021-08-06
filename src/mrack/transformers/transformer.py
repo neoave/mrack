@@ -21,6 +21,8 @@ from mrack.errors import ConfigError, MetadataError
 from mrack.providers import providers
 from mrack.utils import get_config_value, object2json, validate_dict_attrs
 
+DEFAULT_ATTEMPTS = 1
+
 logger = logging.getLogger(__name__)
 
 

@@ -39,18 +39,19 @@ class VirtProvider(Provider):
         self._name = PROVISIONER_KEY
         self.dsp_name = "Virt"
         self.testcloud = Testcloud()
-        self.max_attempts = 1 # for retry strategy
+        self.max_retry = 1  # for retry strategy
         self.status_map = {
             "running": STATUS_ACTIVE,
             "shutoff": STATUS_OTHER,
             "undefined": STATUS_OTHER,
         }
 
-    async def init(self, strategy=STRATEGY_ABORT):
+    async def init(self, strategy=STRATEGY_ABORT, max_retry=1):
         """Initialize Virt provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
+        self.max_retry = max_retry
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")

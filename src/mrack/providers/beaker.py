@@ -53,7 +53,7 @@ class BeakerProvider(Provider):
         self.conf = PyConfigParser()
         self.poll_sleep = 30  # seconds
         self.pubkey = None
-        self.max_attempts = 3 # for retry strategy
+        self.max_retry = 1  # for retry strategy
         self.status_map = {
             "Reserved": STATUS_ACTIVE,
             "New": STATUS_PROVISIONING,
@@ -70,11 +70,18 @@ class BeakerProvider(Provider):
         }
 
     async def init(
-        self, distros, timeout, reserve_duration, pubkey, strategy=STRATEGY_ABORT
+        self,
+        distros,
+        timeout,
+        reserve_duration,
+        pubkey,
+        strategy=STRATEGY_ABORT,
+        max_retry=1,
     ):
         """Initialize provider with data from Beaker configuration."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         self.strategy = strategy
+        self.max_retry = max_retry
         self.distros = distros
         self.timeout = timeout
         self.reserve_duration = reserve_duration
@@ -248,6 +255,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         beaker_id, req_name = resource
         resource = {}
         prev_status = ""
+        job_url = ""
 
         # let us use timeout variable which is in minutes to define
         # maximum time to wait for beaker recipe to provide VM
@@ -256,12 +264,15 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         while datetime.now() < timeout_time:
             resource = self._get_recipe_info(beaker_id)
             status = resource["status"]
+            job_url = (
+                f"{self.hub._hub_url}"  # pylint: disable=protected-access
+                f"jobs/{resource['id']}"
+            )
 
             if prev_status != status:
                 logger.info(
-                    f"{self.dsp_name}: Job "
-                    f"{self.hub._hub_url}jobs/"  # pylint: disable=protected-access
-                    f"{resource['id']} has changed status ({prev_status} -> {status})"
+                    f"{self.dsp_name}: Job {job_url} "
+                    f"has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
 
@@ -271,28 +282,31 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 break
             elif self.status_map.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
-                    f"{self.dsp_name}: Job "
-                    f"{self.hub._hub_url}"  # pylint: disable=protected-access
-                    f"jobs/{resource['id']} has errored with status"
-                    f" {status} and result {resource['result']}"
+                    f"{self.dsp_name}: Job {job_url} has errored with status "
+                    f"{status} and result {resource['result']}"
                 )
+                resource.update({"result": f"Job {job_url} failed to provision"})
                 break
             else:
                 logger.error(
-                    f"{self.dsp_name}: Job "
-                    f"{self.hub._hub_url}"  # pylint: disable=protected-access
-                    f"jobs/{resource['id']} has switched to unexpected"
-                    f" status {status} with result {resource['result']}"
+                    f"{self.dsp_name}: Job {job_url} has switched to unexpected "
+                    f"status {status} with result {resource['result']}"
                 )
+                resource.update({"result": f"Job {job_url} failed to provision"})
                 break
 
         else:
             # In this case we failed to provision host in time:
             # we need to create failed host object for mrack
             # to delete the resource by cancelling the beaker job.
+            logger.error(
+                f"{self.dsp_name}: Job {job_url} failed to provide resource in"
+                f" the timeout of {self.timeout} minutes"
+            )
             resource.update(
                 {
                     "status": "MRACK_REACHED_TIMEOUT",
+                    "result": f"Job {job_url} reached timeout",
                 }
             )
 

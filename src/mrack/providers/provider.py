@@ -39,7 +39,7 @@ class Provider:
         """Initialize provider."""
         self._name = "dummy"
         self.dsp_name = "Dummy"
-        self.max_attempts = 1
+        self.max_retry = 1
         self.strategy = STRATEGY_ABORT
         self.status_map = {"OTHER": STATUS_OTHER}
 
@@ -280,8 +280,10 @@ class Provider:
         error_hosts = []
 
         while missing_reqs:
-            if attempts >= self.max_attempts:
-                logger.error(f"Max attempts({self.max_attempts}) reached. Aborting.")
+            if attempts >= self.max_retry:
+                logger.error(
+                    f"{self.dsp_name}: Max attempts({self.max_retry}) reached. Aborting"
+                )
                 break
 
             attempts += 1
@@ -297,7 +299,7 @@ class Provider:
                 for host in error_hosts:
                     logger.error(f"{self.dsp_name}: Error: {str(host.error)}")
                 await self.delete_hosts(error_hosts)
-                logger.info("Retrying to provision these hosts.")
+                logger.info(f"{self.dsp_name}: Retrying to provision these hosts.")
 
         return success_hosts, error_hosts, missing_reqs
 

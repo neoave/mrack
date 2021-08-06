@@ -42,7 +42,7 @@ class AWSProvider(Provider):
         self.ssh_key = None
         self.sec_group = None
         self.instance_tags = None
-        self.max_attempts = 3 # for retry strategy
+        self.max_retry = 1  # for retry strategy
         self.status_map = {
             "running": STATUS_ACTIVE,
             "pending": STATUS_PROVISIONING,
@@ -58,13 +58,20 @@ class AWSProvider(Provider):
         return self._name
 
     async def init(
-        self, ami_ids, ssh_key, sec_group, instance_tags, strategy=STRATEGY_ABORT
+        self,
+        ami_ids,
+        ssh_key,
+        sec_group,
+        instance_tags,
+        strategy=STRATEGY_ABORT,
+        max_retry=1,
     ):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
+        self.max_retry = max_retry
         self.ec2 = boto3.resource("ec2")
         self.client = boto3.client("ec2")
         self.ami_ids = ami_ids
