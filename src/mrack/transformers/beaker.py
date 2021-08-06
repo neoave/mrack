@@ -19,6 +19,7 @@ from mrack.providers.provider import STRATEGY_ABORT
 from mrack.transformers.transformer import Transformer
 
 CONFIG_KEY = "beaker"
+DEFAULT_ATTEMPTS = 2
 
 
 class BeakerTransformer(Transformer):
@@ -41,6 +42,7 @@ class BeakerTransformer(Transformer):
             reserve_duration=self.config["reserve_duration"],
             pubkey=self.config["pubkey"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
+            max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
     def _get_bkr_variant(self, host):

@@ -22,6 +22,7 @@ from mrack.transformers.transformer import Transformer
 logger = logging.getLogger(__name__)
 
 CONFIG_KEY = "openstack"
+DEFAULT_ATTEMPTS = 5
 
 
 class OpenStackTransformer(Transformer):
@@ -37,6 +38,7 @@ class OpenStackTransformer(Transformer):
             image_names=self.config["images"].values(),
             networks=self.config["networks"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
+            max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
     def _get_network_type(self, host):

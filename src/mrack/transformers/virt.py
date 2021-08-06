@@ -17,7 +17,7 @@
 import secrets
 
 from mrack.providers.provider import STRATEGY_ABORT
-from mrack.transformers.transformer import Transformer
+from mrack.transformers.transformer import DEFAULT_ATTEMPTS, Transformer
 
 CONFIG_KEY = "virt"
 
@@ -37,6 +37,7 @@ class VirtTransformer(Transformer):
         self.dsp_name = "Virt"
         await self._provider.init(
             strategy=self.config.get("strategy", STRATEGY_ABORT),
+            max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
     def _get_host_option(self, host, name):

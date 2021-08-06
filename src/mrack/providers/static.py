@@ -32,7 +32,7 @@ class StaticProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
-        self.max_attempts = 1 # for retry strategy
+        self.max_retry = 1  # for retry strategy
         self.strategy = STRATEGY_ABORT
         self.status_map = {STATUS_ACTIVE: STATUS_ACTIVE}
 

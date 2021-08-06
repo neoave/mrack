@@ -15,7 +15,7 @@
 """AWS transformer module."""
 
 from mrack.providers.provider import STRATEGY_ABORT
-from mrack.transformers.transformer import Transformer
+from mrack.transformers.transformer import DEFAULT_ATTEMPTS, Transformer
 
 CONFIG_KEY = "aws"
 
@@ -43,6 +43,7 @@ class AWSTransformer(Transformer):
             sec_group=self.config["security_group"],
             instance_tags=self.config["instance_tags"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
+            max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
     def create_host_requirement(self, host):

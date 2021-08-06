@@ -61,7 +61,7 @@ class OpenStackProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "OpenStack"
-        self.max_attempts = 5  # provisioning retries
+        self.max_retry = 1  # provisioning retries
         self.flavors = {}
         self.flavors_by_ref = {}
         self.images = {}
@@ -86,7 +86,9 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
-    async def init(self, image_names=None, networks=None, strategy=STRATEGY_ABORT):
+    async def init(
+        self, image_names=None, networks=None, strategy=STRATEGY_ABORT, max_retry=1
+    ):
         """Initialize provider with data from OpenStack.
 
         Load:
@@ -99,6 +101,7 @@ class OpenStackProvider(Provider):
         # session expects that credentials will be set via env variables
         logger.info(f"{self.dsp_name}: Initializing provider")
         self.strategy = strategy
+        self.max_retry = max_retry
         try:
             self.session = AuthPassword()
         except TypeError as terr:
