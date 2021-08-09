@@ -292,7 +292,11 @@ class Provider:
             )
             success_hosts.extend(s_hosts)
 
-            if error_hosts:
+            # We need to cleanup the error hosts for the next retry run
+            # in case of last attempt which is `self.max_retry`
+            # we skip this part at it done in provision_hosts() method while
+            # awaiting the self.abort_and_delete(error hosts)
+            if error_hosts and attempts != self.max_retry:
                 count = len(error_hosts)
                 err = f"{count} hosts were not provisioned properly, deleting."
                 logger.info(f"{self.dsp_name}: {err}")
