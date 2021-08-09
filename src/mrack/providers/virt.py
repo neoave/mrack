@@ -22,7 +22,7 @@ import os
 from datetime import datetime
 
 from mrack.errors import ProvisioningError, ValidationError
-from mrack.host import STATUS_ACTIVE, STATUS_OTHER
+from mrack.host import STATUS_ACTIVE, STATUS_OTHER, STATUS_PENDING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.testcloud import Testcloud
 
@@ -44,6 +44,7 @@ class VirtProvider(Provider):
             "running": STATUS_ACTIVE,
             "shutoff": STATUS_OTHER,
             "undefined": STATUS_OTHER,
+            "de-sync": STATUS_PENDING,
         }
 
     async def init(self, strategy=STRATEGY_ABORT, max_retry=1):
@@ -114,12 +115,18 @@ class VirtProvider(Provider):
             )
         except ProvisioningError as virt_err:
             req.update({"host_id": host_id})
-            raise ProvisioningError(
-                # split traceback string to find Error causing failure
-                # index 1 should point to the Error string
-                str(virt_err).split("Error:")[1].strip(),
-                req,
-            ) from virt_err
+            # split traceback string to find Error causing failure
+            # index 1 should point to the Error string
+            exc_str = str(virt_err)
+            err_sep = "Error:"
+            if err_sep in exc_str:
+                err_str = str(virt_err).split(err_sep)[1].strip()
+            elif err_sep.upper() in exc_str:
+                err_str = str(virt_err).split(err_sep.upper())[1].strip()
+            else:
+                err_str = exc_str
+
+            raise ProvisioningError(err_str, req) from virt_err
 
         info = self.testcloud.info(host_id)
         info["id"] = host_id
