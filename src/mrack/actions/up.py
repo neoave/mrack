@@ -17,10 +17,12 @@
 import asyncio
 import logging
 
-from mrack.errors import MetadataError
+from mrack.errors import MetadataError, ProvisioningError
 from mrack.providers import providers
 from mrack.transformers import transformers
 from mrack.utils import global_context, validate_dict_attrs
+
+PROVIDER_NAME_INDEX = 1
 
 logger = logging.getLogger(__name__)
 
@@ -97,11 +99,47 @@ class Up:
             provider = providers.get(provider_name)
             awaitable = provider.provision_hosts(reqs)
             prov_aws.append(awaitable)
-        provisioning_results = await asyncio.gather(*prov_aws)
-        hosts = []
-        for results in provisioning_results:
-            hosts.extend(results)
 
-        self._db_driver.add_hosts(hosts)
+        provisioning_results = await asyncio.gather(*prov_aws, return_exceptions=True)
+
+        success_hosts = []
+        destroy = []
+        for results in provisioning_results:
+            if isinstance(results, ProvisioningError):
+                # in this case some of any provider fails to provision
+                # we need to cleanup all the remaining resources
+                # even when provisioned successfully
+                destroy.append(results.args[PROVIDER_NAME_INDEX])
+                continue
+
+            if isinstance(results, Exception):
+                logger.error("An unexpected exception occurred while provisioning")
+                raise results
+
+            success_hosts.extend(results)
+
+        if destroy:
+            failed_prov = ", ".join(destroy)
+            logger.info(
+                "Issuing deletion of all successfully provisioned resources "
+                " due to provisioning error"
+            )
+            cleanup = [h.delete() for h in success_hosts]
+            cleanup_res = await asyncio.gather(*cleanup)
+            if all(cleanup_res):
+                logger.info(
+                    "All successfully provisioned resources issued to be deleted"
+                )
+            else:
+                logger.error(
+                    "Failed to destroy some of provisioned resources, "
+                    "manual destroy of resources might be needed"
+                )
+
+            raise ProvisioningError(
+                f"Provider(s) {failed_prov} failed to provision resources"
+            )
+
+        self._db_driver.add_hosts(success_hosts)
         logger.info("Provisioning done")
-        return hosts
+        return success_hosts
