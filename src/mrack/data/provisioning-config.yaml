@@ -1,5 +1,8 @@
 ---
 podman:
+    # feature to switch provisioning strategy from abort or retry on fail
+    strategy: abort
+
     images:
         # example: systemd enabled container images from: https://github.com/Tiboris/snappeas
         fedora-rawhide: tdudlak/snappeas:fedora-rawhide
@@ -68,6 +71,12 @@ aws:  # aws provider config
 
 
 beaker:  # beaker provider specific values
+    # feature to switch provisioning strategy from abort or retry on fail
+    strategy: retry
+    # maximum count of the retries when re-provisioning resources
+    # fails if retry does not provide resource after max_retry count
+    max_retry: 3
+
     distros:
         # list of beaker distros key is used in metadata distro is used in generated jobxml
         fedora-32: Fedora-32%
@@ -81,6 +90,12 @@ beaker:  # beaker provider specific values
 
 
 openstack:  # OpenStack provider specific values
+    # feature to switch provisioning strategy from abort or retry on fail
+    strategy: retry
+    # maximum count of the retries when re-provisioning resources
+    # fails if retry does not provide resource after max_retry count
+    max_retry: 5
+
     images:
         fedora-32: Fedora-Cloud-Base-32-latest
 
