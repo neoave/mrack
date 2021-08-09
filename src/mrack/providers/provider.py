@@ -132,7 +132,7 @@ class Provider:
 
     async def _provision_base(
         self, reqs, res_check_timeout=60, res_busy_sleep=10
-    ):  # pylint: disable=too-many-locals, too-many-branches
+    ):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Provision hosts based on list of host requirements.
 
         Main function which does provisioning and validation.
@@ -178,11 +178,7 @@ class Provider:
         error_hosts = []
         wait_servers = []
         for response in create_resps:
-            if not isinstance(response, ProvisioningError):
-                # response might be okay so let us wait for result
-                awaitable = self.wait_till_provisioned(response)
-                wait_servers.append(awaitable)
-            else:
+            if isinstance(response, ProvisioningError):
                 # use ProvisioningError arguments to create missing Host object
                 # which we append to error hosts list for later usage
                 error_hosts.append(
@@ -196,6 +192,13 @@ class Provider:
                         error_obj=response.args[ERROR_OBJ],
                     )
                 )
+            elif isinstance(response, Exception):
+                logger.error("An unexpected exception occurred while provisioning")
+                raise response
+            else:
+                # response might be okay so let us wait for result
+                awaitable = self.wait_till_provisioned(response)
+                wait_servers.append(awaitable)
 
         server_results = await asyncio.gather(*wait_servers)
         provisioned = datetime.now()
@@ -334,7 +337,9 @@ class Provider:
         logger.info(f"{self.dsp_name}: Given the error, will delete hosts")
         await self.delete_hosts(hosts_to_delete)
         raise ProvisioningError(
-            f"Failed to provision {len(error_hosts)} host(s) due to provisioning error."
+            f"{self.dsp_name}: Failed to provision {len(error_hosts)} host(s) "
+            "due to provisioning error",
+            self.dsp_name,
         )
 
     async def delete_host(self, host_id):
