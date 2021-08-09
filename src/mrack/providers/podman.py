@@ -209,6 +209,7 @@ class PodmanProvider(Provider):
         insp_data = await self.podman.inspect(host_id)
         networks = insp_data[0]["NetworkSettings"]["Networks"]
         # then we destroy the container
+        logger.info(f"{self.dsp_name}: Removing container {host_id}")
         deleted = await self.podman.rm(host_id, force=True)  # TODO use stop and then rm
         # after that we cleanup the podman network
         for net in networks:
