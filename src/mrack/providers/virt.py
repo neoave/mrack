@@ -144,6 +144,7 @@ class VirtProvider(Provider):
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
+        logger.info(f"{self.dsp_name}: Removing VM {host_id}")
         _out, _err, _proc = await self.testcloud.destroy(host_id)
         return True
 
