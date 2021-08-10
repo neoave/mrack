@@ -22,13 +22,12 @@ class TestStaticProvider:
     async def test_up_action(
         self, provisioning_config, metadata, database, setup_providers
     ):
-        up_action = UpAction()
-        await up_action.init(
+        up_action = UpAction(
             config=provisioning_config,
             metadata=metadata,
-            default_provider="static",
             db_driver=database,
         )
+        await up_action.init(default_provider="static")
         await up_action.provision()
 
         assert database.hosts != {}
@@ -41,8 +40,7 @@ class TestStaticProvider:
 
     @pytest.mark.asyncio
     async def test_list_action(self, database, setup_providers, caplog):
-        list_action = ListAction()
-        list_action.init(
+        list_action = ListAction(
             db_driver=database,
         )
         list_action.list()
@@ -63,8 +61,7 @@ class TestStaticProvider:
         # Check that workdir is empty
         assert os.listdir(workdir) == []
 
-        output_action = OutputAction()
-        await output_action.init(
+        output_action = OutputAction(
             config=provisioning_config,
             metadata=metadata,
             db_driver=database,
@@ -82,8 +79,7 @@ class TestStaticProvider:
     async def test_destroy_action(
         self, provisioning_config, metadata, database, setup_providers
     ):
-        destroy_action = DestroyAction()
-        await destroy_action.init(
+        destroy_action = DestroyAction(
             config=provisioning_config,
             metadata=metadata,
             db_driver=database,
