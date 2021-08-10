@@ -34,4 +34,5 @@ class StaticTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for Static provisioner."""
+        self.dsp_name = "Static"
         return deepcopy(host)
