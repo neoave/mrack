@@ -266,7 +266,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             status = resource["status"]
             job_url = (
                 f"{self.hub._hub_url}"  # pylint: disable=protected-access
-                f"jobs/{resource['id']}"
+                f"/jobs/{resource['id']}"
             )
 
             if prev_status != status:
