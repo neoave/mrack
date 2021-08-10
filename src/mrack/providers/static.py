@@ -14,11 +14,15 @@
 
 """Static provider."""
 
+import logging
+
 from mrack.errors import ValidationError
 from mrack.host import STATUS_ACTIVE
 from mrack.providers.provider import SPECS, STRATEGY_ABORT, Provider
 
 PROVISIONER_KEY = "static"
+
+logger = logging.getLogger(__name__)
 
 
 class StaticProvider(Provider):
@@ -32,6 +36,7 @@ class StaticProvider(Provider):
     def __init__(self):
         """Object initialization."""
         self._name = PROVISIONER_KEY
+        self.dsp_name = "Static"
         self.max_retry = 1  # for retry strategy
         self.strategy = STRATEGY_ABORT
         self.status_map = {STATUS_ACTIVE: STATUS_ACTIVE}
@@ -82,4 +87,8 @@ class StaticProvider(Provider):
 
     async def delete_host(self, host_id):
         """Fake delete - pass but don't do anything."""
+        logger.info(
+            f"{self.dsp_name}: Host {host_id} is static"
+            " - not managed by mrack, ignoring removal"
+        )
         return bool(host_id)
