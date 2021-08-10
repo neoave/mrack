@@ -1,5 +1,5 @@
 How to configure provider's provisioning strategy
-=======================================
+=================================================
 
 mrack supports several providers and each provider can be configured to retry
 the provisioning of resource when needed.
