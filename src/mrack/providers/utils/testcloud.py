@@ -39,7 +39,7 @@ class Testcloud:
 
     async def _run_testcloud(self, args, raise_on_err=True):
         """Util method to execute testcloud process."""
-        logger.debug(args)
+        logger.info("Running: testcloud %s", " ".join(args))
         return await exec_async_subprocess(self.program, args, raise_on_err)
 
     async def list(self):
@@ -64,8 +64,8 @@ class Testcloud:
         **kwargs,
     ):
         """Start a new testcloud instance."""
-        args = ["instance", "create", instance_name]
-        args.extend(["--url", image_url])
+        args = ["instance", "create", "--name", instance_name]
+
         if kwargs.get("ram"):
             args.extend(["--ram", kwargs.get("ram")])
         if kwargs.get("vcpus"):
@@ -80,6 +80,11 @@ class Testcloud:
             args.extend(["--no_graphics"])
         if kwargs.get("keep"):
             args.extend(["--keep"])
+        if kwargs.get("ssh_path"):
+            args.extend(["--ssh_path", kwargs.get("ssh_path")])
+
+        args.append(image_url)
+
         return await self._run_testcloud(args)
 
     def info(self, instance_name):

@@ -54,7 +54,9 @@ class VirtTransformer(Transformer):
             "name": host["name"],
             "run_id": self.run_id,
             "image_url": self._get_image(host["os"]),
+            "ssh_path": self._get_host_option(host, "ssh_path"),
         }
+
         for option in [
             "ram",
             "vcpus",
