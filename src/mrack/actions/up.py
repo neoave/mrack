@@ -103,13 +103,13 @@ class Up:
         provisioning_results = await asyncio.gather(*prov_aws, return_exceptions=True)
 
         success_hosts = []
-        destroy = []
+        failed_providers = []
         for results in provisioning_results:
             if isinstance(results, ProvisioningError):
                 # in this case some of any provider fails to provision
                 # we need to cleanup all the remaining resources
                 # even when provisioned successfully
-                destroy.append(results.args[PROVIDER_NAME_INDEX])
+                failed_providers.append(results.args[PROVIDER_NAME_INDEX])
                 continue
 
             if isinstance(results, Exception):
@@ -118,8 +118,8 @@ class Up:
 
             success_hosts.extend(results)
 
-        if destroy:
-            failed_prov = ", ".join(destroy)
+        if failed_providers and success_hosts:
+            # if there is successfully provisioned resource do a cleanup
             logger.info(
                 "Issuing deletion of all successfully provisioned resources "
                 " due to provisioning error"
@@ -136,6 +136,8 @@ class Up:
                     "manual destroy of resources might be needed"
                 )
 
+        if failed_providers:
+            failed_prov = ", ".join(failed_providers)
             raise ProvisioningError(
                 f"Provider(s) {failed_prov} failed to provision resources"
             )
