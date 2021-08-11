@@ -47,6 +47,22 @@ class VirtProvider(Provider):
             "de-sync": STATUS_PENDING,
         }
 
+    def _extract_err_msg(self, virt_err):
+        """Extract Virt provider traceback error from message."""
+        # split traceback string to find Error causing failure
+        # index 1 should point to the Error string
+        exc_str = str(virt_err)
+        logger.error(f"Exception occured:\n{exc_str}")
+        err_sep = "Error:"
+        if err_sep in exc_str:
+            err_str = str(virt_err).split(err_sep)[1].strip()
+        elif err_sep.upper() in exc_str:
+            err_str = str(virt_err).split(err_sep.upper())[1].strip()
+        else:
+            err_str = exc_str
+        # return first line of error as it could be more lines of traceback
+        return err_str.split("\n")[0]
+
     async def init(self, strategy=STRATEGY_ABORT, max_retry=1):
         """Initialize Virt provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
@@ -115,18 +131,7 @@ class VirtProvider(Provider):
             )
         except ProvisioningError as virt_err:
             req.update({"host_id": host_id})
-            # split traceback string to find Error causing failure
-            # index 1 should point to the Error string
-            exc_str = str(virt_err)
-            err_sep = "Error:"
-            if err_sep in exc_str:
-                err_str = str(virt_err).split(err_sep)[1].strip()
-            elif err_sep.upper() in exc_str:
-                err_str = str(virt_err).split(err_sep.upper())[1].strip()
-            else:
-                err_str = exc_str
-
-            raise ProvisioningError(err_str, req) from virt_err
+            raise ProvisioningError(self._extract_err_msg(virt_err), req) from virt_err
 
         info = self.testcloud.info(host_id)
         info["id"] = host_id
@@ -145,7 +150,12 @@ class VirtProvider(Provider):
     async def delete_host(self, host_id):
         """Delete provisioned host."""
         logger.info(f"{self.dsp_name}: Removing VM {host_id}")
-        _out, _err, _proc = await self.testcloud.destroy(host_id)
+        try:
+            _out, _err, _proc = await self.testcloud.destroy(host_id)
+        except ProvisioningError as p_err:
+            # just log error message when unable to delete VM
+            logger.error(f"{self.dsp_name}: {self._extract_err_msg(p_err)}")
+
         return True
 
     def prov_result_to_host_data(self, prov_result):
