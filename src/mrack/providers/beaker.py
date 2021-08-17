@@ -318,7 +318,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         logger.info(
             f"{self.dsp_name}: Deleting host by cancelling Job "
             f"{self.hub._hub_url}"  # pylint: disable=protected-access
-            f"jobs/{host_id.split(':')[1]}"
+            f"/jobs/{host_id.split(':')[1]}"
         )
         return self.hub.taskactions.stop(
             host_id, "cancel", "Job has been stopped by mrack."
