@@ -51,7 +51,7 @@ class BeakerProvider(Provider):
         self._name = PROVISIONER_KEY
         self.dsp_name = "Beaker"
         self.conf = PyConfigParser()
-        self.poll_sleep = 30  # seconds
+        self.poll_sleep = 45  # seconds
         self.pubkey = None
         self.max_retry = 1  # for retry strategy
         self.status_map = {
@@ -275,6 +275,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                     f"has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
+            else:
+                logger.info(
+                    f"{self.dsp_name}: Job {job_url} has not changed status "
+                    f"({status}), waiting another {self.poll_sleep:.1f}s"
+                )
 
             if self.status_map.get(status) == STATUS_PROVISIONING:
                 await asyncio.sleep(self.poll_sleep)
