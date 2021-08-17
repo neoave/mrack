@@ -221,11 +221,11 @@ def ssh_to_host(
     ssh_key = ssh_key or get_ssh_key(host, meta_host, global_context["config"])
     psw = host.password or password
 
-    my_env = os.environ.copy()
-
     run_args = {
-        "env": my_env,
+        "env": os.environ.copy(),
         "shell": True,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
     }
 
     cmd = ["ssh"]
@@ -249,9 +249,16 @@ def ssh_to_host(
 
     cmd = " ".join(cmd)
 
-    logger.info(cmd)
+    logger.debug(f"Running: {cmd}")
     process = subprocess.Popen(cmd, **run_args)
-    process.communicate()
+    std_out, std_err = process.communicate()
+
+    for o_line in std_out.decode().splitlines():
+        logger.debug(f"stdout: {o_line}")
+
+    for e_line in std_err.decode().splitlines():
+        logger.debug(f"stderr: {e_line}")
+
     return process.returncode == 0
 
 

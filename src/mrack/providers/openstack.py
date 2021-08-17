@@ -635,7 +635,7 @@ class OpenStackProvider(Provider):
         timeout_time = start + timedelta(minutes=self.timeout)
 
         # do not check the state immediately, it will take some time
-        logger.debug(f"{uuid}: sleeping for {poll_sleep_initial} seconds")
+        logger.debug(f"{uuid}: sleeping for {poll_sleep_initial:.1f} seconds")
         await asyncio.sleep(poll_sleep_initial)
 
         resp = {}
@@ -657,7 +657,7 @@ class OpenStackProvider(Provider):
                 break
 
             poll_sleep += 0.5  # increase delays to check the longer it takes
-            logger.debug(f"{uuid}: sleeping for {poll_sleep} seconds")
+            logger.debug(f"{uuid}: sleeping for {poll_sleep:.1f} seconds")
             await asyncio.sleep(poll_sleep)
 
         done_time = datetime.now()
