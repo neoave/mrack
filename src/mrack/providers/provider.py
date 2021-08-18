@@ -283,7 +283,12 @@ class Provider:
         error_hosts = []
 
         while missing_reqs:
-            if attempts >= self.max_retry:
+            # number of attempts should be greater than max_retry
+            # and not greater or equal than max_retry because
+            # other way first attempt to provision will be
+            # considered as first retry and provisioning will end
+            # after reaching count 1 without reprovisioning retry
+            if attempts > self.max_retry:
                 logger.error(
                     f"{self.dsp_name}: Max attempts({self.max_retry}) reached. Aborting"
                 )
