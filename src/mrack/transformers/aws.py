@@ -48,10 +48,15 @@ class AWSTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
-        required_image = host.get("image") or self._get_image(host["os"])
+        req_arch = host.get("arch", "x86_64")
+        arch_images = self.config.get("images")
+        req_image = host.get("image") or self._get_image(
+            host["os"], config_key=req_arch, provider_config=arch_images
+        )
+
         return {
             "name": host["name"],
             "flavor": self._get_flavor(host),
-            "image": required_image,
+            "image": req_image,
             "meta_image": "image" in host,
         }

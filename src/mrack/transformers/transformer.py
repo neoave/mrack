@@ -68,7 +68,7 @@ class Transformer:
         """Add host input."""
         self._hosts.append(host)
 
-    def _get_image(self, operating_system, config_key="images"):
+    def _get_image(self, operating_system, config_key="images", provider_config=None):
         """
         Get image name by OS name from provisioning config.
 
@@ -77,8 +77,11 @@ class Transformer:
             2. default from the images if os is not found in keys
             3. os name if default is not specified for images.
         """
+        if not provider_config:
+            provider_config = self.config
+
         image = get_config_value(
-            self.config[config_key], operating_system, operating_system
+            provider_config[config_key], operating_system, operating_system
         )
         logger.debug(
             f"{self.dsp_name}: Loaded image for {operating_system}"

@@ -50,8 +50,9 @@ virt:
 
 aws:  # aws provider config
     images:
-        # list of ami images key is used in metadata ami image is used for provider e.g.
-        fedora-32: ami-0f1d60751946b66c5  # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
+        # list of ami images based on arch (ami image used in metadata is overriding) e.g.
+        x86_64:
+            fedora-32: ami-0f1d60751946b66c5  # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
 
 
     flavors:
