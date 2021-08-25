@@ -51,8 +51,8 @@ class VirtProvider(Provider):
         """Extract Virt provider traceback error from message."""
         # split traceback string to find Error causing failure
         # index 1 should point to the Error string
-        exc_str = str(virt_err)
-        logger.error(f"Exception occured:\n{exc_str}")
+        exc_str = "\n".join([f"\t{s}" for s in str(virt_err).splitlines()])
+        logger.debug(f"{self.dsp_name}: Exception occured:\n{exc_str}")
         err_sep = "Error:"
         if err_sep in exc_str:
             err_str = str(virt_err).split(err_sep)[1].strip()
