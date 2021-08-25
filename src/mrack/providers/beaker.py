@@ -354,6 +354,17 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
+        # host_id should start with 'J:' this way we know job has been scheduled
+        # and proper response from beaker hub has beed returned.
+        # Other way (In case of hub error or invalid host definition)
+        # the provider uses hostname from metadata of the VM which has failed
+        # to validate the requirements for the provider
+        if not host_id.startswith("J:"):
+            logger.warning(
+                f"{self.dsp_name}: Job for host '{host_id}' does not exist yet"
+            )
+            return True
+
         logger.info(
             f"{self.dsp_name}: Deleting host by cancelling Job "
             f"{self.hub._hub_url}"  # pylint: disable=protected-access
@@ -363,6 +374,6 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             host_id, "cancel", "Job has been stopped by mrack."
         )
 
-    def to_host(self, provisioning_result, username=None):
+    def to_host(self, provisioning_result, username="root"):
         """Transform provisioning result into Host object."""
-        return super().to_host(provisioning_result, username="root")
+        return super().to_host(provisioning_result, username)
