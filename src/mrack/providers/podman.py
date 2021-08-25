@@ -52,11 +52,13 @@ class PodmanProvider(Provider):
         ssh_key,
         container_options,
         strategy=STRATEGY_ABORT,
+        max_retry=1,
     ):
         """Initialize Podman provider with data from config."""
         logger.info(f"{self.dsp_name}: Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
+        self.max_retry = max_retry
         self.images = container_images
         self.default_network = default_network
         self.ssh_key = ssh_key
@@ -207,7 +209,7 @@ class PodmanProvider(Provider):
         """Delete provisioned host."""
         # first we inspect the container to find its networks
         insp_data = await self.podman.inspect(host_id)
-        networks = insp_data[0]["NetworkSettings"]["Networks"]
+        networks = insp_data[0]["NetworkSettings"]["Networks"] if insp_data else []
         # then we destroy the container
         logger.info(f"{self.dsp_name}: Removing container {host_id}")
         deleted = await self.podman.rm(host_id, force=True)  # TODO use stop and then rm

@@ -18,6 +18,7 @@ import json
 import logging
 import subprocess
 
+from mrack.errors import ProvisioningError
 from mrack.utils import exec_async_subprocess
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,10 @@ class Podman:
 
     async def _run_podman(self, args, raise_on_err=True):
         """Util method to execute podman process."""
-        return await exec_async_subprocess(self.program, args, raise_on_err)
+        try:
+            return await exec_async_subprocess(self.program, args, raise_on_err)
+        except ProvisioningError as p_error:
+            raise ProvisioningError(p_error, self.dsp_name) from p_error
 
     async def run(
         self,
@@ -71,7 +75,7 @@ class Podman:
     async def inspect(self, container_id):
         """Inspects a container returns data loaded from JSON structure."""
         args = ["inspect", container_id]
-        stdout, _stderr, _process = await self._run_podman(args)
+        stdout, _stderr, _process = await self._run_podman(args, raise_on_err=False)
         inspect_data = json.loads(stdout)
         return inspect_data
 
@@ -81,7 +85,11 @@ class Podman:
         if force:
             args.append("-f")
         args.append(container_id)
-        _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
+        _stdout, stderr, process = await self._run_podman(args, raise_on_err=False)
+
+        if stderr:
+            logger.debug(f"{self.dsp_name}: {stderr.strip()}")
+
         return process.returncode == 0
 
     async def stop(self, container_id, time=0):
