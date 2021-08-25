@@ -110,6 +110,7 @@ class OpenStackProvider(Provider):
                 "credentials and try again. E.g.: $ source PROJECT-openrc.sh"
             )
             raise NotAuthenticatedError(err) from terr
+
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
         self.neutron = NeutronClient(session=self.session)
@@ -125,16 +126,32 @@ class OpenStackProvider(Provider):
 
         self.network_pools = networks
         object_start = datetime.now()
-        _, _, limits, _, _ = await asyncio.gather(
-            self.load_flavors(),
-            self.load_images(image_names),
-            self.nova.limits.show(),
-            self.load_networks(),
-            self.load_ip_availabilities(),
-        )
-        self.limits = limits
-        object_end = datetime.now()
-        object_duration = object_end - object_start
+
+        error_attempts = 0
+        while True:
+            try:
+                _, _, self.limits, _, _ = await asyncio.gather(
+                    self.load_flavors(),
+                    self.load_images(image_names),
+                    self.nova.limits.show(),
+                    self.load_networks(),
+                    self.load_ip_availabilities(),
+                )
+                break
+            except ServerError as exc:
+                logger.debug(f"{self.dsp_name}: {exc}")
+                error_attempts += 1
+                if error_attempts <= SERVER_ERROR_RETRY:
+                    await asyncio.sleep(SERVER_ERROR_SLEEP)
+                    continue  # Try again due to ServerError
+
+            if error_attempts > SERVER_ERROR_RETRY:
+                # now we are past to what we would like to wait fail now
+                raise ProvisioningError(
+                    f"{self.dsp_name}: Failed to load environment objects from server",
+                )
+
+        object_duration = datetime.now() - object_start
         logger.info(
             f"{self.dsp_name}: Environment objects load duration: {object_duration}"
         )
@@ -547,7 +564,7 @@ class OpenStackProvider(Provider):
             try:
                 response = await self.nova.servers.create(server=specs)
             except ServerError as exc:
-                logger.debug(exc)
+                logger.debug(f"{self.dsp_name}: {exc}")
                 error_attempts += 1
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
