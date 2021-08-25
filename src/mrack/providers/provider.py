@@ -18,7 +18,7 @@ import logging
 import socket
 from datetime import datetime, timedelta
 
-from mrack.errors import ProvisioningError, ValidationError
+from mrack.errors import ProvisioningError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
 from mrack.utils import global_context, ssh_to_host
 
@@ -152,13 +152,34 @@ class Provider:
 
         logger.info(f"{self.dsp_name}: Checking available resources")
 
+        error_hosts = []
         res_check_start = datetime.now()
         while not await self.can_provision(reqs):
-            await asyncio.sleep(res_busy_sleep * 60)
             if datetime.now() - res_check_start >= timedelta(minutes=res_check_timeout):
-                raise ValidationError(
-                    f"{self.dsp_name}: Not enough resources to provision"
-                )
+                # create error host object so retry strategy can continue
+                # instead of throwing exception to fail at once without retry
+                err_str = "Not enough resources to provision"
+                logger.error(f"{self.dsp_name}: {err_str}")
+                for req in reqs:
+                    error_hosts.append(
+                        Host(
+                            provider=self,
+                            host_id=req.get("name"),
+                            name=req.get("name"),
+                            ip_addrs=[],
+                            status=STATUS_OTHER,
+                            rawdata=req,
+                            error_obj=err_str,
+                        )
+                    )
+                return ([], error_hosts, reqs)
+
+            logger.info(
+                f"{self.dsp_name}: Not enough resources to provision, "
+                f"checking again in {res_busy_sleep} min(s)"
+            )
+            await asyncio.sleep(res_busy_sleep * 60)
+
         logger.info(f"{self.dsp_name}: Resource availability: OK")
         started = datetime.now()
 
@@ -175,7 +196,6 @@ class Provider:
 
         logger.info(f"{self.dsp_name}: Waiting for all hosts to be active")
 
-        error_hosts = []
         wait_servers = []
         for response in create_resps:
             if isinstance(response, ProvisioningError):
@@ -290,7 +310,8 @@ class Provider:
             # after reaching count 1 without reprovisioning retry
             if attempts > self.max_retry:
                 logger.error(
-                    f"{self.dsp_name}: Max attempts({self.max_retry}) reached. Aborting"
+                    f"{self.dsp_name}: Max retry attempts "
+                    f"({self.max_retry}) reached. Aborting"
                 )
                 break
 
@@ -304,7 +325,7 @@ class Provider:
             # in case of last attempt which is `self.max_retry`
             # we skip this part at it done in provision_hosts() method while
             # awaiting the self.abort_and_delete(error hosts)
-            if error_hosts and attempts != self.max_retry:
+            if error_hosts and attempts <= self.max_retry:
                 count = len(error_hosts)
                 err = f"{count} hosts were not provisioned properly, deleting."
                 logger.info(f"{self.dsp_name}: {err}")
