@@ -22,12 +22,13 @@ import xml.etree.ElementTree as eTree
 from copy import deepcopy
 from datetime import datetime, timedelta
 from xml.dom.minidom import Document as xml_doc
+from xmlrpc.client import Fault
 
 from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
 
-from mrack.errors import ValidationError
+from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
@@ -41,6 +42,32 @@ from mrack.utils import global_context
 logger = logging.getLogger(__name__)
 
 PROVISIONER_KEY = "beaker"
+
+
+def parse_bkr_exc_str(exc_str):
+    """Parse exception string and return more readable string for mrack error."""
+    # we expect exception string to look like following:
+    # '<class \'bkr.common.bexceptions.BX\'>:No distro tree matches Recipe:
+    # <distroRequires>
+    #   <and>
+    #     <distro_name op="like" value="Fedora-33%"/>
+    #   </and>
+    # </distroRequires>'
+    if (
+        ":" not in exc_str.faultString
+        and "bkr.common.bexceptions" not in exc_str.faultString
+    ):
+        # we got string we do not expect so just use the traceback
+        return str(exc_str)
+
+    # because of expected format we split by ":" and use last 2 values from list
+    # in above example it would be
+    # [
+    #   '\tNo distro tree matches Recipe',
+    #   '\t<distroRequires><and><distro_name op="like" value="Fedora-33%"/> ...
+    # ]
+    fault = [f"\t{f.strip()}" for f in exc_str.faultString.split(":")[-2:]]
+    return "\n".join(fault)
 
 
 class BeakerProvider(Provider):
@@ -210,8 +237,15 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         logger.info(f"{self.dsp_name}: Creating server")
 
         job = self._req_to_bkr_job(req)  # Generate the job
-
-        job_id = self.hub.jobs.upload(job.toxml())  # schedule beaker job
+        try:
+            job_id = self.hub.jobs.upload(job.toxml())  # schedule beaker job
+        except Fault as bkr_fault:
+            # use the name as id for the logging purposes
+            req["host_id"] = req["name"]
+            raise ProvisioningError(
+                parse_bkr_exc_str(bkr_fault),
+                req,
+            ) from bkr_fault
 
         return (job_id, req["name"])
 
