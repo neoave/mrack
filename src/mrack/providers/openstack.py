@@ -128,7 +128,7 @@ class OpenStackProvider(Provider):
         object_start = datetime.now()
 
         error_attempts = 0
-        while True:
+        while error_attempts < SERVER_ERROR_RETRY:
             try:
                 _, _, self.limits, _, _ = await asyncio.gather(
                     self.load_flavors(),
@@ -145,11 +145,11 @@ class OpenStackProvider(Provider):
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
                     continue  # Try again due to ServerError
 
-            if error_attempts > SERVER_ERROR_RETRY:
-                # now we are past to what we would like to wait fail now
-                raise ProvisioningError(
-                    f"{self.dsp_name}: Failed to load environment objects from server",
-                )
+        else:
+            # now we are past to what we would like to wait fail now
+            raise ProvisioningError(
+                f"{self.dsp_name}: Failed to load environment objects from server",
+            )
 
         object_duration = datetime.now() - object_start
         logger.info(
@@ -560,7 +560,7 @@ class OpenStackProvider(Provider):
             del specs["network"]
 
         error_attempts = 0
-        while True:
+        while error_attempts < SERVER_ERROR_RETRY:
             try:
                 response = await self.nova.servers.create(server=specs)
             except ServerError as exc:
@@ -569,13 +569,6 @@ class OpenStackProvider(Provider):
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
                     continue  # Try again due to ServerError
-
-            if error_attempts > SERVER_ERROR_RETRY:
-                # now we are past to what we would like to wait fail now
-                raise ProvisioningError(
-                    f"{self.dsp_name}: Failed to create server {req['name']}",
-                    req,  # add the requirement dictionary to traceback for later
-                )
 
             fault = response["server"].get("fault", {})
 
@@ -598,6 +591,13 @@ class OpenStackProvider(Provider):
             else:
                 # provisioning seems to pass correctly break to return result
                 break
+
+        else:
+            # now we are past to what we would like to wait fail now
+            raise ProvisioningError(
+                f"{self.dsp_name}: Failed to create server {req['name']}",
+                req,  # add the requirement dictionary to traceback for later
+            )
 
         return (response.get("server"), req["name"])
 
