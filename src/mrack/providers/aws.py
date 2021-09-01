@@ -20,9 +20,9 @@ from copy import deepcopy
 from datetime import datetime
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 
-from mrack.errors import ProvisioningError, ValidationError
+from mrack.errors import NotAuthenticatedError, ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 
@@ -72,8 +72,18 @@ class AWSProvider(Provider):
         login_start = datetime.now()
         self.strategy = strategy
         self.max_retry = max_retry
-        self.ec2 = boto3.resource("ec2")
-        self.client = boto3.client("ec2")
+        try:
+            self.ec2 = boto3.resource("ec2")
+            self.client = boto3.client("ec2")
+        except (NoRegionError, NoCredentialsError) as c_err:
+            logger.debug(
+                f"{self.dsp_name}: Failed loading credentials file with: {str(c_err)}"
+            )
+            raise NotAuthenticatedError(
+                f"{self.dsp_name}: failed loading credentials. Load AWS credentials"
+                " and try again. E.g.: $ export AWS_CONFIG_FILE=~/aws.key"
+            ) from c_err
+
         self.ami_ids = ami_ids
         self.ssh_key = ssh_key
         self.sec_group = sec_group
