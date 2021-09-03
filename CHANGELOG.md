@@ -2,6 +2,49 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.0 (2021-09-03)
+### Feature
+* Use global context instead of dictionary as ctx for click ([`9f38a3c`](https://github.com/neoave/mrack/commit/9f38a3c77cf3874326866247d40ff696a5c24a4b))
+* Use GlobalContext class in runtime ([`2c23c97`](https://github.com/neoave/mrack/commit/2c23c9714900e727f845c99ef675b7a8a9ac0147))
+* Log message when job is not changing state ([`9e50f46`](https://github.com/neoave/mrack/commit/9e50f468fd58912a76ec6b19312f87f5c9f46252))
+* Improve logging for openstack and ssh subprocess ([`7594732`](https://github.com/neoave/mrack/commit/7594732cbbf46c5cc2e4ef07c3fee35c02ee5081))
+* Do not destroy if there are not success hosts ([`84dce71`](https://github.com/neoave/mrack/commit/84dce715bb181adfb5bdc2d285e73c837b18172e))
+* **Virt:** Support testcloud v0.6.0 and later ([`6403bd6`](https://github.com/neoave/mrack/commit/6403bd64b63a52e187d447ec702e9e6253ef02c8))
+* **Virt:** Log the tracebacks for Virt provider ([`d508aff`](https://github.com/neoave/mrack/commit/d508aff342fbbfceb4334e2068ab092d6fe6662d))
+* Use max_retry across providers to define retry count ([`d8caab5`](https://github.com/neoave/mrack/commit/d8caab5fa96cb74410193c8c1cc7e927d776c9a9))
+* **Beaker:** Use timeout instead of number of retries ([`00330ef`](https://github.com/neoave/mrack/commit/00330efa500d1c2d2de796004bde04709ac2ac92))
+* Add possibility to change strategy per provider in provisioning config ([`ee8cb36`](https://github.com/neoave/mrack/commit/ee8cb36e5e6c0ecd9e3885676d3b16a91f2be140))
+
+### Fix
+* **AWS:** Catch traceback when credentials are missing ([`1dc975e`](https://github.com/neoave/mrack/commit/1dc975e027039d46c8a36e6b7d6f2cd70f9d0340))
+* **Podman:** Handle premature deletion ([`0353d89`](https://github.com/neoave/mrack/commit/0353d895c83699e6f07af12416b29195d2059a5d))
+* **Beaker:** Delete_host handle premature deletion ([`c57ff28`](https://github.com/neoave/mrack/commit/c57ff287ed506d9c4b353f7439230cc4dbdc0b54))
+* **Virt:** Create more readable output and move to debug ([`04d4d4a`](https://github.com/neoave/mrack/commit/04d4d4a3e9ceb9583af980a69df94071e3f2c1eb))
+* Do not end provisioning if there are no resources ([`4cbdc50`](https://github.com/neoave/mrack/commit/4cbdc501085d5f5ae8f819f828a30bcea59d940e))
+* **OpenStack:** Add exception handling to init of provider ([`5ac9eaf`](https://github.com/neoave/mrack/commit/5ac9eafba2e368015a6bffd3d1d5f9e81a3e40aa))
+* **Beaker:** Handle Fault exception when contacting hub ([`02cfd66`](https://github.com/neoave/mrack/commit/02cfd6652ba938df1b9239dd5b84d710867e5ec7))
+* Attempts should be greater than max_retry ([`e29e92d`](https://github.com/neoave/mrack/commit/e29e92d78b6f9bdf7b0dd4fb79e0c98eb921954c))
+* Add missing '/' to log message while deleting ([`65e4ad0`](https://github.com/neoave/mrack/commit/65e4ad094bcced6434c2e0510354238fc71d8b9c))
+* Make static provider more verbose ([`9c6b217`](https://github.com/neoave/mrack/commit/9c6b21795b72bb4cf554ccd3929d41cae7dc2d54))
+* Destroy active VMs after other providers fail ([`7e58e5d`](https://github.com/neoave/mrack/commit/7e58e5d9622e5c714c1e5e6659ffee89680a9b05))
+* Add verbosity to virt and podman resource deletion ([`c7653fb`](https://github.com/neoave/mrack/commit/c7653fb22ed37142fb80573b77b24de8ec4f8501))
+* **Beaker:** Beaker job link add missing '/' in url ([`4a33072`](https://github.com/neoave/mrack/commit/4a330725d1b6ab410a0610fd8662c0fa86af2f43))
+* **Virt:** Add de-sync state and fix error parsing. ([`5875883`](https://github.com/neoave/mrack/commit/5875883e89f85484cb3b48dc8bdfae8cc6f6b37c))
+* Do not remove error hosts when doing last retry ([`6201042`](https://github.com/neoave/mrack/commit/6201042d34e352ead8ce6369f43a5f8e8622f2b8))
+* Fail without traceback when job times out ([`5aa156e`](https://github.com/neoave/mrack/commit/5aa156e44fe2a1589879d78ec8cac9a8d7cc5f2e))
+* Use SPECS and ERROR_OBJ keys to create fault object ([`2de1f6f`](https://github.com/neoave/mrack/commit/2de1f6f350decff116f80b519ed4e53cd2b75aaa))
+* Unite providers's create server to return tuple ([`5f9ba63`](https://github.com/neoave/mrack/commit/5f9ba633ef1ddafa07105e6f8a0667f057a09786))
+* Do not proceed to ssh check if port is not open ([`ea94a8e`](https://github.com/neoave/mrack/commit/ea94a8e53dd56e306e0131404508476a0929fe67))
+
+### Breaking
+* Release 1.0.0 candidate ([`2df06d7`](https://github.com/neoave/mrack/commit/2df06d7cdc0b9ce008bc40ad25708adb24564a68))
+* Using GlobalContext class in runtime allows us to use mrack actions without parameters Up/Destroy/... which simplify the workflow in scripts so mrack can be used as library in python automation. ([`2c23c97`](https://github.com/neoave/mrack/commit/2c23c9714900e727f845c99ef675b7a8a9ac0147))
+
+### Documentation
+* Add docs about usage mrack as lib ([`2df06d7`](https://github.com/neoave/mrack/commit/2df06d7cdc0b9ce008bc40ad25708adb24564a68))
+* Fix title underline too short ([`225cff4`](https://github.com/neoave/mrack/commit/225cff4d0c4c4d745844ef8b591f99628f6d82bc))
+* Add documentation to strategy switch ([`5cd1a8a`](https://github.com/neoave/mrack/commit/5cd1a8a6e83a5eb8cef04ac8d88108c533a66f28))
+
 ## v0.14.0 (2021-07-01)
 ### Feature
 * **Beaker:** Add distro tag from provisioning conf ([`762e88a`](https://github.com/neoave/mrack/commit/762e88a00c79be2c1194a459a7404f2eb3513e19))
