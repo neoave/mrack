@@ -2,8 +2,6 @@
 
 ![pypi_badge](https://img.shields.io/pypi/v/mrack?label=PyPI&logo=pypi) ![readthedocs_badge](https://img.shields.io/readthedocs/mrack?label=Read%20the%20Docs&logo=read-the-docs) ![badge](https://copr.fedorainfracloud.org/coprs/g/freeipa/neoave/package/mrack/status_image/last_build.png)
 
-**Important**: most of the described below is not implemented yet
-
 Provisioning library for CI and local multi-host testing supporting multiple
 provisioning providers e.g. OpenStack, libvirt, containers, Beaker).
 
@@ -114,13 +112,13 @@ all:
 
 ## Installation
 
-mrack can be installed via pip, from PyPI:
+mrack can be installed via pip, from [PyPI](https://pypi.org/project/mrack/):
 
 ```
 pip install mrack
 ```
 
-It is also available for Fedora 32+ via COPR:
+It is also available for Fedora 32+ via [COPR](https://copr.fedorainfracloud.org/coprs/g/freeipa/neoave/package/mrack/):
 
 ```
 sudo dnf copr enable @freeipa/neoave
@@ -164,7 +162,7 @@ To provision system from the metadata.yaml either run:
 ```
 mrack up
 ```
-or use `up` command's option `--metadata`/`-m` to orverride path to the metadata file.
+or use `up` command's option `--metadata`/`-m` to override path to the metadata file.
 ```
 mrack up --metadata other-metadata.yaml
 ```
@@ -173,7 +171,7 @@ To return resources using mrack run:
 ```
 mrack destroy
 ```
-or use `destroy` command's option `--metadata`/`-m` to orverride path to the metadata file.
+or use `destroy` command's option `--metadata`/`-m` to override path to the metadata file.
 ```
 mrack destroy --metadata other-metadata.yaml
 ```
@@ -181,8 +179,70 @@ mrack destroy --metadata other-metadata.yaml
 ### mrack as python library
 
 ```python
+# first set up authentication for each provider
+# $ export AWS_CONFIG_FILE=`readlink -f ./aws.key`
+from mrack.providers import providers
+# import all supported providers:
+from mrack.providers.aws import PROVISIONER_KEY as AWS
+from mrack.providers.aws import AWSProvider
+from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
+from mrack.providers.beaker import BeakerProvider
+from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
+from mrack.providers.openstack import OpenStackProvider
+from mrack.providers.podman import PROVISIONER_KEY as PODMAN
+from mrack.providers.podman import PodmanProvider
+from mrack.providers.static import PROVISIONER_KEY as STATIC
+from mrack.providers.static import StaticProvider
+from mrack.providers.virt import PROVISIONER_KEY as VIRT
+from mrack.providers.virt import VirtProvider
+
+# register all supported providers:
+providers.register(AWS, AWSProvider)
+providers.register(OPENSTACK, OpenStackProvider)
+providers.register(BEAKER, BeakerProvider)
+providers.register(PODMAN, PodmanProvider)
+providers.register(STATIC, StaticProvider)
+providers.register(VIRT, VirtProvider)
+
+
+# use global context class
 import mrack
-# TODO
+global_context = mrack.context.global_context
+
+# init global context with paths to files
+mrack_config = "mrack.conf"
+provisioning_config = "provisioning-config.yaml"
+db_file = "mrackdb.json"
+global_context.init(mrack_config, provisioning_config, db_file)
+
+# load the metadata to global_context
+metadata = "./metadata-f34.yaml"
+global_context.init_metadata(metadata)
+
+# pick default provider:
+provider = "aws"
+
+# create Up action
+
+from mrack.actions.up import Up
+
+up_action = Up()
+await up_action.init(provider)
+
+# provision machines:
+await up_action.provision()
+
+# store the output to db or just use the db later on
+from mrack.actions.output import Output
+output_action = Output()
+await output_action.generate_outputs()
+
+# work with machines...
+
+# cleanup the machines:
+from mrack.actions.destroy import Destroy
+destroy_action = Destroy()
+await destroy_action.destroy()
 ```
 
 ## Contribute
@@ -199,7 +259,7 @@ Please enable the feature on your local system and use it before sending a patch
 It could save us lot of re-pushing to the PR.
 
 ### Black formatting and isort
-Expected formatting can be achived by running:
+Expected formatting can be achieved by running:
 ```
 $ make format
 ```
@@ -212,6 +272,6 @@ Just run tox to execute all tests and linters
 
 ```
 $ tox
-# or us make
+# or use make
 $ make test
 ```
