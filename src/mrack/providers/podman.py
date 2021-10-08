@@ -51,6 +51,7 @@ class PodmanProvider(Provider):
         default_network,
         ssh_key,
         container_options,
+        extra_commands,
         strategy=STRATEGY_ABORT,
         max_retry=1,
     ):
@@ -63,6 +64,7 @@ class PodmanProvider(Provider):
         self.default_network = default_network
         self.ssh_key = ssh_key
         self.podman_options = container_options
+        self.extra_commands = extra_commands
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name}: Init duration {login_duration}")
@@ -153,7 +155,7 @@ class PodmanProvider(Provider):
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
         # access fist item from tuple resource which should be id
-        cont_id = resource[0]
+        cont_id, _req = resource
 
         start = datetime.now()
         timeout = 20
@@ -166,9 +168,8 @@ class PodmanProvider(Provider):
                 logger.error(f"{self.dsp_name}: {object2json(err)}")
                 raise ServerNotFoundError(cont_id) from err
             server = inspect[0]
-            running = server["State"]["Running"]
-            is_error = server["State"]["Error"]
-            if running or is_error:
+
+            if server["State"]["Running"] or server["State"]["Error"]:
                 break
             await asyncio.sleep(1)
 
@@ -191,17 +192,22 @@ class PodmanProvider(Provider):
             key_content = key_file.read()
 
         if not await self.podman.exec_command(cont_id, "mkdir -p /root/.ssh/"):
-            raise ProvisioningError(f"Could not copy public key to container {cont_id}")
+            raise ProvisioningError(
+                f"Could not copy public key to container {cont_id}", self.dsp_name
+            )
 
         if not await self.podman.exec_command(
             cont_id, f'echo "{key_content}" >> /root/.ssh/authorized_keys'
         ):
-            raise ProvisioningError(f"Could not copy public key to container {cont_id}")
-
-        if not await self.podman.exec_command(cont_id, "systemctl restart sshd"):
             raise ProvisioningError(
-                f"Failed restarting sshd service in container {cont_id}"
+                f"Could not copy public key to container {cont_id}", self.dsp_name
             )
+
+        for command in self.extra_commands:
+            if not await self.podman.exec_command(cont_id, command):
+                raise ProvisioningError(
+                    f"Failed to run '{command}' in container {cont_id}", self.dsp_name
+                )
 
         return server
 

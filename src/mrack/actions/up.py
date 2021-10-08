@@ -22,6 +22,7 @@ from mrack.errors import MetadataError, ProvisioningError
 from mrack.providers import providers
 from mrack.utils import validate_dict_attrs
 
+ERR_MSG_INDEX = 0
 PROVIDER_NAME_INDEX = 1
 
 logger = logging.getLogger(__name__)
@@ -93,6 +94,10 @@ class Up(Action):
                 # in this case some of any provider fails to provision
                 # we need to cleanup all the remaining resources
                 # even when provisioned successfully
+                logger.error(
+                    f"{results.args[PROVIDER_NAME_INDEX]}: "
+                    f"{results.args[ERR_MSG_INDEX]}"
+                )
                 failed_providers.append(results.args[PROVIDER_NAME_INDEX])
                 continue
 
