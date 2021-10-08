@@ -153,12 +153,12 @@ class PodmanProvider(Provider):
         except ProvisioningError as p_error:
             raise ProvisioningError(p_error, req) from p_error
 
-        return (container_id, req["name"])
+        return (container_id, req)
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
         # access fist item from tuple resource which should be id
-        cont_id, _req = resource
+        cont_id, req = resource
 
         start = datetime.now()
         timeout = 20
@@ -166,11 +166,10 @@ class PodmanProvider(Provider):
 
         while datetime.now() < timeout_time:
             try:
-                inspect = await self.podman.inspect(cont_id)
+                server = await self.podman.inspect(cont_id)[0]
             except ProvisioningError as err:
                 logger.error(f"{self.dsp_name}: {object2json(err)}")
                 raise ServerNotFoundError(cont_id) from err
-            server = inspect[0]
 
             if server["State"]["Running"] or server["State"]["Error"]:
                 break
@@ -211,6 +210,13 @@ class PodmanProvider(Provider):
                 raise ProvisioningError(
                     f"Failed to run '{command}' in container {cont_id}", self.dsp_name
                 )
+
+        server.update(
+            {
+                "mrack_req_os": req["os"],
+                "mrack_req_name": req["name"],
+            }
+        )
 
         return server
 
@@ -275,6 +281,7 @@ class PodmanProvider(Provider):
 
         result["fault"] = error_obj
         result["status"] = status
+        result["os"] = prov_result.get("mrack_req_os")
 
         return result
 

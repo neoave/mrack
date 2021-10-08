@@ -43,6 +43,7 @@ def host_from_json(host_data):
         provider,
         host_data["host_id"],
         host_data["name"],
+        host_data["operating_system"],
         host_data["ip_addrs"],
         host_data["status"],
         host_data["rawdata"],
@@ -64,6 +65,7 @@ class Host:
         provider,
         host_id,
         name,
+        operating_system,
         ip_addrs,
         status,
         rawdata,
@@ -75,6 +77,7 @@ class Host:
         self._provider = provider
         self._host_id = host_id
         self._name = name
+        self._operating_system = operating_system
         self._ip_addrs = ip_addrs
         self._status = status
         self._username = username
@@ -87,8 +90,8 @@ class Host:
         net_str = " ".join(self._ip_addrs)
 
         out = (
-            f"{self._status} {self._host_id} {self._name} {net_str} {self._username} "
-            f"{self._password}"
+            f"{self._status} {self._operating_system} {self._host_id} {self._name} "
+            f"{net_str} {self._username} {self._password}"
         )
 
         if self._error:
@@ -101,6 +104,7 @@ class Host:
             "provider": self._provider.name,
             "host_id": self._host_id,
             "name": self._name,
+            "operating_system": self._operating_system,
             "ip_addrs": self._ip_addrs,
             "status": self._status,
             "username": self._username,
@@ -113,6 +117,11 @@ class Host:
     def provider(self):
         """Get host provisioning provider."""
         return self._provider
+
+    @property
+    def operating_system(self):
+        """Get host operating system."""
+        return self._operating_system
 
     @property
     def host_id(self):

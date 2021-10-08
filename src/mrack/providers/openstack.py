@@ -543,6 +543,7 @@ class OpenStackProvider(Provider):
         name = req.get("name")
         logger.info(f"{self.dsp_name}: Creating server {name}")
         specs = deepcopy(req)  # work with own copy, do not modify the input
+        del specs["os"]  # do not pass this to openstack
 
         flavor = self._translate_flavor(req)
         specs["flavorRef"] = flavor["id"]
@@ -599,7 +600,7 @@ class OpenStackProvider(Provider):
                 req,  # add the requirement dictionary to traceback for later
             )
 
-        return (response.get("server"), req["name"])
+        return (response.get("server"), req)
 
     async def delete_server(self, uuid):
         """Issue deletion of server.
@@ -639,7 +640,7 @@ class OpenStackProvider(Provider):
 
         Return information about provisioned server.
         """
-        resource, req_name = resource
+        resource, req = resource
         uuid = resource.get("id")
 
         poll_sleep_initial = self.poll_sleep_initial + self.poll_init_adj
@@ -656,7 +657,7 @@ class OpenStackProvider(Provider):
         await asyncio.sleep(poll_sleep_initial)
 
         resp = {}
-        logger.debug(f"Waiting for '{req_name}': {uuid}")
+        logger.debug(f"Waiting for '{req['name']}': {uuid}")
         error_attempts = 0
         while datetime.now() < timeout_time:
             try:
@@ -690,6 +691,13 @@ class OpenStackProvider(Provider):
                 f"{self.dsp_name}: Host {uuid} was provisioned in {prov_duration:.1f}s"
             )
 
+        server.update(
+            {
+                "mrack_req_os": req["os"],
+                "mrack_req_name": req["name"],
+            }
+        )
+
         return server
 
     async def delete_host(self, host_id):
@@ -708,5 +716,6 @@ class OpenStackProvider(Provider):
         result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
         result["fault"] = prov_result.get("fault")
         result["status"] = prov_result.get("status")
+        result["os"] = prov_result.get("mrack_req_os")
 
         return result

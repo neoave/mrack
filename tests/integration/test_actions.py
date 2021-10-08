@@ -45,9 +45,12 @@ class TestStaticProvider:
         )
         list_action.list()
         expected_lines = [
-            "active f30.aiohabit.test f30.aiohabit.test 192.168.100.2 None None",
-            "active f31.aiohabit.test f31.aiohabit.test 192.168.100.3 None None",
-            "active f32.aiohabit.test f32.aiohabit.test 192.168.100.4 None None",
+            "active fedora-30 f30.aiohabit.test "
+            "f30.aiohabit.test 192.168.100.2 None None",
+            "active fedora-31 f31.aiohabit.test "
+            "f31.aiohabit.test 192.168.100.3 None None",
+            "active fedora-32 f32.aiohabit.test "
+            "f32.aiohabit.test 192.168.100.4 None None",
         ]
         for record, line in zip(caplog.records, expected_lines):
             assert record.message == line

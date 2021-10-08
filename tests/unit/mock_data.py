@@ -81,6 +81,7 @@ def get_ip(index=0):
 
 def create_db_host(
     hostname,
+    operating_system="fedora",
     index=0,
     status=STATUS_ACTIVE,
     username=None,
@@ -93,6 +94,7 @@ def create_db_host(
         MockProvider(provider),
         uuid.uuid4(),
         hostname,
+        operating_system,
         [get_ip(index)],
         status,
         {},

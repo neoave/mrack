@@ -23,7 +23,7 @@ from mrack.host import Host
 
 
 def create_host(name, ip):
-    return Host(None, None, name, [ip], None, None)
+    return Host(None, None, name, None, [ip], None, None)
 
 
 def hosts_data():

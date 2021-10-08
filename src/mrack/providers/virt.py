@@ -140,12 +140,18 @@ class VirtProvider(Provider):
         if info["state"] != "running":
             info["error"] = err
 
-        return (info, req["name"])
+        return (info, req)
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
-        resource, _req_name = resource
-        return resource
+        result, req = resource
+        result.update(
+            {
+                "mrack_req_os": req["os"],
+                "mrack_req_name": req["name"],
+            }
+        )
+        return result
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
@@ -167,5 +173,6 @@ class VirtProvider(Provider):
         result["status"] = prov_result["state"]
         result["fault"] = prov_result.get("error")
         result["password"] = prov_result["password"]
+        result["os"] = prov_result.get("mrack_req_os")
 
         return result
