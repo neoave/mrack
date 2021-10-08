@@ -41,6 +41,7 @@ class PodmanTransformer(Transformer):
             ssh_key=self.config["pubkey"],
             default_network=self.config["default_network"],
             container_options=self.config["podman_options"],
+            extra_commands=self.config.get("extra_commands", []),
             strategy=self.config.get("strategy", STRATEGY_ABORT),
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
