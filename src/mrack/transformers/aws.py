@@ -51,6 +51,7 @@ class AWSTransformer(Transformer):
         required_image = host.get("image") or self._get_image(host["os"])
         return {
             "name": host["name"],
+            "os": host["os"],
             "flavor": self._get_flavor(host),
             "image": required_image,
             "meta_image": "image" in host,

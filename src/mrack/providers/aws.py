@@ -145,8 +145,8 @@ class AWSProvider(Provider):
 
         Returns:
             A tuple containing, respectively, a string (<aws machine id>)
-            and a string (<required host name for the VM>)
-            :rtype: (str, str)
+            and a dict (<requirements for the VM>)
+            :rtype: (str, dict)
         """
         logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
@@ -171,7 +171,7 @@ class AWSProvider(Provider):
         self.ec2.create_tags(Resources=ids, Tags=taglist)
 
         # returns id of provisioned instance and required host name
-        return (ids[0], req["name"])
+        return (ids[0], req)
 
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""
@@ -185,21 +185,24 @@ class AWSProvider(Provider):
 
         result["addresses"] = [prov_result.get("PublicIpAddress")]
         result["status"] = prov_result["State"]["Name"]
+        result["os"] = prov_result.get("mrack_req_os")
 
         return result
 
     async def wait_till_provisioned(self, resource):
         """Wait for AWS provisioning result."""
-        aws_id, name = resource
+        aws_id, req = resource
         instance = self.ec2.Instance(aws_id)
         instance.wait_until_running()
         response = self.client.describe_instances(InstanceIds=[aws_id])
         result = {}
         try:  # returns dict with aws instance information
             result = response["Reservations"][0]["Instances"][0]
+            result.update("mrack_req_os", req["os"])
         except (KeyError, IndexError) as data_err:
             raise ProvisioningError(
-                f"Unexpected data format in response of provisioned instance '{name}'"
+                "Unexpected data format in response "
+                f"of provisioned instance '{req['name']}'"
             ) from data_err
 
         return result

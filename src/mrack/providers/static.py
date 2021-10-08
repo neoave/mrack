@@ -15,6 +15,7 @@
 """Static provider."""
 
 import logging
+from copy import deepcopy
 
 from mrack.errors import ValidationError
 from mrack.host import STATUS_ACTIVE
@@ -48,7 +49,7 @@ class StaticProvider(Provider):
     async def create_server(self, req):
         """Request and create resource on selected provider."""
         # we shall return same tuple as with other providers
-        return (req, req["name"])
+        return (req, deepcopy(req))
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -71,7 +72,8 @@ class StaticProvider(Provider):
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
-        return resource[SPECS]
+        server = resource[SPECS]
+        return server
 
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""
@@ -82,6 +84,7 @@ class StaticProvider(Provider):
         result["addresses"] = [prov_result.get("ip")]
         result["fault"] = {}
         result["status"] = STATUS_ACTIVE
+        result["os"] = prov_result.get("os")  # with static it stays os
 
         return result
 

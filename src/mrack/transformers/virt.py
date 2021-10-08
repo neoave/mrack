@@ -52,6 +52,7 @@ class VirtTransformer(Transformer):
         """Create single input for podman provisioner."""
         req = {
             "name": host["name"],
+            "os": host["os"],
             "run_id": self.run_id,
             "image_url": self._get_image(host["os"]),
             "ssh_path": self._get_host_option(host, "ssh_path"),

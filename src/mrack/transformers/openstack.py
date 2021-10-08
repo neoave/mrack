@@ -64,6 +64,7 @@ class OpenStackTransformer(Transformer):
         required_image = host.get("image") or self._get_image(host["os"])
         req = {
             "name": host["name"],
+            "os": host["os"],
             "flavor": self._get_flavor(host),
             "image": required_image,
             "key_name": self.config["keypair"],

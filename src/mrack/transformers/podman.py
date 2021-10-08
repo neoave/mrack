@@ -52,6 +52,7 @@ class PodmanTransformer(Transformer):
         return {
             "name": host["name"],
             "image": self._get_image(host["os"]),
+            "os": host["os"],
             "hostname": host["name"],
             "domain": domain["name"],
         }

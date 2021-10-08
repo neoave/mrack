@@ -254,8 +254,8 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         Returns:
             A tuple containing, respectively, a string (<created beaker job id>)
-            and a string (<required host name for the VM>)
-            :rtype: (str, str)
+            and a dict (<requirements for VM>)
+            :rtype: (str, dict)
         """
         logger.info(f"{self.dsp_name}: Creating server")
 
@@ -270,7 +270,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 req,
             ) from bkr_fault
 
-        return (job_id, req["name"])
+        return (job_id, req)
 
     def prov_result_to_host_data(self, prov_result):
         """Transform provisioning result to needed host data."""
@@ -281,10 +281,11 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         result = {
             "id": prov_result["JobID"],
-            "name": prov_result["req_name"],
+            "name": prov_result["mrack_req_name"],
             "addresses": [ip_address],
             "status": prov_result["status"],
             "fault": prov_result["result"] if prov_result["result"] != "Pass" else None,
+            "os": prov_result.get("mrack_req_os"),
         }
 
         return result
@@ -309,7 +310,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
     async def wait_till_provisioned(self, resource):
         """Wait for Beaker provisioning result."""
-        beaker_id, req_name = resource
+        beaker_id, req = resource
         resource = {}
         prev_status = ""
         job_url = ""
@@ -372,7 +373,13 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 }
             )
 
-        resource.update({"JobID": beaker_id, "req_name": req_name})
+        resource.update(
+            {
+                "JobID": beaker_id,
+                "mrack_req_name": req["name"],
+                "mrack_req_os": req["os"],
+            }
+        )
         return resource
 
     async def delete_host(self, host_id):
