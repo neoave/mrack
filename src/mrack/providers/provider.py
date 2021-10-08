@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from mrack.context import global_context
 from mrack.errors import ProvisioningError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
-from mrack.utils import get_username_pass_and_ssh_key, ssh_to_host
+from mrack.utils import get_username_pass_and_ssh_key, object2json, ssh_to_host
 
 logger = logging.getLogger(__name__)
 
@@ -69,27 +69,29 @@ class Provider:
         """Prepare provisioning."""
         raise NotImplementedError()
 
-    async def _wait_for_ssh(self, host, port=22, timeout=1200):
+    async def _wait_for_ssh(self, host, timeout, port):
         """
-        Wait until a port starts accepting TCP connections.
+        Wait until a port starts accepting TCP connections and is able to connect.
 
         Args:
-            port (int): Port number.
             host (Host): Host object to get its address on which the port should exist.
-            timeout (float): In seconds. How long to wait before raising errors.
+            timeout (float): In minutes. How long to wait before raising errors.
+            port (int): Port number.
         Raises:
             TimeoutError: The port isn't accepting connection after specified `timeout`.
         """
         start_time = datetime.now()
         info_msg = (
-            f"{self.dsp_name}: Waiting for the port {port} "
-            f"on host {host.ip_addr} to start accepting connections"
+            f"{self.dsp_name}: Waiting for the port {port} on host "
+            f"{host.ip_addr} to start accepting connections (up to {timeout} minutes)"
         )
         logger.info(info_msg)
 
         while True:
             try:
-                with socket.create_connection((host.ip_addr, port), timeout=timeout):
+                with socket.create_connection(
+                    (host.ip_addr, port), timeout=(timeout * 60)
+                ):
                     logger.info(
                         f"{self.dsp_name}: Port {port} on host "
                         f" {host.ip_addr} is now open"
@@ -98,7 +100,7 @@ class Provider:
             except OSError:
                 await asyncio.sleep(10)
                 logger.debug(info_msg)
-                if datetime.now() - start_time >= timedelta(seconds=timeout):
+                if datetime.now() - start_time >= timedelta(seconds=(timeout * 60)):
                     logger.error(
                         f"{self.dsp_name}: Waited too long for the port {port} "
                         f"on host {host.ip_addr} to start accepting connections"
@@ -111,6 +113,11 @@ class Provider:
         # load stuff from configs: like:
         username, password, ssh_key = get_username_pass_and_ssh_key(
             host, global_context
+        )
+
+        info_msg = (
+            f"{self.dsp_name}: Waiting for the host {host.ip_addr} "
+            f"to accept the authentication method (up to {timeout} minutes)"
         )
 
         while True:
@@ -130,7 +137,7 @@ class Provider:
                 )
                 break
 
-            if datetime.now() - start_ssh >= timedelta(seconds=(timeout / 2)):
+            if datetime.now() - start_ssh >= timedelta(seconds=(timeout * 60)):
                 logger.error(
                     f"{self.dsp_name}: SSH to host '{host.ip_addr}' "
                     f"timed out after {duration:.1f}s"
@@ -141,6 +148,81 @@ class Provider:
             await asyncio.sleep(10)
 
         return res, host
+
+    async def _check_ssh_auth(self, ssh_check, active_hosts):
+        success_hosts = []
+        error_hosts = []
+
+        if not isinstance(ssh_check, dict):
+            ssh_check = {}
+
+        # check if default config is in place, if not use defaults
+        req_keys = ("enabled", "port", "timeout")
+        if not all(k in ssh_check for k in req_keys):
+            logger.warning(
+                f"{self.dsp_name}: Missing complete default post provisioning "
+                "ssh check configuration in provisioning config file."
+            )
+            # extend not complete configuration with defaults
+            ssh_check = {
+                "enabled": True,
+                "port": 22,
+                "timeout": 10,
+            } | ssh_check
+
+        # split dictionary into two default and based on host os/group
+        req_keys += ("enabled_providers", "disabled_providers")
+        default_check = {x: ssh_check[x] for x in ssh_check if x in req_keys}
+        based_check = {x: ssh_check[x] for x in ssh_check if x not in req_keys}
+        del ssh_check
+
+        wait_ssh = []
+        for host in active_hosts:
+            # go host by host and load the group and os based configuration for ssh
+            os_check = based_check.get("os", {}).get(host.operating_system, {})
+            opts = default_check | os_check  # sorted by priority
+
+            logger.debug(
+                f"{self.dsp_name}: Host '{host.name}' "
+                f"ssh check config: {object2json(opts)}"
+            )
+
+            if (
+                not opts.get("enabled")
+                and self.name not in opts.get("enabled_providers", [])
+            ) or (
+                opts.get("enabled") and self.name in opts.get("disabled_providers", [])
+            ):
+                success_hosts.append(host)
+                logger.debug(
+                    f"{self.dsp_name}: Skipping ssh check for host '{host.name}'"
+                )
+                continue
+
+            awaitable = self._wait_for_ssh(
+                host,
+                timeout=opts.get("timeout"),
+                port=opts.get("port"),
+            )
+            wait_ssh.append(awaitable)
+
+        ssh_results = await asyncio.gather(*wait_ssh)
+        # We distinguish the success hosts and new error hosts from active by using:
+        # res[RET_CODE] 0
+        #   - the result of operation returned from self._wait_for_ssh()
+        # res[HOST_OBJ] 1
+        #   - the host object returned from self._wait_for_ssh()
+        for res in ssh_results:
+            if res[RET_CODE]:
+                success_hosts.append(res[HOST_OBJ])
+            else:
+                res[HOST_OBJ].error = (
+                    "Could not establish ssh connection to host "
+                    f"{res[HOST_OBJ].host_id} with IP {res[HOST_OBJ].ip_addr}"
+                )
+                error_hosts.append(res[HOST_OBJ])
+
+        return success_hosts, error_hosts
 
     async def _provision_base(
         self, reqs, res_check_timeout=60, res_busy_sleep=10
@@ -249,28 +331,16 @@ class Provider:
         active_hosts = [h for h in hosts if h not in error_hosts]
         success_hosts = []
 
-        if global_context.PROV_CONFIG.get("post_provisioning_ssh_check", True):
-            # check ssh connectivity to succeeded hosts
-            wait_ssh = []
-            for host in active_hosts:
-                awaitable = self._wait_for_ssh(host)
-                wait_ssh.append(awaitable)
+        ssh_check = global_context.PROV_CONFIG.get("post_provisioning_check", {}).get(
+            "ssh", True
+        )  # enable check by default
 
-            ssh_results = await asyncio.gather(*wait_ssh)
-            # We distinguish the success hosts and new error hosts from active by using:
-            # res[RET_CODE] 0
-            #   - the result of operation returned from self._wait_for_ssh()
-            # res[HOST_OBJ] 1
-            #   - the host object returned from self._wait_for_ssh()
-            for res in ssh_results:
-                if res[RET_CODE]:
-                    success_hosts.append(res[HOST_OBJ])
-                else:
-                    res[HOST_OBJ].error = (
-                        "Could not establish ssh connection to host "
-                        f"{res[HOST_OBJ].host_id} with IP {res[HOST_OBJ].ip_addr}"
-                    )
-                    error_hosts.append(res[HOST_OBJ])
+        # check ssh connectivity to hosts if not disabled per host or provider
+        if bool(ssh_check):
+            success_hosts, failed_hosts = await self._check_ssh_auth(
+                ssh_check, active_hosts
+            )
+            error_hosts += failed_hosts
         else:  # we do not check the ssh connection to VMs
             success_hosts = active_hosts
 
