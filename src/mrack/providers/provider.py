@@ -387,7 +387,6 @@ class Provider:
     async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
         logger.info(f"{self.dsp_name}: Issuing deletion")
-
         delete_servers = []
         for host in hosts:
             awaitable = self.delete_host(host.host_id)

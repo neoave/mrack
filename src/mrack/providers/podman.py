@@ -142,13 +142,16 @@ class PodmanProvider(Provider):
                 "Could not set up podman network for some host(s)", req
             )
 
-        container_id = await self.podman.run(
-            image,
-            hostname,
-            network,
-            extra_options=self.podman_options,
-            remove_at_stop=True,
-        )
+        try:
+            container_id = await self.podman.run(
+                image,
+                hostname,
+                network,
+                extra_options=self.podman_options,
+                remove_at_stop=True,
+            )
+        except ProvisioningError as p_error:
+            raise ProvisioningError(p_error, req) from p_error
 
         return (container_id, req["name"])
 
@@ -213,12 +216,17 @@ class PodmanProvider(Provider):
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
+        # if there is no container we do nothing
+        if not host_id:
+            logger.debug(f"{self.dsp_name}: Container is not created yet, skipping.")
+            return False
+
         # first we inspect the container to find its networks
         insp_data = await self.podman.inspect(host_id)
         networks = insp_data[0]["NetworkSettings"]["Networks"] if insp_data else []
         # then we destroy the container
         logger.info(f"{self.dsp_name}: Removing container {host_id}")
-        deleted = await self.podman.rm(host_id, force=True)  # TODO use stop and then rm
+        deleted = await self.podman.rm(host_id, force=True)
         # after that we cleanup the podman network
         for net in networks:
             if await self.podman.network_remove(net):
