@@ -37,7 +37,12 @@ class Podman:
         try:
             return await exec_async_subprocess(self.program, args, raise_on_err)
         except ProvisioningError as p_error:
-            raise ProvisioningError(p_error, self.dsp_name) from p_error
+            try:
+                err_str = str(p_error).split("Error:")[1].strip()
+            except IndexError:
+                err_str = str(p_error)
+
+            raise ProvisioningError(err_str) from p_error
 
     async def run(
         self,
