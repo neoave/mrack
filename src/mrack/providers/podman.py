@@ -115,7 +115,7 @@ class PodmanProvider(Provider):
         if success:
             logger.info(f"{self.dsp_name}: All required images present")
         else:
-            logger.error(f"{self.dsp_name}: Pulling of missing images failed")
+            raise ProvisioningError("Pulling of missing images failed", self.dsp_name)
 
         return success
 
