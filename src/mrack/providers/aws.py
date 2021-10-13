@@ -114,8 +114,13 @@ class AWSProvider(Provider):
                         f"to use image: {req_img}"
                     )
 
+                try:  # FIXME when https://github.com/boto/boto3/issues/2531 fixed
+                    aws_img_name = aws_image.name
+                except AttributeError:
+                    aws_img_name = req_img
+
                 logger.info(
-                    f"{self.dsp_name}: Requested provisioning of {aws_image.name} image"
+                    f"{self.dsp_name}: Requested provisioning of {aws_img_name} image"
                 )
             except ClientError as image_err:
                 err_msg = (
@@ -125,7 +130,7 @@ class AWSProvider(Provider):
                 logger.error(err_msg)
                 err_resp = image_err.response["Error"]["Message"]
                 raise ValidationError(
-                    f"{err_msg} Request failed with {err_resp}"
+                    f"{err_msg} Request failed with: {err_resp}"
                 ) from image_err
 
         return
@@ -151,14 +156,25 @@ class AWSProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
-        aws_res = self.ec2.create_instances(
-            ImageId=specs.get("image"),
-            MinCount=1,
-            MaxCount=1,
-            InstanceType=specs.get("flavor"),
-            KeyName=self.ssh_key,
-            SecurityGroupIds=[self.sec_group],
-        )
+        try:
+            aws_res = self.ec2.create_instances(
+                ImageId=specs.get("image"),
+                MinCount=1,
+                MaxCount=1,
+                InstanceType=specs.get("flavor"),
+                KeyName=self.ssh_key,
+                SecurityGroupIds=[self.sec_group],
+            )
+        except ClientError as creation_error:
+            err_msg = (
+                f"{self.dsp_name}: Requested image "
+                f"'{specs.get('image')}' can not be provisioned"
+            )
+            logger.error(err_msg)
+            err_resp = creation_error.response["Error"]["Message"]
+            raise ProvisioningError(
+                f"{err_msg} Request failed with: {err_resp}", req
+            ) from creation_error
 
         ids = [srv.id for srv in aws_res]
         if len(ids) != 1:  # ids must be len of 1 as we provision one vm at the time
@@ -209,6 +225,12 @@ class AWSProvider(Provider):
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
+        if not host_id:
+            logger.debug(
+                f"{self.dsp_name}: Skipping termination, because host was not created"
+            )
+            return False
+
         logger.info(f"{self.dsp_name}: Terminating host {host_id}")
         ids = [host_id]
         self.ec2.instances.filter(InstanceIds=ids).stop()
