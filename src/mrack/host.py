@@ -95,7 +95,12 @@ class Host:
         )
 
         if self._error:
-            out = "\n".join([out, "Error:", object2json(self._error)])
+            out = "\n".join(
+                [
+                    out,
+                    f"Error: Host finished with error(s): {object2json(self._error)}",
+                ]
+            )
         return out
 
     def to_json(self):

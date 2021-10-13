@@ -95,6 +95,7 @@ class BeakerProvider(Provider):
             "Aborted": STATUS_ERROR,
             "Completed": STATUS_OTHER,
             "MRACK_REACHED_TIMEOUT": STATUS_ERROR,
+            "MRACK_RESULT_NOT_PASSED": STATUS_ERROR,
         }
 
     async def init(
@@ -284,9 +285,17 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             "name": prov_result["mrack_req_name"],
             "addresses": [ip_address],
             "status": prov_result["status"],
-            "fault": prov_result["result"] if prov_result["result"] != "Pass" else None,
+            "fault": None,
             "os": prov_result.get("mrack_req_os"),
         }
+
+        if prov_result["result"] != "Pass":
+            result.update(
+                {
+                    "fault": prov_result["result"],
+                    "status": "MRACK_RESULT_NOT_PASSED",
+                }
+            )
 
         return result
 
