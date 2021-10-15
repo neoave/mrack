@@ -44,6 +44,7 @@ def host_from_json(host_data):
         host_data["host_id"],
         host_data["name"],
         host_data["operating_system"],
+        host_data["group"],
         host_data["ip_addrs"],
         host_data["status"],
         host_data["rawdata"],
@@ -66,6 +67,7 @@ class Host:
         host_id,
         name,
         operating_system,
+        group,
         ip_addrs,
         status,
         rawdata,
@@ -78,6 +80,7 @@ class Host:
         self._host_id = host_id
         self._name = name
         self._operating_system = operating_system
+        self._group = group
         self._ip_addrs = ip_addrs
         self._status = status
         self._username = username
@@ -110,6 +113,7 @@ class Host:
             "host_id": self._host_id,
             "name": self._name,
             "operating_system": self._operating_system,
+            "group": self._group,
             "ip_addrs": self._ip_addrs,
             "status": self._status,
             "username": self._username,
@@ -127,6 +131,11 @@ class Host:
     def operating_system(self):
         """Get host operating system."""
         return self._operating_system
+
+    @property
+    def group(self):
+        """Get host group."""
+        return self._group
 
     @property
     def host_id(self):

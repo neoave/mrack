@@ -85,6 +85,7 @@ class StaticProvider(Provider):
         result["fault"] = {}
         result["status"] = STATUS_ACTIVE
         result["os"] = prov_result.get("os")  # with static it stays os
+        result["group"] = prov_result.get("group")  # with static it stays os
 
         return result
 

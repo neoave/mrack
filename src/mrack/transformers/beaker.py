@@ -64,6 +64,7 @@ class BeakerTransformer(Transformer):
             "name": host["name"],
             "distro": required_distro,
             "os": host["os"],
+            "group": host["group"],
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": self._get_bkr_variant(host),
