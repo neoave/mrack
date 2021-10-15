@@ -82,6 +82,7 @@ def get_ip(index=0):
 def create_db_host(
     hostname,
     operating_system="fedora",
+    group=None,
     index=0,
     status=STATUS_ACTIVE,
     username=None,
@@ -95,6 +96,7 @@ def create_db_host(
         uuid.uuid4(),
         hostname,
         operating_system,
+        group,
         [get_ip(index)],
         status,
         {},

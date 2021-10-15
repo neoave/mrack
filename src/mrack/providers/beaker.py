@@ -282,11 +282,12 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         result = {
             "id": prov_result["JobID"],
-            "name": prov_result["mrack_req_name"],
+            "name": prov_result.get("mrack_req").get("name"),
             "addresses": [ip_address],
             "status": prov_result["status"],
             "fault": None,
-            "os": prov_result.get("mrack_req_os"),
+            "os": prov_result.get("mrack_req").get("os"),
+            "group": prov_result.get("mrack_req").get("group"),
         }
 
         if prov_result["result"] != "Pass":
@@ -385,8 +386,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         resource.update(
             {
                 "JobID": beaker_id,
-                "mrack_req_name": req["name"],
-                "mrack_req_os": req["os"],
+                "mrack_req": req,
             }
         )
         return resource

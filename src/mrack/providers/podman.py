@@ -211,12 +211,7 @@ class PodmanProvider(Provider):
                     f"Failed to run '{command}' in container {cont_id}", self.dsp_name
                 )
 
-        server.update(
-            {
-                "mrack_req_os": req["os"],
-                "mrack_req_name": req["name"],
-            }
-        )
+        server.update({"mrack_req": req})
 
         return server
 
@@ -281,7 +276,8 @@ class PodmanProvider(Provider):
 
         result["fault"] = error_obj
         result["status"] = status
-        result["os"] = prov_result.get("mrack_req_os")
+        result["os"] = prov_result.get("mrack_req").get("os")
+        result["group"] = prov_result.get("mrack_req").get("group")
 
         return result
 

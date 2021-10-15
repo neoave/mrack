@@ -52,6 +52,7 @@ class AWSTransformer(Transformer):
         return {
             "name": host["name"],
             "os": host["os"],
+            "group": host["group"],
             "flavor": self._get_flavor(host),
             "image": required_image,
             "meta_image": "image" in host,

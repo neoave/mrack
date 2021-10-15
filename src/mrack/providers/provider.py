@@ -149,38 +149,38 @@ class Provider:
 
         return res, host
 
-    async def _check_ssh_auth(self, ssh_check, active_hosts):
+    async def _check_ssh_auth(self, default_check, active_hosts):
         success_hosts = []
         error_hosts = []
 
-        if not isinstance(ssh_check, dict):
-            ssh_check = {}
+        if not isinstance(default_check, dict):
+            default_check = {}
 
         # check if default config is in place, if not use defaults
         req_keys = ("enabled", "port", "timeout")
-        if not all(k in ssh_check for k in req_keys):
+        if not all(k in default_check for k in req_keys):
             logger.warning(
                 f"{self.dsp_name}: Missing complete default post provisioning "
                 "ssh check configuration in provisioning config file."
             )
             # extend not complete configuration with defaults
-            ssh_check = {
+            default_check = {
                 "enabled": True,
                 "port": 22,
                 "timeout": 10,
-            } | ssh_check
+            } | default_check
 
         # split dictionary into two default and based on host os/group
         req_keys += ("enabled_providers", "disabled_providers")
-        default_check = {x: ssh_check[x] for x in ssh_check if x in req_keys}
-        based_check = {x: ssh_check[x] for x in ssh_check if x not in req_keys}
-        del ssh_check
+        based_check = {x: default_check[x] for x in default_check if x not in req_keys}
+        default_check = {x: default_check[x] for x in default_check if x in req_keys}
 
         wait_ssh = []
         for host in active_hosts:
             # go host by host and load the group and os based configuration for ssh
             os_check = based_check.get("os", {}).get(host.operating_system, {})
-            opts = default_check | os_check  # sorted by priority
+            group_check = based_check.get("group", {}).get(host.group, {})
+            opts = default_check | group_check | os_check  # sorted by priority
 
             logger.debug(
                 f"{self.dsp_name}: Host '{host.name}' "
@@ -261,6 +261,7 @@ class Provider:
                             host_id=req.get("name"),
                             name=req.get("name"),
                             operating_system=req.get("os"),
+                            group=req.get("group"),
                             ip_addrs=[],
                             status=STATUS_OTHER,
                             rawdata=req,
@@ -302,6 +303,7 @@ class Provider:
                         host_id=response.args[SPECS].get("host_id"),
                         name=response.args[SPECS].get("name"),
                         operating_system=response.args[SPECS].get("os"),
+                        group=response.args[SPECS].get("group"),
                         ip_addrs=[],
                         status=STATUS_OTHER,
                         rawdata=response.args,
@@ -480,6 +482,7 @@ class Provider:
             host_info.get("id"),
             host_info.get("name"),
             host_info.get("os"),
+            host_info.get("group"),
             host_info.get("addresses"),
             self.status_map.get(host_info.get("status"), STATUS_OTHER),
             provisioning_result,

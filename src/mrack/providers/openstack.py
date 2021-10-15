@@ -560,6 +560,9 @@ class OpenStackProvider(Provider):
         if specs.get("network"):
             del specs["network"]
 
+        if specs.get("group"):
+            del specs["group"]
+
         error_attempts = 0
         while error_attempts < SERVER_ERROR_RETRY:
             try:
@@ -691,12 +694,7 @@ class OpenStackProvider(Provider):
                 f"{self.dsp_name}: Host {uuid} was provisioned in {prov_duration:.1f}s"
             )
 
-        server.update(
-            {
-                "mrack_req_os": req["os"],
-                "mrack_req_name": req["name"],
-            }
-        )
+        server.update({"mrack_req": req})
 
         return server
 
@@ -716,6 +714,7 @@ class OpenStackProvider(Provider):
         result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
         result["fault"] = prov_result.get("fault")
         result["status"] = prov_result.get("status")
-        result["os"] = prov_result.get("mrack_req_os")
+        result["os"] = prov_result.get("mrack_req").get("os")
+        result["group"] = prov_result.get("mrack_req").get("group")
 
         return result

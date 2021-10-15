@@ -65,6 +65,7 @@ class OpenStackTransformer(Transformer):
         req = {
             "name": host["name"],
             "os": host["os"],
+            "group": host["group"],
             "flavor": self._get_flavor(host),
             "image": required_image,
             "key_name": self.config["keypair"],
