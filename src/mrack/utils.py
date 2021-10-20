@@ -25,6 +25,7 @@ import os
 import subprocess
 import sys
 from functools import update_wrapper
+from xml.dom.minidom import Document as xml_doc
 
 import yaml
 
@@ -62,6 +63,19 @@ def validate_dict_attrs(dct, attr_list, dct_name):
         'Is missing required attributes: {missing}'
         """
         raise ConfigError(error)
+
+
+def add_dict_to_node(node, input_dict):
+    """Convert dict object to XML elements."""
+    # Recursively create xml from dict
+    if isinstance(input_dict, dict):
+        for key, value in input_dict.items():
+            if key.startswith("_"):
+                node.setAttribute(key[1:], str(value))
+            else:
+                node.appendChild(add_dict_to_node(xml_doc().createElement(key), value))
+
+    return node
 
 
 def json_convertor(obj):

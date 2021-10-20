@@ -38,6 +38,7 @@ from mrack.host import (
     STATUS_PROVISIONING,
 )
 from mrack.providers.provider import STRATEGY_ABORT, Provider
+from mrack.utils import add_dict_to_node
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +159,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             % "".join(key_content)
         ]
 
-    def _req_to_bkr_job(self, req):
+    def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
         """Transform requirement to beaker job xml."""
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
@@ -192,6 +193,28 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         arch_node.setAttribute("op", "=")
         arch_node.setAttribute("value", specs["arch"])
         recipe.addDistroRequires(arch_node)
+
+        host_requires = global_context.PROV_CONFIG[PROVISIONER_KEY].get(
+            "hostRequires",
+            specs.get(f"mrack_{PROVISIONER_KEY}", {}).get("hostRequires", {}),
+        )
+
+        if host_requires:  # suppose to be dict like {"or": [dict()], "and": [dict()]}
+            for operand, operand_value in host_requires.items():
+                if operand.startswith("_"):
+                    recipe.node.getElementsByTagName("hostRequires")[0].setAttribute(
+                        operand[1:],
+                        operand_value,
+                    )
+                    continue
+                # known operands are ["and", "or"]
+                req_node = xml_doc().createElement(operand)
+                for dct in operand_value:
+                    req_node = add_dict_to_node(req_node, dct)
+
+                recipe.node.getElementsByTagName("hostRequires")[0].appendChild(
+                    req_node
+                )
 
         # Specify the custom xml distro_tag node with values from provisioning config
         distro_tags = global_context.PROV_CONFIG["beaker"].get("distro_tags")
@@ -253,7 +276,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         """Transform provisioning result to needed host data."""
         try:
             ip_address = socket.gethostbyname(prov_result["system"])
-        except socket.gaierror:
+        except (TypeError, socket.gaierror):
             ip_address = None
 
         result = {

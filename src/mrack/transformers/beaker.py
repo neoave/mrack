@@ -66,4 +66,5 @@ class BeakerTransformer(Transformer):
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": self._get_bkr_variant(host),
+            f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
         }
