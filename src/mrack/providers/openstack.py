@@ -34,7 +34,7 @@ from mrack.errors import (
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
-from mrack.utils import object2json
+from mrack.utils import is_windows_host, object2json
 
 logger = logging.getLogger(__name__)
 
@@ -550,6 +550,12 @@ class OpenStackProvider(Provider):
         if specs.get("flavor"):
             del specs["flavor"]
 
+        if is_windows_host(specs):
+            # if the host name contains "." character which is not supported for
+            # windows OS as host name or the host name is an FQDN we use only
+            # first part of domain name as host identifier for openstack
+            specs["name"] = specs["name"].split(".")[0]
+
         image = self._translate_image(req)
         specs["imageRef"] = image["id"]
         if specs.get("image"):
@@ -709,7 +715,7 @@ class OpenStackProvider(Provider):
         result = {}
 
         result["id"] = prov_result.get("id")
-        result["name"] = prov_result.get("name")
+        result["name"] = prov_result.get("name")  # FIXME or here
         networks = prov_result.get("addresses", {})
         result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
         result["fault"] = prov_result.get("fault")

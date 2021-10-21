@@ -80,6 +80,7 @@ class PytestMultihostOutput:
         for domain in mhcfg["domains"]:
             for host in domain["hosts"]:
                 provisioned_host = self._db.hosts.get(host["name"])
+
                 if not provisioned_host:
                     logger.error(f"Host {host['name']} not found in the database.")
                     continue

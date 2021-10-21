@@ -120,7 +120,8 @@ class AnsibleInventoryOutput:
     def create_ansible_host(self, name):
         """Create host entry for Ansible inventory."""
         meta_host, meta_domain = get_host_from_metadata(self._metadata, name)
-        db_host = self._db.hosts[name]
+        host_name = meta_host["name"]
+        db_host = self._db.hosts[host_name]
 
         ip_addr = db_host.ip_addr
         ansible_host = resolve_hostname(ip_addr) or ip_addr
@@ -133,20 +134,20 @@ class AnsibleInventoryOutput:
         ansible_user = get_username(db_host, meta_host, self._config)
         password = get_password(db_host, meta_host, self._config)
         ssh_key = get_ssh_key(db_host, meta_host, self._config)
+        dom_name = meta_domain["name"]
 
         # Common attributes
         host_info = {
             "ansible_host": ansible_host,
             "ansible_python_interpreter": python,
             "ansible_user": ansible_user,
-            "meta_fqdn": name,
-            "meta_domain": meta_domain["name"],
+            "meta_fqdn": host_name,
+            "meta_host_name": name,
+            "meta_domain": dom_name,
             "meta_provider": db_host.provider.name,
             "meta_provider_id": db_host.host_id,
             "meta_ip": ip_addr,
-            "meta_dc_record": ",".join(
-                "DC=%s" % dc for dc in meta_domain["name"].split(".")
-            ),
+            "meta_dc_record": ",".join("DC=%s" % dc for dc in dom_name.split(".")),
         }
 
         if "restraint_id" in meta_host:
@@ -193,6 +194,7 @@ class AnsibleInventoryOutput:
 
         for host in provisioned.values():
             meta_host, _meta_domain = get_host_from_metadata(self._metadata, host.name)
+            host_name = meta_host["name"]  # FIXME here being leveraged
 
             # Groups can be defined in both "groups" and "group" variable.
             groups = meta_host.get("groups", [])
@@ -202,12 +204,12 @@ class AnsibleInventoryOutput:
 
             # Add only a reference custom groups
             for group in groups:
-                added = add_to_group(inventory, group, host.name)
+                added = add_to_group(inventory, group, host_name)
                 if not added:  # group doesn't exist
-                    add_group(inventory, group, host.name)
+                    add_group(inventory, group, host_name)
 
-            # Main record belongs in "all" group
-            all_group["hosts"][host.name] = self.create_ansible_host(host.name)
+            # Main record belongs in "all" group # FIXME using response
+            all_group["hosts"][host_name] = self.create_ansible_host(host.name)
         return inventory
 
     def create_output(self):

@@ -167,7 +167,8 @@ def get_host_from_metadata(metadata, name):
     domains = metadata.get("domains", [])
     for domain in domains:
         for host in domain.get("hosts", []):
-            if host["name"] == name:
+            # use startswith as for ad we use only first part of FQDN
+            if host["name"].startswith(name):  # FIXME here we use it
                 return host, domain
 
     return None, None
