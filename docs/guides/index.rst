@@ -7,4 +7,5 @@ Guides
 
    credentials.rst
    mrack_lib.rst
+   ssh_check.rst
    strategy.rst
