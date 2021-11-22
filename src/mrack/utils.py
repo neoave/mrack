@@ -187,6 +187,15 @@ def is_windows_host(meta_host):
     )
 
 
+def get_shortname(hostname):
+    """
+    Get shortname part of fqdn.
+
+    Return the same string if it is not fqdn.
+    """
+    return hostname.split(".")[0]
+
+
 def get_username(host, meta_host, config):
     """Find username from sources db/metadata/config."""
     username = host.username or meta_host.get("username")

@@ -23,6 +23,7 @@ from mrack.outputs.utils import resolve_hostname
 from mrack.utils import (
     get_host_from_metadata,
     get_password,
+    get_shortname,
     get_ssh_key,
     get_username,
     is_windows_host,
@@ -140,6 +141,7 @@ class AnsibleInventoryOutput:
             "ansible_python_interpreter": python,
             "ansible_user": ansible_user,
             "meta_fqdn": name,
+            "meta_hostname": get_shortname(name),
             "meta_domain": meta_domain["name"],
             "meta_provider": db_host.provider.name,
             "meta_provider_id": db_host.host_id,
