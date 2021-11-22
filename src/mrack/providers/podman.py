@@ -213,7 +213,7 @@ class PodmanProvider(Provider):
 
         server.update({"mrack_req": req})
 
-        return server
+        return server, req
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
@@ -248,7 +248,7 @@ class PodmanProvider(Provider):
 
         return status
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Get needed host information from podman provisioning result."""
         result = {}
 
@@ -281,7 +281,7 @@ class PodmanProvider(Provider):
 
         return result
 
-    def to_host(self, provisioning_result, username=None):
+    def to_host(self, provisioning_result, req, username=None):
         """Transform provisioning result into Host object."""
         # for containers use always root user
-        return super().to_host(provisioning_result, username="root")
+        return super().to_host(provisioning_result, req, username="root")

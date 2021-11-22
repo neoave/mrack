@@ -273,7 +273,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         return (job_id, req)
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
         try:
             ip_address = socket.gethostbyname(prov_result["system"])
@@ -389,7 +389,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 "mrack_req": req,
             }
         )
-        return resource
+        return resource, req
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""
@@ -413,6 +413,6 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             host_id, "cancel", "Job has been stopped by mrack."
         )
 
-    def to_host(self, provisioning_result, username="root"):
+    def to_host(self, provisioning_result, req, username="root"):
         """Transform provisioning result into Host object."""
-        return super().to_host(provisioning_result, username)
+        return super().to_host(provisioning_result, req, username)

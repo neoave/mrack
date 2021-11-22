@@ -327,7 +327,7 @@ class Provider:
         )
         logger.info(f"{self.dsp_name}: Provisioning duration: {provisioned - started}")
 
-        hosts = [self.to_host(srv) for srv in server_results if srv]
+        hosts = [self.to_host(srv, req) for srv, req in server_results if srv]
 
         error_hosts += await self.parse_error_hosts(hosts)
         active_hosts = [h for h in hosts if h not in error_hosts]
@@ -469,13 +469,13 @@ class Provider:
         logger.info(f"{self.dsp_name}: All servers issued to be deleted")
         return results
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
         raise NotImplementedError()
 
-    def to_host(self, provisioning_result, username=None):
+    def to_host(self, provisioning_result, req, username=None):
         """Transform provisioning result into Host object."""
-        host_info = self.prov_result_to_host_data(provisioning_result)
+        host_info = self.prov_result_to_host_data(provisioning_result, req)
 
         host = Host(
             self,
