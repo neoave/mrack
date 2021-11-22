@@ -31,9 +31,39 @@ class OpenStackTransformer(Transformer):
     _config_key = CONFIG_KEY
     _required_config_attrs = ["flavors", "networks", "images", "keypair"]  # List[str]
 
+    def _get_cluster(self):
+        """
+        Get cluster name.
+
+        Get cluster name from metadata if specified
+        if not specified return default_cluster_name
+        """
+        for domain in self._metadata["domains"]:
+            for host in domain["hosts"]:
+                if CONFIG_KEY in host:
+                    return host[CONFIG_KEY]["cluster"]
+
+        return self.config.get("default_cluster_name")
+
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
         self.dsp_name = "OpenStack"
+
+        cluster = self._get_cluster()
+        # if cluster is not empty this feature is already being used.
+        if cluster:
+            # extract default openstack config from the config dictionary
+            default_config = {
+                x: self.config.get(x)
+                for x in self.config
+                if x in self._required_config_attrs
+            }
+            # store the cluster config
+            cluster_config = self.config.get(cluster, {})
+
+            # extend default config with cluster configuration by overriding defaults
+            self.config = default_config | cluster_config
+
         await self._provider.init(
             image_names=self.config["images"].values(),
             networks=self.config["networks"],
