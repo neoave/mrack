@@ -34,7 +34,7 @@ from mrack.errors import (
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.osapi import ExtraNovaClient, NeutronClient
-from mrack.utils import object2json
+from mrack.utils import get_shortname, is_windows_host, object2json
 
 logger = logging.getLogger(__name__)
 
@@ -545,6 +545,11 @@ class OpenStackProvider(Provider):
         specs = deepcopy(req)  # work with own copy, do not modify the input
         del specs["os"]  # do not pass this to openstack
 
+        if is_windows_host(req):
+            # Windows support only shortnames for Cloudbase-Init - it is
+            # derived from openstack vm name.
+            specs["name"] = get_shortname(name)
+
         flavor = self._translate_flavor(req)
         specs["flavorRef"] = flavor["id"]
         if specs.get("flavor"):
@@ -709,7 +714,7 @@ class OpenStackProvider(Provider):
         result = {}
 
         result["id"] = prov_result.get("id")
-        result["name"] = prov_result.get("name")
+        result["name"] = req.get("name")
         networks = prov_result.get("addresses", {})
         result["addresses"] = [ip.get("addr") for n in networks.values() for ip in n]
         result["fault"] = prov_result.get("fault")
