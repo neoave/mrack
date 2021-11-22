@@ -189,7 +189,7 @@ class AWSProvider(Provider):
         # returns id of provisioned instance and required host name
         return (ids[0], req)
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
         # init the dict
         result = {}
@@ -222,7 +222,7 @@ class AWSProvider(Provider):
                 f"of provisioned instance '{req['name']}'"
             ) from data_err
 
-        return result
+        return result, req
 
     async def delete_host(self, host_id):
         """Delete provisioned hosts based on input from provision_hosts."""

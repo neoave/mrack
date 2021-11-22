@@ -146,7 +146,7 @@ class VirtProvider(Provider):
         """Wait till resource is provisioned."""
         result, req = resource
         result.update({"mrack_req": req})
-        return result
+        return result, req
 
     async def delete_host(self, host_id):
         """Delete provisioned host."""
@@ -159,7 +159,7 @@ class VirtProvider(Provider):
 
         return True
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Get needed host information from podman provisioning result."""
         result = {}
         result["id"] = prov_result.get("id")

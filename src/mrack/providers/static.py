@@ -19,7 +19,7 @@ from copy import deepcopy
 
 from mrack.errors import ValidationError
 from mrack.host import STATUS_ACTIVE
-from mrack.providers.provider import SPECS, STRATEGY_ABORT, Provider
+from mrack.providers.provider import STRATEGY_ABORT, Provider
 
 PROVISIONER_KEY = "static"
 
@@ -67,20 +67,19 @@ class StaticProvider(Provider):
     async def provision_hosts(self, reqs):
         """Fake provision - behave as if it was provisioned."""
         await self.validate_hosts(reqs)
-        hosts = [self.to_host(req) for req in reqs]
+        hosts = [self.to_host(req, req) for req in reqs]
         return hosts
 
     async def wait_till_provisioned(self, resource):
         """Wait till resource is provisioned."""
-        server = resource[SPECS]
-        return server
+        return resource
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
         result = {}
 
         result["id"] = prov_result.get("name")
-        result["name"] = prov_result.get("name")
+        result["name"] = req.get("name")
         result["addresses"] = [prov_result.get("ip")]
         result["fault"] = {}
         result["status"] = STATUS_ACTIVE

@@ -696,7 +696,7 @@ class OpenStackProvider(Provider):
 
         server.update({"mrack_req": req})
 
-        return server
+        return server, req
 
     async def delete_host(self, host_id):
         """Issue deletion of host(server) from OpenStack."""
@@ -704,7 +704,7 @@ class OpenStackProvider(Provider):
         await self.delete_server(host_id)
         return True
 
-    def prov_result_to_host_data(self, prov_result):
+    def prov_result_to_host_data(self, prov_result, req):
         """Get needed host information from openstack provisioning result."""
         result = {}
 
