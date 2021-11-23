@@ -2,6 +2,26 @@
 
 <!--next-version-placeholder-->
 
+## v1.1.0 (2021-11-23)
+### Feature
+* Add shortname in Ansible inventory output ([`ea76cbc`](https://github.com/neoave/mrack/commit/ea76cbc07750ffb3e324919a4089bbba88470121))
+* Add group specific ssh config possibility ([`f0e32d8`](https://github.com/neoave/mrack/commit/f0e32d8aab1e22126b3d5e1b3b82afb0082a5ad6))
+* Make post provisioning ssh check configurable ([`c419dc2`](https://github.com/neoave/mrack/commit/c419dc29fdc98ce8aef1dcc13f5ca40f511375a9))
+* **Beaker:** Add parsing of HostRequires to the job ([`e696872`](https://github.com/neoave/mrack/commit/e69687234c26c518de159a082f4bfcb1df328860))
+* **Podman:** Add possibility to run post provisioning commands ([`ea488fc`](https://github.com/neoave/mrack/commit/ea488fc5e367b5d33e074585e48197e050c7d0fb))
+
+### Fix
+* **OpenStack:** Do not raise exception when using unavailable network ([`6c31bb6`](https://github.com/neoave/mrack/commit/6c31bb6f24132051ba7be777a59ec7652cf28f67))
+* **openstack:** Use shortnames for Windows vm names ([`d4a1bec`](https://github.com/neoave/mrack/commit/d4a1bec262041d101d555264382f852faf7190c1))
+* **AWS:** Fix provision of non-existing ami ([`0971479`](https://github.com/neoave/mrack/commit/09714792de24877fe1fa59e8d51fbfd01a7c75ec))
+* **Beaker:** Change host status to error when task did not pass ([`90cd628`](https://github.com/neoave/mrack/commit/90cd6281aba071fe80705dc89adb0dcc721b40d9))
+* **Podman:** Fix the exception handling when container creation is failing ([`6df9605`](https://github.com/neoave/mrack/commit/6df9605c05a1a59bc09715e53edf97126bdb78e0))
+* **Podman:** Raise an exception when image failed to pull ([`ed79732`](https://github.com/neoave/mrack/commit/ed79732a12b47e28d3228e14cf0ea725e80360df))
+
+### Documentation
+* Add post-provisioning ssh check docs ([`ef0e339`](https://github.com/neoave/mrack/commit/ef0e339d25eb735d3825493e815376cd5c6f106b))
+* Fix toctree for guides ([`d9075f9`](https://github.com/neoave/mrack/commit/d9075f91304d1d31491bb37e8cde0a671597b230))
+
 ## v1.0.0 (2021-09-03)
 ### Feature
 * Use global context instead of dictionary as ctx for click ([`9f38a3c`](https://github.com/neoave/mrack/commit/9f38a3c77cf3874326866247d40ff696a5c24a4b))
