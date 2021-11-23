@@ -206,6 +206,9 @@ class OpenStackProvider(Provider):
         networks = [self.get_network(net) for net in possible_networks]
         usable = []
         for network in networks:
+            if not network:
+                continue
+
             ips = self.get_ips(ref=network.get("id"))
 
             available = ips["total_ips"] - ips["used_ips"]
@@ -301,6 +304,13 @@ class OpenStackProvider(Provider):
         network = self.networks.get(name)
         if not network:
             network = self.networks_by_ref.get(ref)
+
+        if not network:
+            net_id = name or ref
+            logger.debug(
+                f"{self.dsp_name}: Failed to load network with name: '{net_id}'"
+            )
+
         return network
 
     def get_ips(self, name=None, ref=None):
