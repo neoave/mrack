@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.1.1 (2021-11-25)
+### Fix
+* Add domain name for fqdn if host has short name ([`a870f7f`](https://github.com/neoave/mrack/commit/a870f7f0fbe5117d08ffda6f789b09ab53018ece))
+
 ## v1.1.0 (2021-11-23)
 ### Feature
 * Add shortname in Ansible inventory output ([`ea76cbc`](https://github.com/neoave/mrack/commit/ea76cbc07750ffb3e324919a4089bbba88470121))
