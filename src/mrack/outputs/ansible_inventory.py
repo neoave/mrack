@@ -134,21 +134,20 @@ class AnsibleInventoryOutput:
         ansible_user = get_username(db_host, meta_host, self._config)
         password = get_password(db_host, meta_host, self._config)
         ssh_key = get_ssh_key(db_host, meta_host, self._config)
+        dom_name = meta_domain["name"]
 
         # Common attributes
         host_info = {
             "ansible_host": ansible_host,
             "ansible_python_interpreter": python,
             "ansible_user": ansible_user,
-            "meta_fqdn": name,
+            "meta_fqdn": f"{get_shortname(name)}.{dom_name}",
             "meta_hostname": get_shortname(name),
-            "meta_domain": meta_domain["name"],
+            "meta_domain": dom_name,
             "meta_provider": db_host.provider.name,
             "meta_provider_id": db_host.host_id,
             "meta_ip": ip_addr,
-            "meta_dc_record": ",".join(
-                "DC=%s" % dc for dc in meta_domain["name"].split(".")
-            ),
+            "meta_dc_record": ",".join("DC=%s" % dc for dc in dom_name.split(".")),
         }
 
         if "restraint_id" in meta_host:
