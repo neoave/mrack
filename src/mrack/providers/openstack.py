@@ -188,7 +188,10 @@ class OpenStackProvider(Provider):
                 continue
             network_type = host.get("network")
             if not self._is_network_type(network_type):
-                continue
+                raise ValidationError(
+                    f"Network type '{network_type}' not found"
+                    f" in the provisioning config file"
+                )
 
             count = network_types.get(network_type, 0)
             count += 1
@@ -310,7 +313,6 @@ class OpenStackProvider(Provider):
             logger.debug(
                 f"{self.dsp_name}: Failed to load network with name: '{net_id}'"
             )
-
         return network
 
     def get_ips(self, name=None, ref=None):
