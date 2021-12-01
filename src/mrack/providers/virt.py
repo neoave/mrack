@@ -21,6 +21,8 @@ import logging
 import os
 from datetime import datetime
 
+from testcloud.exceptions import TestcloudImageError
+
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, STATUS_PENDING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
@@ -99,8 +101,15 @@ class VirtProvider(Provider):
             logger.info(f"{self.dsp_name}: Pulling image '{url}'")
             awaitables.append(self.testcloud.pull_image(url))
 
-        pull_results = await asyncio.gather(*awaitables)
+        pull_results = await asyncio.gather(*awaitables, return_exceptions=True)
         success = all(pull_results)
+
+        for pull in pull_results:
+            if isinstance(pull, TestcloudImageError):
+                logger.error(f"{self.dsp_name}: {str(pull)}")
+                success = False
+            elif isinstance(pull, Exception):
+                raise pull
 
         if not success:
             logger.error(f"{self.dsp_name}: Pulling of images failed")
