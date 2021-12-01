@@ -364,7 +364,8 @@ class Provider:
         Return list of information about provisioned servers.
         """
         logger.info(f"{self.dsp_name}: Preparing provider resources")
-        await self.prepare_provisioning(reqs)
+        if not await self.prepare_provisioning(reqs):
+            raise ProvisioningError("Failed to prepare resources", self.dsp_name)
 
         if self.strategy == STRATEGY_RETRY:
             success_hosts, error_hosts, _missing_reqs = await self.strategy_retry(reqs)
