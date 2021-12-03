@@ -44,7 +44,7 @@ class StaticProvider(Provider):
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
-        pass
+        return bool(reqs)
 
     async def create_server(self, req):
         """Request and create resource on selected provider."""

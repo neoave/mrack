@@ -94,7 +94,7 @@ class AWSProvider(Provider):
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
-        pass
+        return bool(reqs)
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""

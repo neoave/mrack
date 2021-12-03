@@ -138,7 +138,7 @@ class BeakerProvider(Provider):
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
-        pass
+        return bool(reqs)
 
     async def can_provision(self, hosts):
         """Check that hosts can be provisioned."""
