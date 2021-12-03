@@ -471,6 +471,7 @@ class OpenStackProvider(Provider):
             logger.debug(f"{self.dsp_name}: Loading images info done.")
 
         self._set_poll_sleep_times(reqs)
+        return True
 
     async def validate_hosts(self, reqs):
         """Validate that all hosts requirements contains existing required objects."""
