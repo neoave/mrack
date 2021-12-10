@@ -61,13 +61,12 @@ class OpenStackTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for OpenStack provisioner."""
-        required_image = host.get("image") or self._get_image(host["os"])
         req = {
             "name": host["name"],
             "os": host["os"],
             "group": host["group"],
             "flavor": self._get_flavor(host),
-            "image": required_image,
+            "image": self._get_image(host),
             "key_name": self.config["keypair"],
             "network": self._get_network_type(host),
         }
