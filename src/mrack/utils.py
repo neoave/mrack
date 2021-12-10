@@ -263,13 +263,15 @@ def get_shortname(hostname):
 
 def get_username(host, meta_host, config):
     """Find username from sources db/metadata/config."""
-    username = host.username or meta_host.get("username")
-    default_user = get_config_value(config["users"], meta_host["os"])
-
+    provider = host.provider.name
+    dict_key = meta_host["os"]
+    default_user = None
     if is_windows_host(meta_host):
-        default_user = default_user or "Administrator"
+        default_user = "Administrator"
+    username = find_value_in_config_hierarchy(
+        config, provider, host, meta_host, "username", "users", dict_key, default_user
+    )
 
-    username = username or default_user
     return username
 
 
