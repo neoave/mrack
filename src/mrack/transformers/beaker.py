@@ -57,9 +57,7 @@ class BeakerTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
-        required_distro = host.get("distro") or self._get_image(
-            host["os"], config_key="distros"
-        )
+        required_distro = self._find_value(host, "distro", "distros", host["os"])
         return {
             "name": host["name"],
             "distro": required_distro,

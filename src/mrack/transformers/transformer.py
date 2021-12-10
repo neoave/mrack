@@ -19,7 +19,12 @@ import typing
 
 from mrack.errors import ConfigError, MetadataError
 from mrack.providers import providers
-from mrack.utils import get_config_value, object2json, validate_dict_attrs
+from mrack.utils import (
+    find_value_in_config_hierarchy,
+    get_config_value,
+    object2json,
+    validate_dict_attrs,
+)
 
 DEFAULT_ATTEMPTS = 1
 
@@ -68,22 +73,19 @@ class Transformer:
         """Add host input."""
         self._hosts.append(host)
 
-    def _get_image(self, operating_system, config_key="images"):
-        """
-        Get image name by OS name from provisioning config.
+    def _find_value(self, host, attr, dict_name, key, default=None):
+        """Find value in config hierarchy."""
+        value = find_value_in_config_hierarchy(
+            self._config, self._config_key, None, host, attr, dict_name, key, default
+        )
+        return value
 
-        Returns:
-            1. image by the os key
-            2. default from the images if os is not found in keys
-            3. os name if default is not specified for images.
-        """
-        image = get_config_value(
-            self.config[config_key], operating_system, operating_system
-        )
-        logger.debug(
-            f"{self.dsp_name}: Loaded image for {operating_system}"
-            f" from {config_key}: '{image}'"
-        )
+    def _get_image(self, host):
+        """Get image name by OS name from provisioning config."""
+        operating_system = host["os"]
+        image = self._find_value(host, "image", "images", operating_system)
+
+        logger.debug(f"{self.dsp_name}: Found image {image} for {operating_system}")
         return image
 
     def _get_flavor(self, host):

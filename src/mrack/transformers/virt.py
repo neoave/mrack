@@ -55,7 +55,7 @@ class VirtTransformer(Transformer):
             "os": host["os"],
             "group": host["group"],
             "run_id": self.run_id,
-            "image_url": self._get_image(host["os"]),
+            "image_url": self._get_image(host),
             "ssh_path": self._get_host_option(host, "ssh_path"),
         }
 

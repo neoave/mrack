@@ -51,7 +51,7 @@ class PodmanTransformer(Transformer):
         _host, domain = get_host_from_metadata(self._metadata, host["name"])
         return {
             "name": host["name"],
-            "image": self._get_image(host["os"]),
+            "image": self._get_image(host),
             "os": host["os"],
             "group": host["group"],
             "hostname": host["name"],
