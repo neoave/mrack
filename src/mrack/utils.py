@@ -50,6 +50,71 @@ def get_config_value(config_dict, key, default=None):
     return val
 
 
+def get_value_or_dict_value(config_dict, attr, dict_name, key):
+    """
+    Look for a value in configuration dictionary.
+
+    Order of preference:
+    * dictionary 'dict_name' with key 'key'
+    * attribute: 'attr'
+    * None
+    """
+    if config_dict is None:
+        return None
+
+    value = None
+    value_dict = config_dict.get(dict_name)
+    if value_dict:
+        value = get_config_value(value_dict, key)
+        if value:
+            return value
+
+    value = config_dict.get(attr)
+    return value
+
+
+def find_value_in_config_hierarchy(
+    provisioning_config,
+    provider_key,
+    host,
+    meta_host,
+    attr,
+    dict_name,
+    key,
+    default=None,
+):
+    """
+    Look for first value in configuration hierarchy.
+
+    Order of preference:
+    * host value (attribute: attr)
+    * host metadata value (attribute: 'attr')
+    * provider config value (dictionary 'dict_name' with key 'key')
+    * provider default value (attribute: 'attr')
+    * global config value (dictionary 'dict_name' with key 'key')
+    * global default value (attribute: 'attr')
+    * value of provided default param
+    """
+    value = None
+    if host is not None:
+        if hasattr(host, attr):
+            value = getattr(host, attr)
+
+    if value is None and isinstance(meta_host, dict):
+        value = meta_host.get(attr)
+
+    if value is None and provider_key is not None:
+        provider_config = provisioning_config.get(provider_key)
+        value = get_value_or_dict_value(provider_config, attr, dict_name, key)
+
+    if value is None:
+        value = get_value_or_dict_value(provisioning_config, attr, dict_name, key)
+    if value is None:
+        value = default
+
+    return value
+
+
 def validate_dict_attrs(dct, attr_list, dct_name):
     """Validate that dictionary contains all attributes.
 
