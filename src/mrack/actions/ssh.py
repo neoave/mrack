@@ -84,7 +84,11 @@ class SSH(Action):
             host, global_context
         )
         return utils_ssh_to_host(
-            host, username=username, password=password, ssh_key=ssh_key
+            host,
+            username=username,
+            password=password,
+            ssh_key=ssh_key,
+            interactive=True,
         )
 
     def is_container_env(self, host):
