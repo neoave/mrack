@@ -243,6 +243,7 @@ def ssh_to_host(
     password=None,
     ssh_key=None,
     command=None,
+    interactive=False,
 ):
     """SSH to the selected host."""
     psw = host.password or password
@@ -250,9 +251,14 @@ def ssh_to_host(
     run_args = {
         "env": os.environ.copy(),
         "shell": True,
-        "stdout": subprocess.PIPE,
-        "stderr": subprocess.PIPE,
     }
+    if not interactive:
+        run_args.update(
+            {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+            }
+        )
 
     cmd = ["ssh"]
     cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
@@ -279,11 +285,12 @@ def ssh_to_host(
     process = subprocess.Popen(cmd, **run_args)
     std_out, std_err = process.communicate()
 
-    for o_line in std_out.decode().splitlines():
-        logger.debug(f"stdout: {o_line}")
+    if not interactive:
+        for o_line in std_out.decode().splitlines():
+            logger.debug(f"stdout: {o_line}")
 
-    for e_line in std_err.decode().splitlines():
-        logger.debug(f"stderr: {e_line}")
+        for e_line in std_err.decode().splitlines():
+            logger.debug(f"stderr: {e_line}")
 
     return process.returncode == 0
 
