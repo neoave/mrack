@@ -40,7 +40,6 @@ class AWSProvider(Provider):
         self.dsp_name = "AWS"
         self.ami_ids: typing.List[str] = []
         self.ssh_key = None
-        self.sec_group = None
         self.instance_tags = None
         self.max_retry = 1  # for retry strategy
         self.status_map = {
@@ -61,7 +60,6 @@ class AWSProvider(Provider):
         self,
         ami_ids,
         ssh_key,
-        sec_group,
         instance_tags,
         strategy=STRATEGY_ABORT,
         max_retry=1,
@@ -86,7 +84,6 @@ class AWSProvider(Provider):
 
         self.ami_ids = ami_ids
         self.ssh_key = ssh_key
-        self.sec_group = sec_group
         self.instance_tags = instance_tags
         login_end = datetime.now()
         login_duration = login_end - login_start
@@ -163,7 +160,7 @@ class AWSProvider(Provider):
                 MaxCount=1,
                 InstanceType=specs.get("flavor"),
                 KeyName=self.ssh_key,
-                SecurityGroupIds=[self.sec_group],
+                SecurityGroupIds=specs.get("security_group_ids", []),
             )
         except ClientError as creation_error:
             err_msg = (

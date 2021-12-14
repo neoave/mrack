@@ -29,7 +29,7 @@ class AWSTransformer(Transformer):
         "images",
         "credentials_file",
         "keypair",
-        "security_group",
+        "security_groups",
         "profile",
         "instance_tags",
     ]
@@ -40,11 +40,23 @@ class AWSTransformer(Transformer):
         await self._provider.init(
             ami_ids=self.config["images"].values(),
             ssh_key=self.config["keypair"],
-            sec_group=self.config["security_group"],
             instance_tags=self.config["instance_tags"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
+
+    def _get_security_groups(self):
+        """
+        Get Security Group IDs.
+
+        Works with both single `subnet_id` definition as well as with newer
+        `subnet_ids` which allows to defined multiple.
+        """
+        sc_ids = set(self.config.get("security_groups", []))
+        sc_id = self.config.get("security_group")
+        if sc_id:
+            sc_ids.add(sc_id)
+        return list(sc_ids)
 
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
@@ -56,4 +68,5 @@ class AWSTransformer(Transformer):
             "flavor": self._get_flavor(host),
             "image": required_image,
             "meta_image": "image" in host,
+            "security_group_ids": self._get_security_groups(),
         }
