@@ -187,6 +187,15 @@ class AWSProvider(Provider):
         # returns id of provisioned instance and required host name
         return (ids[0], req)
 
+    def get_ip_addresses(self, prov_result):
+        """Get IP address from a provisioning result."""
+        addresess = []
+        if prov_result.get("PublicIpAddress"):
+            addresess.append(prov_result.get("PublicIpAddress"))
+        if prov_result.get("PrivateIpAddress"):
+            addresess.append(prov_result.get("PrivateIpAddress"))
+        return addresess
+
     def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
         # init the dict
@@ -197,7 +206,7 @@ class AWSProvider(Provider):
             if tag["Key"] == "name":
                 result["name"] = tag["Value"]  # should be one key "name"
 
-        result["addresses"] = [prov_result.get("PublicIpAddress")]
+        result["addresses"] = self.get_ip_addresses(prov_result)
         result["status"] = prov_result["State"]["Name"]
         result["os"] = prov_result.get("mrack_req").get("os")
         result["group"] = prov_result.get("mrack_req").get("group")
