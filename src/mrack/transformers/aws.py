@@ -61,7 +61,7 @@ class AWSTransformer(Transformer):
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
         required_image = host.get("image") or self._get_image(host["os"])
-        return {
+        req = {
             "name": host["name"],
             "os": host["os"],
             "group": host["group"],
@@ -70,3 +70,6 @@ class AWSTransformer(Transformer):
             "meta_image": "image" in host,
             "security_group_ids": self._get_security_groups(),
         }
+        if self.config.get("subnet_id"):
+            req["subnet_id"] = self.config.get("subnet_id")
+        return req

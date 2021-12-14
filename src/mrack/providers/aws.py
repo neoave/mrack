@@ -161,6 +161,7 @@ class AWSProvider(Provider):
                 InstanceType=specs.get("flavor"),
                 KeyName=self.ssh_key,
                 SecurityGroupIds=specs.get("security_group_ids", []),
+                SubnetId=specs.get("subnet_id"),
             )
         except ClientError as creation_error:
             err_msg = (
