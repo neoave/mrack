@@ -86,6 +86,32 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
+    async def _opentack_gather_responses(self, *functions):
+        """Gather the async result of functions from parameters.
+
+        Returns:
+        * list of asyncio.gather results
+        """
+        error_attempts = 0
+        result = []
+        while error_attempts < SERVER_ERROR_RETRY:
+            try:
+                result = await asyncio.gather(*functions)
+                break
+            except ServerError as exc:
+                logger.debug(f"{self.dsp_name}: {exc}")
+                error_attempts += 1
+                if error_attempts <= SERVER_ERROR_RETRY:
+                    await asyncio.sleep(SERVER_ERROR_SLEEP)
+                    continue  # Try again due to ServerError
+        else:
+            # now we are past to what we would like to wait fail now
+            raise ProvisioningError(
+                f"{self.dsp_name}: Failed to load environment objects from server",
+            )
+
+        return result
+
     async def init(
         self, image_names=None, networks=None, strategy=STRATEGY_ABORT, max_retry=1
     ):
@@ -127,29 +153,13 @@ class OpenStackProvider(Provider):
         self.network_pools = networks
         object_start = datetime.now()
 
-        error_attempts = 0
-        while error_attempts < SERVER_ERROR_RETRY:
-            try:
-                _, _, self.limits, _, _ = await asyncio.gather(
-                    self.load_flavors(),
-                    self.load_images(image_names),
-                    self.nova.limits.show(),
-                    self.load_networks(),
-                    self.load_ip_availabilities(),
-                )
-                break
-            except ServerError as exc:
-                logger.debug(f"{self.dsp_name}: {exc}")
-                error_attempts += 1
-                if error_attempts <= SERVER_ERROR_RETRY:
-                    await asyncio.sleep(SERVER_ERROR_SLEEP)
-                    continue  # Try again due to ServerError
-
-        else:
-            # now we are past to what we would like to wait fail now
-            raise ProvisioningError(
-                f"{self.dsp_name}: Failed to load environment objects from server",
-            )
+        _, _, self.limits, _, _ = await self._opentack_gather_responses(
+            self.load_flavors(),
+            self.load_images(image_names),
+            self.nova.limits.show(),
+            self.load_networks(),
+            self.load_ip_availabilities(),
+        )
 
         object_duration = datetime.now() - object_start
         logger.info(
@@ -517,6 +527,11 @@ class OpenStackProvider(Provider):
             needs = self.get_host_requirements(req)
             vcpus += needs["vcpus"]
             ram += needs["ram"]
+
+        # poll the actual openstack load
+        logger.debug(f"{self.dsp_name}: Loading nova limits")
+        limits_await = await self._opentack_gather_responses(self.nova.limits.show())
+        self.limits = limits_await[0]  # gather returns list
 
         limits = self.limits["limits"]["absolute"]
         used_vcpus = limits["totalCoresUsed"]
