@@ -2,6 +2,20 @@
 
 <!--next-version-placeholder-->
 
+## v1.2.0 (2021-12-15)
+### Feature
+* **aws:** Support for PrivateIpAddress ([`8b7ed70`](https://github.com/neoave/mrack/commit/8b7ed705a58d533b7c5a2115b595d4e4e3e8c2e4))
+* **aws:** Subnet support ([`01c6bf5`](https://github.com/neoave/mrack/commit/01c6bf5a315ce4df73952086645911781516117d))
+* **aws:** Multiple security groups ([`1340813`](https://github.com/neoave/mrack/commit/13408133310b80a4163aef21825ebaa861d9d0dc))
+* **Openstack:** Poll openstack load when running can_provision() ([`8ef8312`](https://github.com/neoave/mrack/commit/8ef831297a99c47eb270a6ea4f5e33ed20c8caee))
+* Search also provider config for username ([`8419698`](https://github.com/neoave/mrack/commit/84196984b85f7743cab3d148827d8417cefef11f))
+* Find_value_in_config_hierarchy utility method ([`c05ab58`](https://github.com/neoave/mrack/commit/c05ab586ea61cb55b5ff211a7486be0c3ae74761))
+
+### Fix
+* SSH action - do not redirect to PIPEs ([`8992629`](https://github.com/neoave/mrack/commit/89926294b663c43edddea4a7c92503e407c92447))
+* Prepare_provisioning now shall return bool value ([`7e47c6f`](https://github.com/neoave/mrack/commit/7e47c6fd18015826575b8a844d95086502022e98))
+* **Virt:** Handle traceback when image is not accessible ([`a0de847`](https://github.com/neoave/mrack/commit/a0de8475659153fd3fb39133a34f56729d0e561c))
+
 ## v1.1.1 (2021-11-25)
 ### Fix
 * Add domain name for fqdn if host has short name ([`a870f7f`](https://github.com/neoave/mrack/commit/a870f7f0fbe5117d08ffda6f789b09ab53018ece))
