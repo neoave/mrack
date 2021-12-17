@@ -15,16 +15,17 @@
 """AWS Provider interface."""
 
 import logging
-import typing
 from copy import deepcopy
 from datetime import datetime
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
+from dateutil import parser
 
 from mrack.errors import NotAuthenticatedError, ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
+from mrack.utils import object2json
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,6 @@ class AWSProvider(Provider):
         """Object initialization."""
         self._name = PROVISIONER_KEY
         self.dsp_name = "AWS"
-        self.ami_ids: typing.List[str] = []
         self.ssh_key = None
         self.instance_tags = None
         self.max_retry = 1  # for retry strategy
@@ -58,7 +58,6 @@ class AWSProvider(Provider):
 
     async def init(
         self,
-        ami_ids,
         ssh_key,
         instance_tags,
         strategy=STRATEGY_ABORT,
@@ -82,54 +81,127 @@ class AWSProvider(Provider):
                 " and try again. E.g.: $ export AWS_CONFIG_FILE=~/aws.key"
             ) from c_err
 
-        self.ami_ids = ami_ids
+        self.amis = []
         self.ssh_key = ssh_key
         self.instance_tags = instance_tags
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name}: Login duration {login_duration}")
 
+    def raise_image_def_error(self, definition):
+        """Raise error that image definition is incorrect."""
+        json_str = object2json(definition)
+        error = f"Not a valid image definition:\n{json_str}"
+        raise ValidationError(error)
+
+    def validate_tags_image_def(self, image_def):
+        """Validate that tag definition for image is correct."""
+        if not isinstance(image_def, dict) or "tag" not in image_def:
+            self.raise_image_def_error(image_def)
+
+        tag_def = image_def.get("tag")
+        if (
+            not isinstance(tag_def, dict)
+            or "name" not in tag_def
+            or "value" not in tag_def
+            or not isinstance(tag_def.get("name"), str)
+            or not isinstance(tag_def.get("value"), str)
+        ):
+            self.raise_image_def_error(image_def)
+
+        return True
+
+    def get_image(self, req):
+        """
+        Get a loaded image.
+
+        Does also basic image defintion validation.
+
+        Return None if image is not yet loaded.
+        """
+        image_def = req.get("image")
+
+        if not image_def:
+            raise ValidationError(
+                f"{self.dsp_name}: Host {req.get('name')} doesn't have image defined."
+            )
+
+        # by tag
+        if isinstance(image_def, dict) and "tag" in image_def:
+            self.validate_tags_image_def(image_def)
+            tag_def = image_def.get("tag")
+            for ami in self.amis:
+                if not ami.tags:
+                    continue
+                for tag in ami.tags:
+                    if (
+                        tag["Key"] == tag_def["name"]
+                        and tag["Value"] == tag_def["value"]
+                    ):
+                        return ami
+        # by AMI ID
+        elif isinstance(image_def, str):
+            for ami in self.amis:
+                if ami.image_id == image_def:
+                    return ami
+        else:
+            raise ValidationError(
+                f"{self.dsp_name}: Host {req.get('name')}: invalid image "
+                f"definion. Must be 'tags' definition or AMI ID"
+            )
+        return None
+
+    def load_image(self, req):
+        """
+        Load AMI information from EC2 based on image requirement.
+
+        If more images match the search then the newest is returned.
+
+        Raises validation error if no image is found.
+        """
+        image_def = req.get("image")
+        filters = []
+
+        # by tag
+        if isinstance(image_def, dict) and "tag" in image_def:
+            tag_def = image_def.get("tag")
+            name = tag_def["name"]
+            filters.append({"Name": f"tag:{name}", "Values": [tag_def["value"]]})
+
+        # by AMI ID
+        elif isinstance(image_def, str):
+            filters.append({"Name": "image-id", "Values": [image_def]})
+
+        amis = list(self.ec2.images.filter(Filters=filters))
+
+        if not amis:
+            raise ValidationError(
+                f"{self.dsp_name}: Cannot find image for host: {req['name']}"
+            )
+
+        amis.sort(key=lambda ami: parser.parse(ami.creation_date), reverse=True)
+        self.amis.append(amis[0])
+        return amis[0]
+
+    def load_images(self, reqs):
+        """
+        Load AMI images for all reqs.
+
+        Done sequentially, already loaded images are not loaded again. Basically also
+        validates that images are available and that their definition is correct.
+        """
+        for req in reqs:
+            ami = self.get_image(req)
+            if not ami:
+                self.load_image(req)
+
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
+        self.load_images(reqs)
         return bool(reqs)
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
-        for req in reqs:
-            req_img = req.get("image")
-            if not req.get("meta_image") and req_img not in self.ami_ids:
-                raise ValidationError(
-                    f"{self.dsp_name}: Provider does not support "
-                    f"'{req_img}' image in provisioning config"
-                )
-
-            try:
-                aws_image = self.ec2.Image(req_img)
-                if not aws_image:  # user is not authorized to use ami - None returned
-                    raise ValidationError(
-                        f"{self.dsp_name}: User does not have enough permissions "
-                        f"to use image: {req_img}"
-                    )
-
-                try:  # FIXME when https://github.com/boto/boto3/issues/2531 fixed
-                    aws_img_name = aws_image.name
-                except AttributeError:
-                    aws_img_name = req_img
-
-                logger.info(
-                    f"{self.dsp_name}: Requested provisioning of {aws_img_name} image"
-                )
-            except ClientError as image_err:
-                err_msg = (
-                    f"{self.dsp_name}: Requested image "
-                    f"'{req_img}' can not be provisioned"
-                )
-                logger.error(err_msg)
-                err_resp = image_err.response["Error"]["Message"]
-                raise ValidationError(
-                    f"{err_msg} Request failed with: {err_resp}"
-                ) from image_err
-
         return
 
     async def can_provision(self, hosts):
@@ -155,7 +227,7 @@ class AWSProvider(Provider):
 
         try:
             aws_res = self.ec2.create_instances(
-                ImageId=specs.get("image"),
+                ImageId=self.get_image(specs).image_id,
                 MinCount=1,
                 MaxCount=1,
                 InstanceType=specs.get("flavor"),

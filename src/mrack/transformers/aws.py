@@ -38,7 +38,6 @@ class AWSTransformer(Transformer):
         """Initialize associate provider and transformer display name."""
         self.dsp_name = "AWS"
         await self._provider.init(
-            ami_ids=self.config["images"].values(),
             ssh_key=self.config["keypair"],
             instance_tags=self.config["instance_tags"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
@@ -66,7 +65,6 @@ class AWSTransformer(Transformer):
             "group": host["group"],
             "flavor": self._get_flavor(host),
             "image": self._get_image(host),
-            "meta_image": "image" in host,
             "security_group_ids": self._get_security_groups(),
         }
         if self.config.get("subnet_id"):
