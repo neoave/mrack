@@ -225,16 +225,24 @@ class AWSProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
+        request = {
+            "ImageId": self.get_image(specs).image_id,
+            "MinCount": 1,
+            "MaxCount": 1,
+            "InstanceType": specs.get("flavor"),
+            "KeyName": self.ssh_key,
+            "SecurityGroupIds": specs.get("security_group_ids", []),
+        }
+        if specs.get("subnet_id"):
+            request["SubnetId"] = specs.get("subnet_id")
+
+        if specs.get("spot"):
+            request["InstanceMarketOptions"] = {
+                "MarketType": "spot",
+            }
+
         try:
-            aws_res = self.ec2.create_instances(
-                ImageId=self.get_image(specs).image_id,
-                MinCount=1,
-                MaxCount=1,
-                InstanceType=specs.get("flavor"),
-                KeyName=self.ssh_key,
-                SecurityGroupIds=specs.get("security_group_ids", []),
-                SubnetId=specs.get("subnet_id"),
-            )
+            aws_res = self.ec2.create_instances(**request)
         except ClientError as creation_error:
             err_msg = (
                 f"{self.dsp_name}: Requested image "
@@ -312,7 +320,10 @@ class AWSProvider(Provider):
             return False
 
         logger.info(f"{self.dsp_name}: Terminating host {host_id}")
-        ids = [host_id]
-        self.ec2.instances.filter(InstanceIds=ids).stop()
-        self.ec2.instances.filter(InstanceIds=ids).terminate()
+        try:
+            self.ec2.instances.filter(InstanceIds=[host_id]).terminate()
+        except ClientError as error:
+            logger.error(f"{self.dsp_name}: Issue while terminating host {host_id}:")
+            logger.error(error.response["Error"]["Message"])
+            return False
         return True

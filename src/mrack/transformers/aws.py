@@ -66,6 +66,7 @@ class AWSTransformer(Transformer):
             "flavor": self._get_flavor(host),
             "image": self._get_image(host),
             "security_group_ids": self._get_security_groups(),
+            "spot": self._find_value(host, "spot", None, None),
         }
         if self.config.get("subnet_id"):
             req["subnet_id"] = self.config.get("subnet_id")
