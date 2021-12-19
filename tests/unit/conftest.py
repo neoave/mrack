@@ -79,6 +79,7 @@ def aws_config():
         "security_group": "sg-something",
         "credentials_file": "aws.key",
         "profile": "default",
+        "spot": True,
         "instance_tags": {
             "Name": "mrack-runner",
             "mrack": "True",

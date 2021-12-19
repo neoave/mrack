@@ -52,3 +52,47 @@ def test_find_value_in_config_hierarchy(
         metahost_win["os"],
     )
     assert value == "Administrator"
+
+
+def test_find_simple_value_in_hierarchy(
+    provisioning_config, host1_aws, metahost1, host_win_aws, metahost_win
+):
+    """
+    Test spot configuration for aws.
+
+    But also tests finding value when dict_name and key are not defined.
+    """
+    value = find_value_in_config_hierarchy(
+        provisioning_config,
+        "aws",
+        host1_aws,
+        metahost1,
+        "spot",
+        None,
+        None,
+    )
+    assert value is True
+
+    provisioning_config["aws"]["spot"] = False
+    value = find_value_in_config_hierarchy(
+        provisioning_config,
+        "aws",
+        host1_aws,
+        metahost1,
+        "spot",
+        None,
+        None,
+    )
+    assert value is False
+
+    metahost1["spot"] = True
+    value = find_value_in_config_hierarchy(
+        provisioning_config,
+        "aws",
+        host1_aws,
+        metahost1,
+        "spot",
+        None,
+        None,
+    )
+    assert value is True

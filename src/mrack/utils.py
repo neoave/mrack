@@ -63,11 +63,12 @@ def get_value_or_dict_value(config_dict, attr, dict_name, key):
         return None
 
     value = None
-    value_dict = config_dict.get(dict_name)
-    if value_dict:
-        value = get_config_value(value_dict, key)
-        if value:
-            return value
+    if dict_name and key:
+        value_dict = config_dict.get(dict_name)
+        if value_dict:
+            value = get_config_value(value_dict, key)
+            if value:
+                return value
 
     value = config_dict.get(attr)
     return value
