@@ -27,6 +27,7 @@ from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, STATUS_PENDING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
 from mrack.providers.utils.testcloud import Testcloud
+from mrack.utils import is_windows_host
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,10 @@ class VirtProvider(Provider):
         if info["state"] != "running":
             info["error"] = err
 
+        if is_windows_host(req):
+            # testcloud can inject default password for the linux instances only so far
+            del info["password"]
+
         return (info, req)
 
     async def wait_till_provisioned(self, resource):
@@ -176,7 +181,7 @@ class VirtProvider(Provider):
         result["addresses"] = [prov_result.get("ip")]
         result["status"] = prov_result["state"]
         result["fault"] = prov_result.get("error")
-        result["password"] = prov_result["password"]
+        result["password"] = prov_result.get("password")
         result["os"] = prov_result.get("mrack_req").get("os")
         result["group"] = prov_result.get("mrack_req").get("group")
 
