@@ -18,7 +18,7 @@ import logging
 import os
 from copy import deepcopy
 
-from mrack.outputs.utils import resolve_hostname
+from mrack.outputs.utils import get_external_id
 from mrack.utils import get_password, get_username, is_windows_host, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-multihost.yaml"
@@ -87,15 +87,15 @@ class PytestMultihostOutput:
                 if password:
                     host["password"] = password
 
-                ip_addr = provisioned_host.ip_addr
-                dns_record = resolve_hostname(ip_addr)
-                host["ip"] = ip_addr
+                host["ip"] = provisioned_host.ip_addr
 
                 # Using IP as backup for external host name as pytest-multihost is using
                 # external_hostname as the host to use in ssh command.
                 # If it is not available it uses hostname, but we assume here that
                 # hostname is internal and thus not resolvable. IP should be resolvable.
-                host["external_hostname"] = dns_record or ip_addr
+                host["external_hostname"] = get_external_id(
+                    provisioned_host, host, self._config
+                )
 
                 if is_windows_host(host):
                     # Set username for Windows, as default for multihost is often 'root'

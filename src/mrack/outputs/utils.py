@@ -17,6 +17,8 @@
 import socket
 from socket import error as socket_error
 
+from mrack.utils import find_value_in_config_hierarchy
+
 
 def resolve_hostname(ip_addr):
     """Resolve IP address to hostname."""
@@ -24,3 +26,22 @@ def resolve_hostname(ip_addr):
         return socket.gethostbyaddr(ip_addr)[0]
     except socket_error:
         return None
+
+
+def get_external_id(host, meta_host, config):
+    """
+    Get host's external ID.
+
+    That can be its resolvable DNS name (from IP) or the IP - based on provider or
+    host configuration (key: resolve_host, default True).
+
+    IP is used as fallback if the desired is not available.
+    """
+    resolve_ip = find_value_in_config_hierarchy(
+        config, host.provider.name, host, meta_host, "resolve_host", None, None, True
+    )
+
+    external_id = host.ip_addr
+    if resolve_ip:
+        external_id = resolve_hostname(host.ip_addr) or host.ip_addr
+    return external_id
