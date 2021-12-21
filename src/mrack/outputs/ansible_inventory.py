@@ -19,7 +19,7 @@ import typing
 from copy import deepcopy
 
 from mrack.errors import ConfigError
-from mrack.outputs.utils import resolve_hostname
+from mrack.outputs.utils import get_external_id
 from mrack.utils import (
     get_host_from_metadata,
     get_password,
@@ -124,7 +124,7 @@ class AnsibleInventoryOutput:
         db_host = self._db.hosts[name]
 
         ip_addr = db_host.ip_addr
-        ansible_host = resolve_hostname(ip_addr) or ip_addr
+        ansible_host = get_external_id(db_host, meta_host, self._config)
 
         python = (
             self._config["python"].get(meta_host["os"])
