@@ -225,6 +225,7 @@ class AWSProvider(Provider):
         logger.info(f"{self.dsp_name}: Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
+        del_vol = specs.get("delete_volume_on_termination", True)
         request = {
             "ImageId": self.get_image(specs).image_id,
             "MinCount": 1,
@@ -232,6 +233,14 @@ class AWSProvider(Provider):
             "InstanceType": specs.get("flavor"),
             "KeyName": self.ssh_key,
             "SecurityGroupIds": specs.get("security_group_ids", []),
+            "BlockDeviceMappings": [
+                {
+                    "DeviceName": "/dev/sda1",
+                    "Ebs": {
+                        "DeleteOnTermination": del_vol,
+                    },
+                },
+            ],
         }
         if specs.get("subnet_id"):
             request["SubnetId"] = specs.get("subnet_id")
