@@ -68,6 +68,7 @@ aws:  # aws provider config
         Name: "mrack-runner"
         mrack: "True"
         persistent: "False"
+    delete_volume_on_termination: True # instance volume is deleted on termination, default: True
 
 
 beaker:  # beaker provider specific values

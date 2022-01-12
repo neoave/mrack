@@ -59,6 +59,9 @@ class AWSTransformer(Transformer):
 
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
+        del_vol = self._find_value(
+            host, "delete_volume_on_termination", None, None, True
+        )
         req = {
             "name": host["name"],
             "os": host["os"],
@@ -67,6 +70,7 @@ class AWSTransformer(Transformer):
             "image": self._get_image(host),
             "security_group_ids": self._get_security_groups(),
             "spot": self._find_value(host, "spot", None, None),
+            "delete_volume_on_termination": del_vol,
         }
         if self.config.get("subnet_id"):
             req["subnet_id"] = self.config.get("subnet_id")
