@@ -52,7 +52,10 @@ aws:  # aws provider config
     images:
         # list of ami images key is used in metadata ami image is used for provider e.g.
         fedora-32: ami-0f1d60751946b66c5  # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
-
+        rhel-8.5:  # find AMI by tag name and value
+            tag:
+                name: my-tag
+                value: my-special-image
 
     flavors:
         # list of available flavours to ask from provider  for vm specs
@@ -60,6 +63,12 @@ aws:  # aws provider config
 
     keypair: mrack  # this name points to uploaded and available in aws ec2 key configuration
     security_group: sg-0ad1bab3a850e70fc  # setup the system firewall using one of existing sec groups
+    security_groups:  # possibility to define more security groups for instance creation
+        - sg-0ad1bab3a850e70fa
+        - sg-0ad1bab3a850e70fb
+    # Note: security_group and security_groups can be combined but at least 1 is required
+
+    subnet_id: subnet-0ad1bab3a850e70fb  # subnet to use if default is not good
 
     credentials_file: aws.key  # file containing the credentials
     profile: default  # credentials profile to use
@@ -69,6 +78,11 @@ aws:  # aws provider config
         mrack: "True"
         persistent: "False"
     delete_volume_on_termination: True # instance volume is deleted on termination, default: True
+    spot: True  # request spot EC2 instances, default: False
+    resolve_host: False  # resolve hostname from IP on output generation, default: True
+
+    users:
+        rhel-8.5: ec2-user  # per-provider default user name override
 
 
 beaker:  # beaker provider specific values
