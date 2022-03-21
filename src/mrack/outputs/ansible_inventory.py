@@ -167,6 +167,10 @@ class AnsibleInventoryOutput:
         if db_host.provider.name in ("docker", "podman"):
             host_info.update({"ansible_user": "root"})  # TODO make it configurable
 
+        if db_host.meta_extra:
+            for key, value in db_host.meta_extra.items():
+                host_info.update({key: value})
+
         if is_windows_host(meta_host):
             if "netbios" in meta_host:
                 host_info.update({"meta_netbios": meta_host["netbios"]})

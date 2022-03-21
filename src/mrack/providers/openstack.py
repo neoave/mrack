@@ -582,6 +582,13 @@ class OpenStackProvider(Provider):
             del specs["flavor"]
 
         image = self._translate_image(req)
+        if image.get("meta_compose_id") and image.get("meta_compose_url"):
+            logger.info(
+                f"{self.dsp_name}: Image meta_compose_id: {image['meta_compose_id']}"
+                f"\n{self.dsp_name}: Image meta_compose_url:"
+                f" {image['meta_compose_url']}"
+            )
+
         specs["imageRef"] = image["id"]
         if specs.get("image"):
             del specs["image"]
@@ -738,6 +745,13 @@ class OpenStackProvider(Provider):
     def prov_result_to_host_data(self, prov_result, req):
         """Get needed host information from openstack provisioning result."""
         result = {}
+        meta_extra = {}
+        image = self._translate_image(req)
+        # Check if these fields exists, not all images have them
+        if image.get("meta_compose_id"):
+            meta_extra["meta_compose_id"] = image.get("meta_compose_id")
+        if image.get("meta_compose_url"):
+            meta_extra["meta_compose_url"] = image.get("meta_compose_url")
 
         result["id"] = prov_result.get("id")
         result["name"] = req.get("name")
@@ -747,5 +761,6 @@ class OpenStackProvider(Provider):
         result["status"] = prov_result.get("status")
         result["os"] = prov_result.get("mrack_req").get("os")
         result["group"] = prov_result.get("mrack_req").get("group")
+        result["meta_extra"] = meta_extra
 
         return result

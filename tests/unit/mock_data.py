@@ -88,6 +88,7 @@ def create_db_host(
     username=None,
     password=None,
     provider="openstack",
+    meta_extra=None,
 ):
     """Create Host object based on minimal info."""
 
@@ -100,31 +101,32 @@ def create_db_host(
         [get_ip(index)],
         status,
         {},
+        meta_extra=meta_extra,
         username=username,
         password=password,
         error_obj=None,
     )
 
 
-def create_db(hostnames, provider="openstack"):
+def create_db(hostnames, provider="openstack", meta_extra=None):
     """Create artificial DB based on hostnames."""
     db = FileDBDriver("mock_path")
     db.save_on_change = False  # to prevent attempt to save when adding hosts
 
     for index, hostname in enumerate(hostnames):
-        host = create_db_host(hostname, index, provider=provider)
+        host = create_db_host(hostname, index, provider=provider, meta_extra=meta_extra)
         db.add_hosts([host])
     return db
 
 
-def get_db_from_metadata(metadata, provider="openstack"):
+def get_db_from_metadata(metadata, provider="openstack", host_extra=None):
     """Create DB from metadata for testing."""
     hostnames = []
     for domain in metadata.get("domains", []):
         for host in domain.get("hosts", []):
             hostnames.append(host["name"])
 
-    db = create_db(hostnames)
+    db = create_db(hostnames, meta_extra=host_extra)
     return db
 
 

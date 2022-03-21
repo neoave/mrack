@@ -51,6 +51,7 @@ def host_from_json(host_data):
         host_data["username"],
         host_data["password"],
         host_data["error"],
+        host_data.get("meta_extra"),
     )
     return host
 
@@ -74,6 +75,7 @@ class Host:
         username=None,
         password=None,
         error_obj=None,
+        meta_extra=None,
     ):
         """Initialize host object."""
         self._provider = provider
@@ -87,6 +89,7 @@ class Host:
         self._password = password
         self._rawdata = rawdata
         self._error = error_obj
+        self._meta_extra = meta_extra
 
     def __str__(self):
         """Return string representation of host."""
@@ -120,6 +123,7 @@ class Host:
             "password": self._password,
             "rawdata": self._rawdata,
             "error": self._error,
+            "meta_extra": self._meta_extra,
         }
 
     @property
@@ -181,6 +185,11 @@ class Host:
     def password(self):
         """Get password for connecting to host."""
         return self._password
+
+    @property
+    def meta_extra(self):
+        """Get host extra meta information."""
+        return self._meta_extra
 
     async def delete(self):
         """Issue host deletion via associated provider."""
