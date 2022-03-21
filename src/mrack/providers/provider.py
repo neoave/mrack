@@ -490,5 +490,6 @@ class Provider:
             username=username,
             password=host_info.get("password"),
             error_obj=host_info.get("fault"),
+            meta_extra=host_info.get("meta_extra"),
         )
         return host

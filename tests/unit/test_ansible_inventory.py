@@ -67,6 +67,17 @@ def db(metadata):
     return get_db_from_metadata(metadata)
 
 
+@pytest.fixture()
+def db_meta_extra(metadata):
+    return get_db_from_metadata(
+        metadata,
+        host_extra={  # Sample data
+            "meta_compose_id": "ID.0-20220317.0",
+            "meta_compose_url": "http://dummy.com/compose/compose_id",
+        },
+    )
+
+
 def empty_layout():
     return {
         "all": {},
@@ -118,3 +129,38 @@ class TestAnsibleInventory:
         with pytest.raises(ConfigError) as excinfo:
             ans_inv.create_inventory()
         assert "dictionary" in str(excinfo.value)
+
+    def test_meta_extra(self, db_meta_extra, metadata):
+
+        config = provisioning_config()
+        ans_inv = AnsibleInventoryOutput(config, db_meta_extra, metadata)
+        inventory = ans_inv.create_inventory()
+        first_hostname = metadata["domains"][0]["hosts"][0]["name"]
+
+        first_host = inventory["all"]["hosts"][first_hostname]
+
+        assert (
+            "meta_compose_url" in first_host
+        ), "Host must have 'meta_compose_url' field"
+        assert "meta_compose_id" in first_host, "Host must have 'meta_compose_id' field"
+
+    def test_not_meta_extra(self, db, metadata):
+        """
+        Because some images (such as Windows images) don't have extra meta data fields
+        like meta_compose_id and meta_compose_url, inventory shouldn't output them
+        if not passed.
+        """
+
+        config = provisioning_config()
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+        first_hostname = metadata["domains"][0]["hosts"][0]["name"]
+
+        first_host = inventory["all"]["hosts"][first_hostname]
+
+        assert (
+            "meta_compose_url" not in first_host
+        ), "Host must NOT have 'meta_compose_url' field"
+        assert (
+            "meta_compose_id" not in first_host
+        ), "Host must NOT have 'meta_compose_id' field"
