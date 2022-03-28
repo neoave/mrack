@@ -45,26 +45,35 @@ class BeakerTransformer(Transformer):
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
 
-    def _get_bkr_variant(self, host):
-        """Get variant for the host system to reqirement."""
+    def _get_distro_and_variant(self, host):
+        """Get distribution and its variant for the host system to requirement."""
+        required_distro = self._find_value(host, "distro", "distros", host["os"])
+        distro_variants = self.config.get("distro_variants")
+
         if "beaker_variant" in host:
             variant = host["beaker_variant"]
+        elif distro_variants:
+            variant = distro_variants.get(
+                required_distro, distro_variants.get("default")
+            )
+        # keep this elif for backward compatibility wit mrack <= 1.2.0
         elif re.match(r"(rhel-[8|9])", host["os"]):
             variant = "BaseOS"
         else:  # Default to Server for RHEL7 and Fedora systems
             variant = "Server"
-        return variant
+
+        return (required_distro, variant)
 
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
-        required_distro = self._find_value(host, "distro", "distros", host["os"])
+        distro, variant = self._get_distro_and_variant(host)
         return {
             "name": host["name"],
-            "distro": required_distro,
+            "distro": distro,
             "os": host["os"],
             "group": host["group"],
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
-            "variant": self._get_bkr_variant(host),
+            "variant": variant,
             f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
         }

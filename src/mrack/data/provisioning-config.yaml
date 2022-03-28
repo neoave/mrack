@@ -95,6 +95,17 @@ beaker:  # beaker provider specific values
     distros:
         # list of beaker distros key is used in metadata distro is used in generated jobxml
         fedora-32: Fedora-32%
+        c9s: CentOS-Stream-9%
+
+    # example of distribution variants configuration for beaker xml job
+    distro_variants:
+        default: Server
+        CentOS-Stream-9%: BaseOS
+
+    # example of beaker requirement tags for specific distributuions
+    distro_tags:
+        CentOS-Stream-9%:
+            - RC-0.1
 
     # path to public ssh key which is later uploaded to the machine for access
     pubkey: id_rsa.pub
