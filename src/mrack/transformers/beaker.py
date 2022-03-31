@@ -47,7 +47,9 @@ class BeakerTransformer(Transformer):
 
     def _get_distro_and_variant(self, host):
         """Get distribution and its variant for the host system to requirement."""
-        required_distro = self._find_value(host, "distro", "distros", host["os"])
+        required_distro = self._find_value(
+            host, "distro", "distros", host["os"], default=host["os"]
+        )
         distro_variants = self.config.get("distro_variants")
 
         if "beaker_variant" in host:
