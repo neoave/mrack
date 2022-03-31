@@ -162,6 +162,7 @@ def provisioning_config(inventory_layout=None):
             "distros": {
                 "c9s": "CentOS-Stream-9%",
                 "fedora-36": "Fedora-36%",
+                "rhel-8.6": "RHEL-8.6%",
                 "fedora-latest": "Fedora-36%",
             },
             "distro_tags": {
@@ -183,6 +184,7 @@ def provisioning_config(inventory_layout=None):
             "fedora-30": "fedora",
             "fedora-31": "fedora",
             "rhel-8.2": "cloud-user",
+            "rhel-8.6": "cloud-user",
             "win-2019": "Administrator",
             "default": "cloud-user",
         },
@@ -190,6 +192,7 @@ def provisioning_config(inventory_layout=None):
             "fedora-30": "/usr/bin/python3",
             "fedora-31": "/usr/bin/python3",
             "rhel-8.2": "/usr/libexec/platform-python",
+            "rhel-8.6": "/usr/libexec/platform-python",
             "default": "/usr/bin/python3",
         },
     }

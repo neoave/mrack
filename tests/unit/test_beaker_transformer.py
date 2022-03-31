@@ -29,6 +29,14 @@ class TestBeakerTransformer:
         "restraint_id": 2,
     }
 
+    rhel86 = {
+        "name": f"rhel86.{domain_name}",
+        "role": "server",
+        "group": "ipaserver",
+        "os": "rhel-8.6",
+        "restraint_id": 3,
+    }
+
     windows = {
         "name": f"ad1.{ad_domain_name}",
         "role": "ad",
@@ -46,6 +54,7 @@ class TestBeakerTransformer:
                 "hosts": [
                     fedora,
                     centos,
+                    rhel86,
                 ],
             },
             {
@@ -59,12 +68,16 @@ class TestBeakerTransformer:
     }
 
     @pytest.mark.asyncio
-    async def create_transformer(self):
+    async def create_transformer(self, legacy=False):
         """Initialize the Beaker transformer"""
         providers.register(BEAKER, BeakerProvider)
         res = MockedBeakerTransformer()
+        config = provisioning_config()
+        if legacy:
+            del config["beaker"]["distro_variants"]
+
         await res.init(
-            provisioning_config(),
+            config,
             self.hosts_metadata,
         )
         return res
@@ -78,11 +91,32 @@ class TestBeakerTransformer:
             # default variant should be there,
             # windows distro does not exist so host['os'] should be copied
             (windows, "win-2022", "BaseOS"),
+            (rhel86, "RHEL-8.6%", "BaseOS"),
         ],
     )
     async def test_beaker_requirement(self, meta_host, exp_distro, exp_variant):
         """Test expected Beaker VM variant and distro"""
         bkr_transformer = await self.create_transformer()
+        req = bkr_transformer.create_host_requirement(meta_host)
+        assert req.get("distro") == exp_distro
+        assert req.get("variant") == exp_variant
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "meta_host,exp_distro,exp_variant",
+        [
+            (fedora, "Fedora-36%", "Server"),
+            (centos, "CentOS-Stream-9%", "Server"),
+            # default variant should be there,
+            # windows distro does not exist so host['os'] should be copied
+            (windows, "win-2022", "Server"),
+            (rhel86, "RHEL-8.6%", "BaseOS"),
+        ],
+    )
+    # legacy test defaults to Server variant
+    async def test_beaker_requirement_legacy(self, meta_host, exp_distro, exp_variant):
+        """Test expected Beaker VM variant and distro"""
+        bkr_transformer = await self.create_transformer(legacy=True)
         req = bkr_transformer.create_host_requirement(meta_host)
         assert req.get("distro") == exp_distro
         assert req.get("variant") == exp_variant
