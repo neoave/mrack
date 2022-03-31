@@ -3,6 +3,15 @@ import uuid
 from mrack.config import ProvisioningConfig
 from mrack.dbdrivers.file import FileDBDriver
 from mrack.host import STATUS_ACTIVE, Host
+from mrack.transformers.beaker import BeakerTransformer
+
+
+class MockedBeakerTransformer(BeakerTransformer):
+    """Mock Beaker transformer."""
+
+    async def init_provider(self):
+        """Override the init_provider to do nothing."""
+        pass
 
 
 class MockProvider:
@@ -147,6 +156,29 @@ def provisioning_config(inventory_layout=None):
     """Get basic provisioning config for testing."""
     cfg = {
         "ssh_key_filename": "config/id_rsa",
+        "beaker": {
+            "strategy": "retry",
+            "max_retry": 2,
+            "distros": {
+                "c9s": "CentOS-Stream-9%",
+                "fedora-36": "Fedora-36%",
+                "fedora-latest": "Fedora-36%",
+            },
+            "distro_tags": {
+                "CentOS-Stream-9%": [
+                    "RC-01",
+                ]
+            },
+            "distro_variants": {
+                "default": "BaseOS",
+                "CentOS-Stream-9%": "BaseOS",
+                "Fedora-36%": "Server",
+            },
+            "pubkey": "config/id_rsa.pub",
+            "reserve_duration": 86400,
+            "max_attempts": 240,
+            "timeout": 120,
+        },
         "users": {
             "fedora-30": "fedora",
             "fedora-31": "fedora",
