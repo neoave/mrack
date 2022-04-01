@@ -2,6 +2,22 @@
 
 <!--next-version-placeholder-->
 
+## v1.3.0 (2022-04-01)
+### Feature
+* **Beaker:** Support distro variant configuration ([`e568507`](https://github.com/neoave/mrack/commit/e568507ec233fe232109717c68abb4a86b14948d))
+* **Openstack:** Printout compose_id when using -latest image pointer ([`bb91893`](https://github.com/neoave/mrack/commit/bb918931d76b2cb031094398eb5e6970f2ef42ad))
+* **aws:** Delete volumes on termination ([`d90375e`](https://github.com/neoave/mrack/commit/d90375ebf571efb4f3b3d6cbf34dc741910fa95a))
+* Possibility to disable host DNS resolution in outputs ([`3fbd133`](https://github.com/neoave/mrack/commit/3fbd133e14f7397ccf261edaf05470664681fc0a))
+* **aws:** Request spot instances ([`25576cb`](https://github.com/neoave/mrack/commit/25576cbb9be0e8e258e8e5fc7209acd17a7e641d))
+* **aws:** Defining AMIs by tags ([`a04497c`](https://github.com/neoave/mrack/commit/a04497c6003445241d96b19218a775a106db7da5))
+
+### Fix
+* Use host['os'] as default value when distro is not found ([`253a380`](https://github.com/neoave/mrack/commit/253a3809887b1024b0ee09c1bc47a40869f35e8c))
+* **Virt:** Remove password when provisioning windows ([`e3a976a`](https://github.com/neoave/mrack/commit/e3a976a75a6e13659277936c690a5abec1ae6faa))
+
+### Documentation
+* **aws:** Add missing examples to provisioning config ([`e00e149`](https://github.com/neoave/mrack/commit/e00e1499364fef1b60a81417d485250817108991))
+
 ## v1.2.0 (2021-12-15)
 ### Feature
 * **aws:** Support for PrivateIpAddress ([`8b7ed70`](https://github.com/neoave/mrack/commit/8b7ed705a58d533b7c5a2115b595d4e4e3e8c2e4))
