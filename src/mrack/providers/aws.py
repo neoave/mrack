@@ -65,7 +65,8 @@ class AWSProvider(Provider):
     ):
         """Initialize provider with data from AWS."""
         # AWS_CONFIG_FILE=`readlink -f ./aws.key`
-        logger.info(f"{self.dsp_name}: Initializing provider")
+        log_msg_start = self.dsp_name
+        logger.info(f"{log_msg_start} Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
         self.max_retry = max_retry
@@ -74,10 +75,10 @@ class AWSProvider(Provider):
             self.client = boto3.client("ec2")
         except (NoRegionError, NoCredentialsError) as c_err:
             logger.debug(
-                f"{self.dsp_name}: Failed loading credentials file with: {str(c_err)}"
+                f"{log_msg_start} Failed loading credentials file with: {str(c_err)}"
             )
             raise NotAuthenticatedError(
-                f"{self.dsp_name}: failed loading credentials. Load AWS credentials"
+                f"{log_msg_start} failed loading credentials. Load AWS credentials"
                 " and try again. E.g.: $ export AWS_CONFIG_FILE=~/aws.key"
             ) from c_err
 
@@ -86,7 +87,7 @@ class AWSProvider(Provider):
         self.instance_tags = instance_tags
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Login duration {login_duration}")
+        logger.info(f"{log_msg_start} Login duration {login_duration}")
 
     def raise_image_def_error(self, definition):
         """Raise error that image definition is incorrect."""
@@ -119,12 +120,11 @@ class AWSProvider(Provider):
 
         Return None if image is not yet loaded.
         """
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
         image_def = req.get("image")
 
         if not image_def:
-            raise ValidationError(
-                f"{self.dsp_name}: Host {req.get('name')} doesn't have image defined."
-            )
+            raise ValidationError(f"{log_msg_start} Host doesn't have image defined.")
 
         # by tag
         if isinstance(image_def, dict) and "tag" in image_def:
@@ -146,7 +146,7 @@ class AWSProvider(Provider):
                     return ami
         else:
             raise ValidationError(
-                f"{self.dsp_name}: Host {req.get('name')}: invalid image "
+                f"{log_msg_start} Invalid image "
                 f"definion. Must be 'tags' definition or AMI ID"
             )
         return None
@@ -159,6 +159,7 @@ class AWSProvider(Provider):
 
         Raises validation error if no image is found.
         """
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
         image_def = req.get("image")
         filters = []
 
@@ -175,9 +176,7 @@ class AWSProvider(Provider):
         amis = list(self.ec2.images.filter(Filters=filters))
 
         if not amis:
-            raise ValidationError(
-                f"{self.dsp_name}: Cannot find image for host: {req['name']}"
-            )
+            raise ValidationError(f"{log_msg_start} Cannot find image for host")
 
         amis.sort(key=lambda ami: parser.parse(ami.creation_date), reverse=True)
         self.amis.append(amis[0])
@@ -222,7 +221,8 @@ class AWSProvider(Provider):
             and a dict (<requirements for the VM>)
             :rtype: (str, dict)
         """
-        logger.info(f"{self.dsp_name}: Creating server")
+        log_msg_start = f"{self.dsp_name} [{req['name']}]"
+        logger.info(f"{log_msg_start} Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         del_vol = specs.get("delete_volume_on_termination", True)
@@ -254,7 +254,7 @@ class AWSProvider(Provider):
             aws_res = self.ec2.create_instances(**request)
         except ClientError as creation_error:
             err_msg = (
-                f"{self.dsp_name}: Requested image "
+                f"{log_msg_start} Requested image "
                 f"'{specs.get('image')}' can not be provisioned"
             )
             logger.error(err_msg)
@@ -320,19 +320,20 @@ class AWSProvider(Provider):
 
         return result, req
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Delete provisioned hosts based on input from provision_hosts."""
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
         if not host_id:
             logger.debug(
-                f"{self.dsp_name}: Skipping termination, because host was not created"
+                f"{log_msg_start} Skipping termination, because host was not created"
             )
             return False
 
-        logger.info(f"{self.dsp_name}: Terminating host {host_id}")
+        logger.info(f"{log_msg_start} Terminating host with ID {host_id}")
         try:
             self.ec2.instances.filter(InstanceIds=[host_id]).terminate()
         except ClientError as error:
-            logger.error(f"{self.dsp_name}: Issue while terminating host {host_id}:")
+            logger.error(f"{log_msg_start} Issue while terminating host {host_id}:")
             logger.error(error.response["Error"]["Message"])
             return False
         return True

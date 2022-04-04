@@ -55,7 +55,7 @@ class VirtProvider(Provider):
         # split traceback string to find Error causing failure
         # index 1 should point to the Error string
         exc_str = "\n".join([f"\t{s}" for s in str(virt_err).splitlines()])
-        logger.debug(f"{self.dsp_name}: Exception occured:\n{exc_str}")
+        logger.debug(f"{self.dsp_name} Exception occured:\n{exc_str}")
         err_sep = "Error:"
         if err_sep in exc_str:
             err_str = str(virt_err).split(err_sep)[1].strip()
@@ -68,13 +68,13 @@ class VirtProvider(Provider):
 
     async def init(self, strategy=STRATEGY_ABORT, max_retry=1):
         """Initialize Virt provider with data from config."""
-        logger.info(f"{self.dsp_name}: Initializing provider")
+        logger.info(f"{self.dsp_name} Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
         self.max_retry = max_retry
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Init duration {login_duration}")
+        logger.info(f"{self.dsp_name} Init duration {login_duration}")
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
@@ -99,7 +99,7 @@ class VirtProvider(Provider):
 
         awaitables = []
         for url in pull:
-            logger.info(f"{self.dsp_name}: Pulling image '{url}'")
+            logger.info(f"{self.dsp_name} Pulling image '{url}'")
             awaitables.append(self.testcloud.pull_image(url))
 
         pull_results = await asyncio.gather(*awaitables, return_exceptions=True)
@@ -107,15 +107,15 @@ class VirtProvider(Provider):
 
         for pull in pull_results:
             if isinstance(pull, TestcloudImageError):
-                logger.error(f"{self.dsp_name}: {str(pull)}")
+                logger.error(f"{self.dsp_name} {str(pull)}")
                 success = False
             elif isinstance(pull, Exception):
                 raise pull
 
         if not success:
-            logger.error(f"{self.dsp_name}: Pulling of images failed")
+            logger.error(f"{self.dsp_name} Pulling of images failed")
         else:
-            logger.info(f"{self.dsp_name}: Images prepared")
+            logger.info(f"{self.dsp_name} Images prepared")
 
         return success
 
@@ -130,8 +130,8 @@ class VirtProvider(Provider):
 
     async def create_server(self, req):
         """Request and create resource on Virt provider."""
-        hostname = req["name"]
-        logger.info(f"{self.dsp_name}: Creating virtual machine for host: {hostname}")
+        hostname = req.get("name")
+        logger.info(f"{self.dsp_name} [{hostname}] Creating virtual machine")
 
         host_id = req["run_id"] + "-" + hostname
         try:
@@ -162,14 +162,15 @@ class VirtProvider(Provider):
         result.update({"mrack_req": req})
         return result, req
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Delete provisioned host."""
-        logger.info(f"{self.dsp_name}: Removing VM {host_id}")
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
+        logger.info(f"{log_msg_start} Removing VM {host_id}")
         try:
             _out, _err, _proc = await self.testcloud.destroy(host_id)
         except ProvisioningError as p_err:
             # just log error message when unable to delete VM
-            logger.error(f"{self.dsp_name}: {self._extract_err_msg(p_err)}")
+            logger.error(f"{log_msg_start} {self._extract_err_msg(p_err)}")
 
         return True
 

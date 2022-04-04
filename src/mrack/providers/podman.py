@@ -56,7 +56,7 @@ class PodmanProvider(Provider):
         max_retry=1,
     ):
         """Initialize Podman provider with data from config."""
-        logger.info(f"{self.dsp_name}: Initializing provider")
+        logger.info(f"{self.dsp_name} Initializing provider")
         login_start = datetime.now()
         self.strategy = strategy
         self.max_retry = max_retry
@@ -67,7 +67,7 @@ class PodmanProvider(Provider):
         self.extra_commands = extra_commands
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Init duration {login_duration}")
+        logger.info(f"{self.dsp_name} Init duration {login_duration}")
 
     async def prepare_provisioning(self, reqs):
         """Prepare podman network and pull missing images to prepare provisioning."""
@@ -88,7 +88,7 @@ class PodmanProvider(Provider):
             image_list.add(req["image"])
 
         if network_list:
-            logger.info(f"{self.dsp_name}: Preparing network(s) {network_list}")
+            logger.info(f"{self.dsp_name} Preparing network(s) {network_list}")
             awaitables = []
             for network in network_list:
                 if not await self.podman.network_exists(network):
@@ -98,22 +98,22 @@ class PodmanProvider(Provider):
             success = all(network_results)
 
             if not success:
-                logger.error(f"{self.dsp_name}: Creation of networks failed")
+                logger.error(f"{self.dsp_name} Creation of networks failed")
                 return False
 
-        logger.info(f"{self.dsp_name}: Pulling missing images {image_list}")
+        logger.info(f"{self.dsp_name} Pulling missing images {image_list}")
 
         awaitables = []
         for image in image_list:
             if not await self.podman.image_exists(image):
-                logger.debug(f"{self.dsp_name}: Pull of image '{image}' required")
+                logger.debug(f"{self.dsp_name} Pull of image '{image}' required")
                 awaitables.append(self.podman.pull(image))
 
         pull_results = await asyncio.gather(*awaitables)
         success = all(pull_results)
 
         if success:
-            logger.info(f"{self.dsp_name}: All required images present")
+            logger.info(f"{self.dsp_name} All required images present")
         else:
             raise ProvisioningError("Pulling of missing images failed", self.dsp_name)
 
@@ -130,13 +130,14 @@ class PodmanProvider(Provider):
     async def create_server(self, req):
         """Request and create resource on selected provider."""
         hostname = req["name"]
-        logger.info(f"{self.dsp_name}: Creating container for host: {hostname}")
+        log_msg_start = f"{self.dsp_name} [{hostname}]"
+        logger.info(f"{log_msg_start} Creating container for host")
 
         image = req["image"]
         network = req.get("network")  # preparation method should set this value
         if not network:
             logger.error(
-                f"{self.dsp_name}: Failed to load network requirement from: {req}"
+                f"{log_msg_start} Failed to load network requirement from: {req}"
             )
             raise ProvisioningError(
                 "Could not set up podman network for some host(s)", req
@@ -159,6 +160,7 @@ class PodmanProvider(Provider):
         """Wait till resource is provisioned."""
         # access fist item from tuple resource which should be id
         cont_id, req = resource
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
 
         start = datetime.now()
         timeout = 20
@@ -168,7 +170,7 @@ class PodmanProvider(Provider):
             try:
                 server = await self.podman.inspect(cont_id)[0]
             except ProvisioningError as err:
-                logger.error(f"{self.dsp_name}: {object2json(err)}")
+                logger.error(f"{log_msg_start} {object2json(err)}")
                 raise ServerNotFoundError(cont_id) from err
 
             if server["State"]["Running"] or server["State"]["Error"]:
@@ -180,15 +182,16 @@ class PodmanProvider(Provider):
 
         if datetime.now() >= timeout_time:
             logger.warning(
-                f"{self.dsp_name}: {cont_id} was not provisioned within a timeout of"
-                f" {timeout} mins"
+                f"{log_msg_start} Container {cont_id} was not provisioned "
+                f"within a timeout of {timeout} mins"
             )
         else:
             logger.info(
-                f"{self.dsp_name}: {cont_id} was provisioned in {prov_duration:.1f}s"
+                f"{log_msg_start} Container {cont_id} "
+                f"was provisioned in {prov_duration:.1f}s"
             )
 
-        logger.debug(f"{self.dsp_name}: Resource: {object2json(server)}")
+        logger.debug(f"{log_msg_start} Resource: {object2json(server)}")
 
         with open(os.path.expanduser(self.ssh_key), "r") as key_file:
             key_content = key_file.read()
@@ -215,23 +218,24 @@ class PodmanProvider(Provider):
 
         return server, req
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Delete provisioned host."""
         # if there is no container we do nothing
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
         if not host_id:
-            logger.debug(f"{self.dsp_name}: Container is not created yet, skipping.")
+            logger.debug(f"{log_msg_start} Container is not created yet, skipping.")
             return False
 
         # first we inspect the container to find its networks
         insp_data = await self.podman.inspect(host_id)
         networks = insp_data[0]["NetworkSettings"]["Networks"] if insp_data else []
         # then we destroy the container
-        logger.info(f"{self.dsp_name}: Removing container {host_id}")
+        logger.info(f"{log_msg_start} Removing container {host_id}")
         deleted = await self.podman.rm(host_id, force=True)
         # after that we cleanup the podman network
         for net in networks:
             if await self.podman.network_remove(net):
-                logger.info(f"{self.dsp_name}: Removed network '{net}'")
+                logger.info(f"{log_msg_start} Removed network '{net}'")
 
         return deleted
 
@@ -250,8 +254,9 @@ class PodmanProvider(Provider):
 
     def prov_result_to_host_data(self, prov_result, req):
         """Get needed host information from podman provisioning result."""
-        result = {}
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
 
+        result = {}
         result["id"] = prov_result.get("Id")
         result["name"] = prov_result["Config"]["Hostname"]
 
@@ -266,7 +271,7 @@ class PodmanProvider(Provider):
                     )
             except KeyError as kerror:
                 raise ProvisioningError(
-                    f"{self.dsp_name}: Container state improper"
+                    f"{log_msg_start} Container state improper"
                 ) from kerror
 
         status = self.get_status(prov_result.get("State"))

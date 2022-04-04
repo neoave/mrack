@@ -99,7 +99,7 @@ class OpenStackProvider(Provider):
                 result = await asyncio.gather(*functions)
                 break
             except ServerError as exc:
-                logger.debug(f"{self.dsp_name}: {exc}")
+                logger.debug(f"{self.dsp_name} {exc}")
                 error_attempts += 1
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
@@ -107,7 +107,7 @@ class OpenStackProvider(Provider):
         else:
             # now we are past to what we would like to wait fail now
             raise ProvisioningError(
-                f"{self.dsp_name}: Failed to load environment objects from server",
+                f"{self.dsp_name} Failed to load environment objects from server",
             )
 
         return result
@@ -125,7 +125,7 @@ class OpenStackProvider(Provider):
         * account limits (max and current usage of vCPUs, memory, ...)
         """
         # session expects that credentials will be set via env variables
-        logger.info(f"{self.dsp_name}: Initializing provider")
+        logger.info(f"{self.dsp_name} Initializing provider")
         self.strategy = strategy
         self.max_retry = max_retry
         try:
@@ -148,7 +148,7 @@ class OpenStackProvider(Provider):
             self.neutron.init_api(self.api_timeout),
         )
         login_end = datetime.now()
-        logger.info(f"{self.dsp_name}: Login duration {login_end - login_start}")
+        logger.info(f"{self.dsp_name} Login duration {login_end - login_start}")
 
         self.network_pools = networks
         object_start = datetime.now()
@@ -163,7 +163,7 @@ class OpenStackProvider(Provider):
 
         object_duration = datetime.now() - object_start
         logger.info(
-            f"{self.dsp_name}: Environment objects load duration: {object_duration}"
+            f"{self.dsp_name} Environment objects load duration: {object_duration}"
         )
 
     def _set_flavors(self, flavors):
@@ -230,14 +230,14 @@ class OpenStackProvider(Provider):
                 usable.append((network["name"], available))
         if not usable:
             logger.error(
-                f"{self.dsp_name}: Error: no usable network"
+                f"{self.dsp_name} Error: no usable network"
                 f" for {count} hosts with {network_type}"
             )
             return None
 
         # sort networks by number of available IPs
         usable = sorted(usable, key=lambda u: u[1])
-        logger.debug(f"{self.dsp_name}: Listing usable networks: {usable}")
+        logger.debug(f"{self.dsp_name} Listing usable networks: {usable}")
 
         # Do not always pick the best, but randomize from good ones to spread
         # load for high number of parallel jobs. E.g. if running mrack 100 times
@@ -249,12 +249,12 @@ class OpenStackProvider(Provider):
         best_pool = usable[-1]
         satisfying = [n for n in usable if n[1] / best_pool[1] > 0.5]
         logger.debug(
-            f"{self.dsp_name}: Picking randomly from network pools which satisfy "
+            f"{self.dsp_name} Picking randomly from network pools which satisfy "
             f"requirement (size_of_pool/size_of_biggest > 0.5): {satisfying}"
         )
         chosen = choice(satisfying)
         logger.debug(
-            f"{self.dsp_name}: Network picked: {chosen[0]} with {chosen[1]} addresses"
+            f"{self.dsp_name} Network picked: {chosen[0]} with {chosen[1]} addresses"
         )
         return chosen[0]
 
@@ -318,7 +318,7 @@ class OpenStackProvider(Provider):
         if not network:
             net_id = name or ref
             logger.debug(
-                f"{self.dsp_name}: Failed to load network with name: '{net_id}'"
+                f"{self.dsp_name} Failed to load network with name: '{net_id}'"
             )
 
         return network
@@ -476,9 +476,9 @@ class OpenStackProvider(Provider):
 
         if prepare_images:
             im_list = ", ".join(prepare_images)
-            logger.debug(f"{self.dsp_name}: Loading image info for: '{im_list}'")
+            logger.debug(f"{self.dsp_name} Loading image info for: '{im_list}'")
             await self.load_images(list(prepare_images))
-            logger.debug(f"{self.dsp_name}: Loading images info done.")
+            logger.debug(f"{self.dsp_name} Loading images info done.")
 
         self._set_poll_sleep_times(reqs)
         return True
@@ -489,9 +489,9 @@ class OpenStackProvider(Provider):
         self.translate_network_types(reqs)
 
         for req in reqs:
-            logger.info(f"{self.dsp_name}: Validating host: {object2json(req)}")
+            logger.info(f"{self.dsp_name} Validating host: {object2json(req)}")
             self.validate_host(req)
-            logger.info(f"{self.dsp_name}: {req['name']} - OK")
+            logger.info(f"{self.dsp_name} [{req['name']}] OK")
 
     def get_host_requirements(self, req):
         """Get vCPU and memory requirements for host requirement."""
@@ -513,7 +513,7 @@ class OpenStackProvider(Provider):
 
         return res
 
-    async def can_provision(self, reqs):  # pylint: disable=arguments-differ
+    async def can_provision(self, hosts):  # pylint: disable=arguments-differ
         """Check that all host can be provisioned.
 
         Checks:
@@ -523,13 +523,13 @@ class OpenStackProvider(Provider):
         vcpus = 0
         ram = 0
 
-        for req in reqs:
+        for req in hosts:
             needs = self.get_host_requirements(req)
             vcpus += needs["vcpus"]
             ram += needs["ram"]
 
         # poll the actual openstack load
-        logger.debug(f"{self.dsp_name}: Loading nova limits")
+        logger.debug(f"{self.dsp_name} Loading nova limits")
         limits_await = await self._opentack_gather_responses(self.nova.limits.show())
         self.limits = limits_await[0]  # gather returns list
 
@@ -543,12 +543,12 @@ class OpenStackProvider(Provider):
         req_memory = used_memory + ram
 
         logger.info(
-            f"{self.dsp_name}: Required vcpus: {vcpus}, "
+            f"{self.dsp_name} Required vcpus: {vcpus}, "
             f"used: {used_vcpus}, max: {limit_vcpus}"
         )
 
         logger.info(
-            f"{self.dsp_name}: Required ram: {ram}, "
+            f"{self.dsp_name} Required ram: {ram}, "
             f"used: {used_memory}, max: {limit_memory}"
         )
 
@@ -567,7 +567,8 @@ class OpenStackProvider(Provider):
                      list if present
         """
         name = req.get("name")
-        logger.info(f"{self.dsp_name}: Creating server {name}")
+        log_msg_start = f"{self.dsp_name} [{name}]"
+        logger.info(f"{log_msg_start} Creating server")
         specs = deepcopy(req)  # work with own copy, do not modify the input
         del specs["os"]  # do not pass this to openstack
 
@@ -584,8 +585,8 @@ class OpenStackProvider(Provider):
         image = self._translate_image(req)
         if image.get("meta_compose_id") and image.get("meta_compose_url"):
             logger.info(
-                f"{self.dsp_name}: Image meta_compose_id: {image['meta_compose_id']}"
-                f"\n{self.dsp_name}: Image meta_compose_url:"
+                f"{log_msg_start} Image meta_compose_id: {image['meta_compose_id']}"
+                f"\n{log_msg_start} Image meta_compose_url:"
                 f" {image['meta_compose_url']}"
             )
 
@@ -606,7 +607,7 @@ class OpenStackProvider(Provider):
             try:
                 response = await self.nova.servers.create(server=specs)
             except ServerError as exc:
-                logger.debug(f"{self.dsp_name}: {exc}")
+                logger.debug(f"{log_msg_start} {exc}")
                 error_attempts += 1
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
@@ -619,12 +620,12 @@ class OpenStackProvider(Provider):
                 # This is not related to reaching OpenStack quota but to OpenStack
                 # itself being fully loaded and without free resources to provide
                 logger.info(
-                    f"{self.dsp_name}: Unable to allocate resources for the required "
+                    f"{log_msg_start} Unable to allocate resources for the required "
                     f"server (all available resources busy)"
                 )
                 error_attempts += 1
                 logger.info(
-                    f"{self.dsp_name}: Retrying request in {SERVER_RES_SLEEP} minutes"
+                    f"{log_msg_start} Retrying request in {SERVER_RES_SLEEP} minutes"
                 )
                 # We should wait for OpenStack for reasonable time to try to reprovision
                 # This sleep time should be longer for higher probability for Openstack
@@ -637,7 +638,7 @@ class OpenStackProvider(Provider):
         else:
             # now we are past to what we would like to wait fail now
             raise ProvisioningError(
-                f"{self.dsp_name}: Failed to create server {req['name']}",
+                f"{log_msg_start} Failed to create server",
                 req,  # add the requirement dictionary to traceback for later
             )
 
@@ -660,12 +661,12 @@ class OpenStackProvider(Provider):
                 await asyncio.sleep(SERVER_ERROR_SLEEP)
             except NotFoundError:
                 logger.warning(
-                    f"{self.dsp_name}: Server '{uuid}' not found, probably already "
-                    "deleted"
+                    f"{self.dsp_name} Server with ID '{uuid}' not found, "
+                    "probably already deleted"
                 )
                 break
 
-    async def wait_till_provisioned(self, resource):
+    async def wait_till_provisioned(self, resource):  # pylint: disable=too-many-locals
         """
         Wait till server is provisioned.
 
@@ -682,6 +683,7 @@ class OpenStackProvider(Provider):
         Return information about provisioned server.
         """
         resource, req = resource
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
         uuid = resource.get("id")
 
         poll_sleep_initial = self.poll_sleep_initial + self.poll_init_adj
@@ -694,11 +696,13 @@ class OpenStackProvider(Provider):
         timeout_time = start + timedelta(minutes=self.timeout)
 
         # do not check the state immediately, it will take some time
-        logger.debug(f"{uuid}: sleeping for {poll_sleep_initial:.1f} seconds")
+        logger.debug(
+            f"{log_msg_start} ID {uuid}: sleeping for {poll_sleep_initial:.1f} seconds"
+        )
         await asyncio.sleep(poll_sleep_initial)
 
         resp = {}
-        logger.debug(f"Waiting for '{req['name']}': {uuid}")
+        logger.debug(f"{log_msg_start} ID {uuid}: Waiting for host creation")
         error_attempts = 0
         while datetime.now() < timeout_time:
             try:
@@ -706,7 +710,7 @@ class OpenStackProvider(Provider):
             except NotFoundError as nf_err:
                 raise ServerNotFoundError(uuid) from nf_err
             except ServerError as err:
-                logger.debug(f"{self.dsp_name}: {err}")
+                logger.debug(f"{log_msg_start} {err}")
                 error_attempts += 1
                 if error_attempts > SERVER_ERROR_RETRY:
                     raise ProvisioningError(uuid) from err
@@ -716,7 +720,9 @@ class OpenStackProvider(Provider):
                 break
 
             poll_sleep += 0.5  # increase delays to check the longer it takes
-            logger.debug(f"{uuid}: sleeping for {poll_sleep:.1f} seconds")
+            logger.debug(
+                f"{log_msg_start} ID {uuid}: sleeping for {poll_sleep:.1f} seconds"
+            )
             await asyncio.sleep(poll_sleep)
 
         done_time = datetime.now()
@@ -724,21 +730,23 @@ class OpenStackProvider(Provider):
 
         if datetime.now() >= timeout_time:
             logger.warning(
-                f"{self.dsp_name}: Host {uuid} was not provisioned "
+                f"{log_msg_start} ID {uuid}: host was not provisioned "
                 f"within a timeout of {self.timeout} mins"
             )
         else:
             logger.info(
-                f"{self.dsp_name}: Host {uuid} was provisioned in {prov_duration:.1f}s"
+                f"{log_msg_start} ID {uuid}: host "
+                f"was provisioned in {prov_duration:.1f}s"
             )
 
         server.update({"mrack_req": req})
 
         return server, req
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Issue deletion of host(server) from OpenStack."""
-        logger.info(f"{self.dsp_name}: Deleting host {host_id}")
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
+        logger.info(f"{log_msg_start} Deleting host with ID {host_id}")
         await self.delete_server(host_id)
         return True
 

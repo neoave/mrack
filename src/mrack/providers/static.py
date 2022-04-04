@@ -88,10 +88,11 @@ class StaticProvider(Provider):
 
         return result
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Fake delete - pass but don't do anything."""
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
         logger.info(
-            f"{self.dsp_name}: Host {host_id} is static"
+            f"{log_msg_start} Host with ID {host_id} is static"
             " - not managed by mrack, ignoring removal"
         )
         return bool(host_id)
