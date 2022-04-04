@@ -108,7 +108,7 @@ class BeakerProvider(Provider):
         max_retry=1,
     ):
         """Initialize provider with data from Beaker configuration."""
-        logger.info(f"{self.dsp_name}: Initializing provider")
+        logger.info(f"{self.dsp_name} Initializing provider")
         self.strategy = strategy
         self.max_retry = max_retry
         self.distros = distros
@@ -123,7 +123,7 @@ class BeakerProvider(Provider):
         self.hub = HubProxy(logger=logger, conf=self.conf)
         login_end = datetime.now()
         login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name}: Init duration {login_duration}")
+        logger.info(f"{self.dsp_name} Init duration {login_duration}")
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -145,7 +145,7 @@ class BeakerProvider(Provider):
         return True
 
     def _allow_ssh_key(self, pubkey):
-
+        """Create ssh key content to be injected to xml."""
         with open(os.path.expanduser(pubkey), "r") as key_file:
             key_content = key_file.read()
 
@@ -258,14 +258,14 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             and a dict (<requirements for VM>)
             :rtype: (str, dict)
         """
-        logger.info(f"{self.dsp_name}: Creating server")
+        logger.info(f"{self.dsp_name} [{req.get('name')}] Creating server")
 
         job = self._req_to_bkr_job(req)  # Generate the job
         try:
             job_id = self.hub.jobs.upload(job.toxml())  # schedule beaker job
         except Fault as bkr_fault:
             # use the name as id for the logging purposes
-            req["host_id"] = req["name"]
+            req["host_id"] = req.get("name")
             raise ProvisioningError(
                 parse_bkr_exc_str(bkr_fault),
                 req,
@@ -321,7 +321,8 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
     async def wait_till_provisioned(self, resource):
         """Wait for Beaker provisioning result."""
         beaker_id, req = resource
-        resource = {}
+        log_msg_start = f"{self.dsp_name} [{req.get('name')}]"
+        bkr_res = {}
         prev_status = ""
         job_url = ""
 
@@ -330,22 +331,22 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         timeout_time = datetime.now() + timedelta(minutes=self.timeout)
 
         while datetime.now() < timeout_time:
-            resource = self._get_recipe_info(beaker_id)
-            status = resource["status"]
+            bkr_res = self._get_recipe_info(beaker_id)
+            status = bkr_res["status"]
             job_url = (
                 f"{self.hub._hub_url}"  # pylint: disable=protected-access
-                f"/jobs/{resource['id']}"
+                f"/jobs/{bkr_res['id']}"
             )
 
             if prev_status != status:
                 logger.info(
-                    f"{self.dsp_name}: Job {job_url} "
+                    f"{log_msg_start} Job {job_url} "
                     f"has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
             else:
                 logger.info(
-                    f"{self.dsp_name}: Job {job_url} has not changed status "
+                    f"{log_msg_start} Job {job_url} has not changed status "
                     f"({status}), waiting another {self.poll_sleep:.1f}s"
                 )
 
@@ -355,17 +356,17 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 break
             elif self.status_map.get(status) in [STATUS_ERROR, STATUS_DELETED]:
                 logger.warning(
-                    f"{self.dsp_name}: Job {job_url} has errored with status "
-                    f"{status} and result {resource['result']}"
+                    f"{log_msg_start} Job {job_url} has errored with status "
+                    f"{status} and result {bkr_res['result']}"
                 )
-                resource.update({"result": f"Job {job_url} failed to provision"})
+                bkr_res.update({"result": f"Job {job_url} failed to provision"})
                 break
             else:
                 logger.error(
-                    f"{self.dsp_name}: Job {job_url} has switched to unexpected "
-                    f"status {status} with result {resource['result']}"
+                    f"{log_msg_start} Job {job_url} has switched to unexpected "
+                    f"status {status} with result {bkr_res['result']}"
                 )
-                resource.update({"result": f"Job {job_url} failed to provision"})
+                bkr_res.update({"result": f"Job {job_url} failed to provision"})
                 break
 
         else:
@@ -373,39 +374,40 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
             # we need to create failed host object for mrack
             # to delete the resource by cancelling the beaker job.
             logger.error(
-                f"{self.dsp_name}: Job {job_url} failed to provide resource in"
+                f"{log_msg_start} Job {job_url} failed to provide bkr_res in"
                 f" the timeout of {self.timeout} minutes"
             )
-            resource.update(
+            bkr_res.update(
                 {
                     "status": "MRACK_REACHED_TIMEOUT",
                     "result": f"Job {job_url} reached timeout",
                 }
             )
 
-        resource.update(
+        bkr_res.update(
             {
                 "JobID": beaker_id,
                 "mrack_req": req,
             }
         )
-        return resource, req
+        return bkr_res, req
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Delete provisioned hosts based on input from provision_hosts."""
         # host_id should start with 'J:' this way we know job has been scheduled
         # and proper response from beaker hub has beed returned.
         # Other way (In case of hub error or invalid host definition)
         # the provider uses hostname from metadata of the VM which has failed
         # to validate the requirements for the provider
+        log_msg_start = f"{self.dsp_name} [{host_name}]"
         if not host_id.startswith("J:"):
             logger.warning(
-                f"{self.dsp_name}: Job for host '{host_id}' does not exist yet"
+                f"{log_msg_start} Job for host '{host_id}' does not exist yet"
             )
             return True
 
         logger.info(
-            f"{self.dsp_name}: Deleting host by cancelling Job "
+            f"{log_msg_start} Deleting host by cancelling Job "
             f"{self.hub._hub_url}"  # pylint: disable=protected-access
             f"/jobs/{host_id.split(':')[1]}"
         )

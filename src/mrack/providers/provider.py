@@ -80,9 +80,10 @@ class Provider:
         Raises:
             TimeoutError: The port isn't accepting connection after specified `timeout`.
         """
+        log_msg_start = f"{self.dsp_name} [{host.name}]"
         start_time = datetime.now()
         info_msg = (
-            f"{self.dsp_name}: Waiting for the port {port} on host "
+            f"{log_msg_start} Waiting for the port {port} on host "
             f"{host.ip_addr} to start accepting connections (up to {timeout} minutes)"
         )
         logger.info(info_msg)
@@ -93,7 +94,7 @@ class Provider:
                     (host.ip_addr, port), timeout=(timeout * 60)
                 ):
                     logger.info(
-                        f"{self.dsp_name}: Port {port} on host "
+                        f"{log_msg_start} Port {port} on host "
                         f" {host.ip_addr} is now open"
                     )
                     break
@@ -102,8 +103,8 @@ class Provider:
                 logger.debug(info_msg)
                 if datetime.now() - start_time >= timedelta(seconds=(timeout * 60)):
                     logger.error(
-                        f"{self.dsp_name}: Waited too long for the port {port} "
-                        f"on host {host.ip_addr} to start accepting connections"
+                        f"{log_msg_start} Waited too long for the port "
+                        f"{port} on host {host.ip_addr} to start accepting connections"
                     )
                     # do not continue to try ssh connection after port is not open
                     return False, host
@@ -116,7 +117,7 @@ class Provider:
         )
 
         info_msg = (
-            f"{self.dsp_name}: Waiting for the host {host.ip_addr} "
+            f"{log_msg_start} Waiting for the host {host.ip_addr} "
             f"to accept the authentication method (up to {timeout} minutes)"
         )
 
@@ -132,14 +133,14 @@ class Provider:
 
             if res:
                 logger.info(
-                    f"{self.dsp_name}: SSH to host '{host.ip_addr}' successful "
+                    f"{log_msg_start} SSH to host '{host.ip_addr}' successful "
                     f"after {duration:.1f}s"
                 )
                 break
 
             if datetime.now() - start_ssh >= timedelta(seconds=(timeout * 60)):
                 logger.error(
-                    f"{self.dsp_name}: SSH to host '{host.ip_addr}' "
+                    f"{log_msg_start} SSH to host '{host.ip_addr}' "
                     f"timed out after {duration:.1f}s"
                 )
                 break
@@ -150,6 +151,7 @@ class Provider:
         return res, host
 
     async def _check_ssh_auth(self, default_check, active_hosts):
+        """Check the ssh authentication functionality."""
         success_hosts = []
         error_hosts = []
 
@@ -160,7 +162,7 @@ class Provider:
         req_keys = ("enabled", "port", "timeout")
         if not all(k in default_check for k in req_keys):
             logger.warning(
-                f"{self.dsp_name}: Missing complete default post provisioning "
+                f"{self.dsp_name} Missing complete default post provisioning "
                 "ssh check configuration in provisioning config file."
             )
             # extend not complete configuration with defaults
@@ -183,7 +185,7 @@ class Provider:
             opts = default_check | group_check | os_check  # sorted by priority
 
             logger.debug(
-                f"{self.dsp_name}: Host '{host.name}' "
+                f"{self.dsp_name} [{host.name}] "
                 f"ssh check config: {object2json(opts)}"
             )
 
@@ -195,7 +197,7 @@ class Provider:
             ):
                 success_hosts.append(host)
                 logger.debug(
-                    f"{self.dsp_name}: Skipping ssh check for host '{host.name}'"
+                    f"{self.dsp_name} Skipping ssh check for host '{host.name}'"
                 )
                 continue
 
@@ -235,16 +237,17 @@ class Provider:
             res_check_timeout (default 60) - timeout (minutes) to wait for resources
             res_busy_sleep (default 10) - time to wait before checking again (minutes)
         """
-        logger.info(f"{self.dsp_name}: Validating hosts definitions")
+        log_msg_start = f"{self.dsp_name}"  # use display name at log message begining
+        logger.info(f"{log_msg_start} Validating host(s) definitions")
         if not reqs:
             raise ProvisioningError(
-                f"{self.dsp_name}: Can not continue with empty requirement for provider"
+                f"{log_msg_start} Can not continue with empty requirement for provider"
             )
 
         await self.validate_hosts(reqs)
-        logger.info(f"{self.dsp_name}: Host definitions valid")
+        logger.info(f"{log_msg_start} Host(s) definitions valid")
 
-        logger.info(f"{self.dsp_name}: Checking available resources")
+        logger.info(f"{log_msg_start} Checking available resources")
 
         error_hosts = []
         res_check_start = datetime.now()
@@ -253,7 +256,7 @@ class Provider:
                 # create error host object so retry strategy can continue
                 # instead of throwing exception to fail at once without retry
                 err_str = "Not enough resources to provision"
-                logger.error(f"{self.dsp_name}: {err_str}")
+                logger.error(f"{log_msg_start} {err_str}")
                 for req in reqs:
                     error_hosts.append(
                         Host(
@@ -271,15 +274,15 @@ class Provider:
                 return ([], error_hosts, reqs)
 
             logger.info(
-                f"{self.dsp_name}: Not enough resources to provision, "
+                f"{log_msg_start} Not enough resources to provision, "
                 f"checking again in {res_busy_sleep} min(s)"
             )
             await asyncio.sleep(res_busy_sleep * 60)
 
-        logger.info(f"{self.dsp_name}: Resource availability: OK")
+        logger.info(f"{log_msg_start} Resource availability: OK")
         started = datetime.now()
 
-        logger.info(f"{self.dsp_name}: Issuing provisioning of {len(reqs)} host(s)")
+        logger.info(f"{log_msg_start} Issuing provisioning of {len(reqs)} host(s)")
         create_servers = []
         for req in reqs:
             awaitable = self.create_server(req)
@@ -288,9 +291,9 @@ class Provider:
         # expect the exception in return data to be parsed later
         create_resps = await asyncio.gather(*create_servers, return_exceptions=True)
 
-        logger.info(f"{self.dsp_name}: Provisioning issued")
+        logger.info(f"{log_msg_start} Provisioning issued")
 
-        logger.info(f"{self.dsp_name}: Waiting for all hosts to be active")
+        logger.info(f"{log_msg_start} Waiting for all hosts to be active")
 
         wait_servers = []
         for response in create_resps:
@@ -322,10 +325,10 @@ class Provider:
         provisioned = datetime.now()
 
         logger.info(
-            f"{self.dsp_name}: "
+            f"{log_msg_start} "
             "All hosts reached provisioning final state (ACTIVE or ERROR)"
         )
-        logger.info(f"{self.dsp_name}: Provisioning duration: {provisioned - started}")
+        logger.info(f"{log_msg_start} Provisioning duration: {provisioned - started}")
 
         hosts = [self.to_host(srv, req) for srv, req in server_results if srv]
 
@@ -363,7 +366,8 @@ class Provider:
 
         Return list of information about provisioned servers.
         """
-        logger.info(f"{self.dsp_name}: Preparing provider resources")
+        log_msg_start = self.dsp_name
+        logger.info(f"{log_msg_start} Preparing provider resources")
         if not await self.prepare_provisioning(reqs):
             raise ProvisioningError("Failed to prepare resources", self.dsp_name)
 
@@ -376,14 +380,15 @@ class Provider:
             hosts_to_delete = success_hosts + error_hosts
             await self.abort_and_delete(hosts_to_delete, error_hosts)
 
-        logger.info(f"{self.dsp_name}: Printing provisioned hosts")
+        logger.info(f"{log_msg_start} Printing provisioned hosts")
         for host in success_hosts:
-            logger.info(f"{self.dsp_name}: {host}")
+            logger.info(f"{log_msg_start} {host}")
 
         return success_hosts
 
     async def strategy_retry(self, reqs):
         """Provisioning strategy to try multiple times to provision a host."""
+        log_msg_start = self.dsp_name
         missing_reqs = reqs
         attempts = 0
         success_hosts = []
@@ -397,7 +402,7 @@ class Provider:
             # after reaching count 1 without reprovisioning retry
             if attempts > self.max_retry:
                 logger.error(
-                    f"{self.dsp_name}: Max retry attempts "
+                    f"{log_msg_start} Max retry attempts "
                     f"({self.max_retry}) reached. Aborting"
                 )
                 break
@@ -415,11 +420,11 @@ class Provider:
             if error_hosts and attempts <= self.max_retry:
                 count = len(error_hosts)
                 err = f"{count} hosts were not provisioned properly, deleting."
-                logger.info(f"{self.dsp_name}: {err}")
+                logger.info(f"{log_msg_start} {err}")
                 for host in error_hosts:
-                    logger.error(f"{self.dsp_name}: Error: {str(host.error)}")
+                    logger.error(f"{log_msg_start} Error: {str(host.error)}")
                 await self.delete_hosts(error_hosts)
-                logger.info(f"{self.dsp_name}: Retrying to provision these hosts.")
+                logger.info(f"{log_msg_start} Retrying to provision these hosts.")
 
         return success_hosts, error_hosts, missing_reqs
 
@@ -429,11 +434,13 @@ class Provider:
 
     async def parse_error_hosts(self, hosts):
         """Parse provisioning errors from provider result."""
+        log_msg_start = self.dsp_name
         errors = []
-        logger.debug(f"{self.dsp_name}: Checking provisioned hosts for errors")
+        logger.debug(f"{log_msg_start} Checking provisioned hosts for errors")
         for host in hosts:
             logger.debug(
-                f"{self.dsp_name}: Host - {host.host_id}\tStatus - {host.status}"
+                f"{log_msg_start} [{host.name}] ID {host.host_id}"
+                f"\tSTATUS - {host.status}"
             )
 
             if host.status != STATUS_ACTIVE:
@@ -443,31 +450,33 @@ class Provider:
 
     async def abort_and_delete(self, hosts_to_delete, error_hosts):
         """Delete hosts and abort provisioning with an error."""
-        logger.info(f"{self.dsp_name}: Aborting provisioning due to error.")
+        log_msg_start = self.dsp_name
+        logger.info(f"{log_msg_start} Aborting provisioning due to error.")
         for host in error_hosts:
-            logger.error(f"{self.dsp_name}: Error: {str(host.error)}")
+            logger.error(f"{log_msg_start} [{host.name}] Error: {str(host.error)}")
 
-        logger.info(f"{self.dsp_name}: Given the error, will delete hosts")
+        logger.info(f"{log_msg_start} Given the error, will delete hosts")
         await self.delete_hosts(hosts_to_delete)
         raise ProvisioningError(
-            f"{self.dsp_name}: Failed to provision {len(error_hosts)} host(s) "
+            f"{log_msg_start} Failed to provision {len(error_hosts)} host(s) "
             "due to provisioning error",
             self.dsp_name,
         )
 
-    async def delete_host(self, host_id):
+    async def delete_host(self, host_id, host_name):
         """Delete provisioned host."""
         raise NotImplementedError()
 
     async def delete_hosts(self, hosts):
         """Issue deletion of all servers based on previous results from provisioning."""
-        logger.info(f"{self.dsp_name}: Issuing deletion")
+        log_msg_start = self.dsp_name
+        logger.info(f"{log_msg_start} Issuing deletion")
         delete_servers = []
         for host in hosts:
-            awaitable = self.delete_host(host.host_id)
+            awaitable = self.delete_host(host.host_id, host.name)
             delete_servers.append(awaitable)
         results = await asyncio.gather(*delete_servers)
-        logger.info(f"{self.dsp_name}: All servers issued to be deleted")
+        logger.info(f"{log_msg_start} All servers issued to be deleted")
         return results
 
     def prov_result_to_host_data(self, prov_result, req):

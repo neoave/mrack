@@ -88,6 +88,8 @@ class Transformer:
         )
 
         logger.debug(f"{self.dsp_name}: Found image {image} for {operating_system}")
+        log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
+        logger.debug(f"{log_msg_start} Found image {image} for {operating_system}")
         return image
 
     def _get_flavor(self, host):
@@ -98,12 +100,14 @@ class Transformer:
         If 'size' is not specified, get the flavor based on host groups
         which are defined in provisioning config.
         """
+        log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
+
         if host.get("size"):  # allow to override size by pointing to group in metadata
             flavor = get_config_value(self.config["flavors"], host["size"])
         else:  # default action based on host group define the flavor of instance
             flavor = get_config_value(self.config["flavors"], host["group"])
 
-        logger.debug(f"{self.dsp_name}: Loaded flavor for {host['name']}: '{flavor}'")
+        logger.debug(f"{log_msg_start} Loaded flavor '{flavor}'")
         return flavor
 
     def validate_config(self):
@@ -112,13 +116,15 @@ class Transformer:
 
     def validate_host(self, host):
         """Validate host input that it contains everything needed by provider."""
+        log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
         # attribute check
         validate_dict_attrs(host, self._required_host_attrs, "host")
         # provider check
         provider = host.get("provider")
+
         if provider and provider not in providers.names:
             raise MetadataError(
-                f"{self.dsp_name}: Error: Invalid host provider: {provider}"
+                f"{log_msg_start} Error: Invalid host provider: {provider}"
             )
 
     def create_host_requirement(self, host):
@@ -128,5 +134,5 @@ class Transformer:
     def create_host_requirements(self):
         """Create inputs for all host for provisioner."""
         reqs = [self.create_host_requirement(host) for host in self.hosts]
-        logger.info(f"{self.dsp_name}: Created requirement(s): {object2json(reqs)}")
+        logger.info(f"{self.dsp_name} Created requirement(s): {object2json(reqs)}")
         return reqs
