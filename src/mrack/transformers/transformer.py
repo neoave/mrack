@@ -83,7 +83,9 @@ class Transformer:
     def _get_image(self, host):
         """Get image name by OS name from provisioning config."""
         operating_system = host["os"]
-        image = self._find_value(host, "image", "images", operating_system)
+        image = self._find_value(
+            host, "image", "images", operating_system, default=operating_system
+        )
 
         logger.debug(f"{self.dsp_name}: Found image {image} for {operating_system}")
         return image
