@@ -81,7 +81,23 @@ class Transformer:
         return value
 
     def _get_image(self, host):
-        """Get image name by OS name from provisioning config."""
+        """
+        Get image name by OS name from provisioning config.
+
+        The preferred solution is to create mappings between operating system
+        and image present in the provisioning config - this only allows us
+        to change the providers without changing the input metadata.
+
+        host - dictionary with server requirements
+
+        The host dictionary can contain following attributes:
+        * 'os': operating system to find mapping to image from provisioning config
+        * 'image': image to use (optional)
+
+        Returns:
+            An image to be used, if mapping is not found it defaults to the host['os']
+            :rtype: str
+        """
         operating_system = host["os"]
         image = self._find_value(
             host, "image", "images", operating_system, default=operating_system
