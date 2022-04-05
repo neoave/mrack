@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.3.1 (2022-04-05)
+### Fix
+* Image transformer none value in requirements ([`cb5290d`](https://github.com/neoave/mrack/commit/cb5290d7c4864dccf94c9c126487e9436fea8682))
+
+### Documentation
+* Update the _get_image() method doc string ([`6b88058`](https://github.com/neoave/mrack/commit/6b8805880e2e9bfcb26dca4d9628254e4ad896cf))
+
 ## v1.3.0 (2022-04-01)
 ### Feature
 * **Beaker:** Support distro variant configuration ([`e568507`](https://github.com/neoave/mrack/commit/e568507ec233fe232109717c68abb4a86b14948d))
