@@ -103,9 +103,10 @@ class Transformer:
             host, "image", "images", operating_system, default=operating_system
         )
 
-        logger.debug(f"{self.dsp_name}: Found image {image} for {operating_system}")
-        log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
-        logger.debug(f"{log_msg_start} Found image {image} for {operating_system}")
+        logger.debug(
+            f"{self.dsp_name} [{host.get('name')}] Using image "
+            f"{image} for {operating_system}"
+        )
         return image
 
     def _get_flavor(self, host):
