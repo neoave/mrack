@@ -231,6 +231,12 @@ class AWSProvider(Provider):
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         del_vol = specs.get("delete_volume_on_termination", True)
+
+        # creating name for instance (visible in aws ec2 WebUI)
+        taglist = [{"Key": "name", "Value": req.get("name")}]
+        for key, value in self.instance_tags.items():
+            taglist.append({"Key": key, "Value": value})
+
         request = {
             "ImageId": self.get_image(specs).image_id,
             "MinCount": 1,
@@ -246,6 +252,7 @@ class AWSProvider(Provider):
                     },
                 },
             ],
+            "TagSpecifications": [{"ResourceType": "instance", "Tags": taglist}],
         }
         if specs.get("subnet_id"):
             request["SubnetId"] = specs.get("subnet_id")
@@ -271,12 +278,6 @@ class AWSProvider(Provider):
         ids = [srv.id for srv in aws_res]
         if len(ids) != 1:  # ids must be len of 1 as we provision one vm at the time
             raise ProvisioningError("Unexpected number of instances provisioned.", req)
-        # creating name for instance (visible in aws ec2 WebUI)
-        taglist = [{"Key": "name", "Value": specs.get("name")}]
-        for key in self.instance_tags:
-            taglist.append({"Key": key, "Value": self.instance_tags[key]})
-
-        self.ec2.create_tags(Resources=ids, Tags=taglist)
 
         # returns id of provisioned instance and required host name
         return (ids[0], req)
