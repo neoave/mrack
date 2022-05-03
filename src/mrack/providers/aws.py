@@ -196,7 +196,12 @@ class AWSProvider(Provider):
 
     async def prepare_provisioning(self, reqs):
         """Prepare provisioning."""
-        self.load_images(reqs)
+        try:
+            self.load_images(reqs)
+        except ValidationError as val_err:
+            logger.error(val_err)
+            return False
+
         return bool(reqs)
 
     async def validate_hosts(self, reqs):
