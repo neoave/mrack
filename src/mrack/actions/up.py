@@ -95,7 +95,7 @@ class Up(Action):
                 # we need to cleanup all the remaining resources
                 # even when provisioned successfully
                 logger.error(
-                    f"{results.args[PROVIDER_NAME_INDEX]}: "
+                    f"{results.args[PROVIDER_NAME_INDEX]} "
                     f"{results.args[ERR_MSG_INDEX]}"
                 )
                 failed_providers.append(results.args[PROVIDER_NAME_INDEX])
