@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.0 (2022-05-05)
+### Feature
+* **AWS:** Move tagging into creation request itself ([`b4fae6b`](https://github.com/neoave/mrack/commit/b4fae6bceabfeffa2fe47efae5a3ee87aba6da74))
+
+### Fix
+* **AWS:** Return False when ValidationError is raised ([`bb5594b`](https://github.com/neoave/mrack/commit/bb5594b4028bc06e71f5167615acbb9ac3cd7e32))
+
 ## v1.3.1 (2022-04-05)
 ### Fix
 * Image transformer none value in requirements ([`cb5290d`](https://github.com/neoave/mrack/commit/cb5290d7c4864dccf94c9c126487e9436fea8682))
