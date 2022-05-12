@@ -198,6 +198,8 @@ class AnsibleInventoryOutput:
 
         for host in provisioned.values():
             meta_host, _meta_domain = get_host_from_metadata(self._metadata, host.name)
+            if meta_host is None:
+                continue
 
             # Groups can be defined in both "groups" and "group" variable.
             groups = meta_host.get("groups", [])
