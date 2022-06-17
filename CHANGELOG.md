@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.4.1 (2022-06-17)
+### Fix
+* Creating inventory with None host ([`7489240`](https://github.com/neoave/mrack/commit/748924088ab0416d8ff1d9381cb5da5f262a2af9))
+
 ## v1.4.0 (2022-05-05)
 ### Feature
 * **AWS:** Move tagging into creation request itself ([`b4fae6b`](https://github.com/neoave/mrack/commit/b4fae6bceabfeffa2fe47efae5a3ee87aba6da74))
