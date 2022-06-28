@@ -15,6 +15,7 @@
 """AWS Provider interface."""
 
 import logging
+import secrets
 from copy import deepcopy
 from datetime import datetime
 
@@ -232,10 +233,20 @@ class AWSProvider(Provider):
 
         del_vol = specs.get("delete_volume_on_termination", True)
 
-        # creating name for instance (visible in aws ec2 WebUI)
-        taglist = [{"Key": "name", "Value": req.get("name")}]
+        name = req.get("name")
+        # creating unique name for instance (visible in aws ec2 WebUI)
+        taglist = [{"Key": "Name", "Value": name}]
+        taglist.append(
+            {
+                "Key": "Hostname",
+                "Value": f"{name.split('.')[0]}-{secrets.token_hex()[:6]}",
+            }
+        )
+
         for key, value in self.instance_tags.items():
             taglist.append({"Key": key, "Value": value})
+
+        logger.debug(f"{log_msg_start} Tagging instance with: {object2json(taglist)}")
 
         request = {
             "ImageId": self.get_image(specs).image_id,
@@ -298,7 +309,7 @@ class AWSProvider(Provider):
 
         result["id"] = prov_result.get("InstanceId")
         for tag in prov_result.get("Tags"):
-            if tag["Key"] == "name":
+            if tag["Key"] == "Name":
                 result["name"] = tag["Value"]  # should be one key "name"
 
         result["addresses"] = self.get_ip_addresses(prov_result)
