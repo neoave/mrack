@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.0 (2022-07-08)
+### Feature
+* **AWS:** Create unique instance name with the tag ([`b3e31e0`](https://github.com/neoave/mrack/commit/b3e31e0ab614c795ea34ef250e118ffa4905b536))
+
 ## v1.4.1 (2022-06-17)
 ### Fix
 * Creating inventory with None host ([`7489240`](https://github.com/neoave/mrack/commit/748924088ab0416d8ff1d9381cb5da5f262a2af9))
