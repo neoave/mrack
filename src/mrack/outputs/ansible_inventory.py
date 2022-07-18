@@ -174,6 +174,8 @@ class AnsibleInventoryOutput:
         if is_windows_host(meta_host):
             if "netbios" in meta_host:
                 host_info.update({"meta_netbios": meta_host["netbios"]})
+            if "read_only" in meta_host:
+                host_info.update({"meta_read_only": meta_host["read_only"]})
 
             host_info.update(
                 {
