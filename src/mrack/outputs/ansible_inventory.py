@@ -120,6 +120,7 @@ class AnsibleInventoryOutput:
 
     def create_ansible_host(self, name):
         """Create host entry for Ansible inventory."""
+        # pylint: disable=too-many-locals
         meta_host, meta_domain = get_host_from_metadata(self._metadata, name)
         db_host = self._db.hosts[name]
 
@@ -183,6 +184,10 @@ class AnsibleInventoryOutput:
                     "meta_domain_level": meta_host.get("domain_level", "top"),
                 }
             )
+
+        for key, val in meta_host.items():
+            if key.startswith("meta_"):
+                host_info[key] = val
 
         return host_info
 
