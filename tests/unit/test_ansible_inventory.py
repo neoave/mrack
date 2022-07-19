@@ -7,6 +7,7 @@ from .mock_data import (
     common_inventory_layout,
     create_metadata,
     get_db_from_metadata,
+    metadata_extra,
     provisioning_config,
 )
 
@@ -164,3 +165,29 @@ class TestAnsibleInventory:
         assert (
             "meta_compose_id" not in first_host
         ), "Host must NOT have 'meta_compose_id' field"
+
+    def test_arbitrary_meta_attrs(self):
+        """
+        Test that inventory has meta_$something attribute if user defined it in job
+        metadata file. Also test that they override the default meta attrs, e.g.,
+        meta_os.
+        """
+        metadata = metadata_extra()
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "meta_readonly_dc" in srv1
+        assert srv1["meta_readonly_dc"] == "yes"
+        assert "meta_something_else" in srv1
+        assert srv1["meta_something_else"] == "val"
+        assert srv1["meta_os"] == "windows-2019"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+        assert "meta_something_else" not in srv2
+        assert "meta_readonly_dc" in srv2
+        assert srv2["meta_readonly_dc"] == "no"
+        assert srv2["meta_os"] == "windows-2022"

@@ -83,6 +83,36 @@ def create_metadata(ipaservers, ipaclients, ads):
     }
 
 
+def metadata_extra():
+    hosts = [
+        {
+            "name": "srv1.example.test",
+            "os": "windows-2019",
+            "role": "ad",
+            "groups": ["windows"],
+            "meta_readonly_dc": "yes",
+            "meta_something_else": "val",
+        },
+        {
+            "name": "srv2.example.test",
+            "os": "fedora",
+            "role": "master",
+            "groups": ["ipaserver"],
+            "meta_readonly_dc": "no",
+            "meta_os": "fedora-32",
+        },
+    ]
+    return {
+        "domains": [
+            {
+                "name": "example.test",
+                "type": "mixed",
+                "hosts": hosts,
+            }
+        ]
+    }
+
+
 def get_ip(index=0):
     """Get IPv4 IP from 192.168.0/24 network."""
     return f"192.168.0.{index+1}"
