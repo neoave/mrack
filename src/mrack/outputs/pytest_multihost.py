@@ -108,11 +108,19 @@ class PytestMultihostOutput:
                     if username:
                         host["username"] = username
 
-                if host["group"] == "ad_root":
+                group = host.get("group")
+                if not group:
+                    groups = host.get("groups")
+                    if isinstance(groups, list) and len(groups):
+                        group = groups[0]
+                    else:
+                        group = ""  # group is required, but not part of output
+
+                if group == "ad_root":
                     mhcfg["ad_top_domain"] = domain["name"]
                     mhcfg["ad_hostname"] = host["name"]
                     mhcfg["ad_ip"] = host["ip"]
-                elif host["group"] == "ad_subdomain":
+                elif group == "ad_subdomain":
                     mhcfg["ad_sub_domain"] = domain["name"]
                     mhcfg["ad_sub_hostname"] = host["name"]
                     mhcfg["ad_sub_ip"] = host["ip"]
