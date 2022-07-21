@@ -72,7 +72,7 @@ class PytestMultihostOutput:
         # Use values from provisioning-config mhcfg section - as default values
         # options defined in metadata takes precedence over options in
         # provisioning-config as it is "closer" to user.
-        mhcfg = self._config["mhcfg"] | mhcfg
+        mhcfg = self._config.get("mhcfg", {}) | mhcfg
 
         for domain in mhcfg["domains"]:
             for host in domain["hosts"]:
