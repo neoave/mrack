@@ -125,9 +125,14 @@ class PytestMultihostOutput:
                     mhcfg["ad_sub_hostname"] = host["name"]
                     mhcfg["ad_sub_ip"] = host["ip"]
 
+                host_custom_attrs = host.get("pytest_multihost")
+
                 rm_keys = [key for key in host.keys() if key not in host_allowed_attrs]
                 for key in rm_keys:
                     del host[key]
+
+                if isinstance(host_custom_attrs, dict):
+                    host.update(host_custom_attrs)
 
             domain_rm_keys = [
                 key for key in domain.keys() if key not in ["name", "type", "hosts"]
