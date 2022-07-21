@@ -189,6 +189,10 @@ class AnsibleInventoryOutput:
             if key.startswith("meta_"):
                 host_info[key] = val
 
+        ansible_inventory = meta_host.get("ansible_inventory")
+        if isinstance(ansible_inventory, dict):
+            host_info.update(ansible_inventory)
+
         return host_info
 
     def create_inventory(self):
