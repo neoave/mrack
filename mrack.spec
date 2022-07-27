@@ -2,7 +2,7 @@
 %global srcname mrack
 
 Name:           %{srcname}
-Version:        1.5.0
+Version:        1.6.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner for CIs and testing during development
 
@@ -56,6 +56,9 @@ rm -rf %{srcname}.egg-info
 %{python3_sitelib}/%{srcname}-%{version}-py%{python3_version}.egg-info
 
 %changelog
+* Wed Jul 27 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.6.0-1
+- Released upstream version 1.6.0
+
 * Fri Jul 08 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.5.0-1
 - Released upstream version 1.5.0
 

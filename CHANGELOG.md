@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v1.6.0 (2022-07-27)
+### Feature
+* **pytest-multihost:** Arbitrary attributes for hosts ([`d0c28f6`](https://github.com/neoave/mrack/commit/d0c28f62dad1cb8cf99704973209102cc0deab2f))
+* **ansible-inventory:** Host arbitrary attributes ([`65057e7`](https://github.com/neoave/mrack/commit/65057e734db89531d10ee02ec8b763f25578b840))
+* Copyign meta_ attributes from host to ansible inventory ([`3da517c`](https://github.com/neoave/mrack/commit/3da517c18701999c43638a67835f09938272badc))
+
+### Fix
+* **pytest-multihost:** Crash when group is not defined ([`d337a7b`](https://github.com/neoave/mrack/commit/d337a7bbec98f9385fa7f86fb944e032b8b60878))
+* **pytest-multihost:** Crash when mhcfg is missing in prov. config ([`d6e3483`](https://github.com/neoave/mrack/commit/d6e3483f509fb6fe5b5c0759f0d51e0db9bd28b5))
+
 ## v1.5.0 (2022-07-08)
 ### Feature
 * **AWS:** Create unique instance name with the tag ([`b3e31e0`](https://github.com/neoave/mrack/commit/b3e31e0ab614c795ea34ef250e118ffa4905b536))
