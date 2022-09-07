@@ -180,7 +180,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         # Recipe task definition
         specs.update(
-            {  # we use dummy task because beaker reuire a task in recipe
+            {  # we use dummy task because beaker require a task in recipe
                 "tasks": [{"name": "/distribution/dummy", "role": "STANDALONE"}]
             }
         )
