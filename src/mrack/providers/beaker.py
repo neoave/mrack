@@ -175,9 +175,6 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         # Add allowed keys
         specs.update({"ks_append": self._allow_ssh_key(self.pubkey)})
 
-        # Use ks_meta
-        specs.update({"ks_meta": "harness='restraint-rhts beakerlib-redhat'"})
-
         # Recipe task definition
         specs.update(
             {  # we use dummy task because beaker require a task in recipe

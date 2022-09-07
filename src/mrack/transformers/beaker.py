@@ -66,6 +66,25 @@ class BeakerTransformer(Transformer):
 
         return (required_distro, variant)
 
+    def _get_ks_meta(self, host):
+        """
+        Get `ks_meta` value from host or provisioning config or default if not defined.
+
+        The priority is following:
+            - host
+            - provisioning-config.yaml
+            - default from provisioning config
+            - empty if not defined in provisioning config
+
+        """
+        res = self._find_value(
+            host.get(CONFIG_KEY, {}),
+            "ks_meta",
+            "kickstart_metadata",
+            host["os"],
+        )
+        return res
+
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
         distro, variant = self._get_distro_and_variant(host)
@@ -77,5 +96,6 @@ class BeakerTransformer(Transformer):
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": variant,
+            "ks_meta": self._get_ks_meta(host),
             f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
         }
