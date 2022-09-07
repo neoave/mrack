@@ -102,6 +102,10 @@ beaker:  # beaker provider specific values
         default: Server
         CentOS-Stream-9%: BaseOS
 
+    kickstart_metadata:
+        default: ""
+        fedora-37: "harness='restraint-rhts beakerlib-redhat'"
+
     # example of beaker requirement tags for specific distributuions
     distro_tags:
         CentOS-Stream-9%:
