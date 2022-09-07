@@ -1,5 +1,6 @@
 import pytest
 
+from mrack.context import global_context
 from mrack.providers import providers
 from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
 from mrack.providers.beaker import BeakerProvider
@@ -73,6 +74,7 @@ class TestBeakerTransformer:
         providers.register(BEAKER, BeakerProvider)
         res = MockedBeakerTransformer()
         config = provisioning_config()
+        global_context.provisioning_config = config
         if legacy:
             del config["beaker"]["distro_variants"]
 
