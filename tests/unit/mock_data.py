@@ -207,7 +207,11 @@ def provisioning_config(inventory_layout=None):
             },
             "pubkey": "config/id_rsa.pub",
             "reserve_duration": 86400,
-            "max_attempts": 240,
+            "kickstart_metadata": {
+                "default": "PROV_CONF_DEFAULT",
+                "rhel-8.6": "PROV_CONF_RHEL86_KS_META",
+                "c9s": "PROV_CONF_CENTOS_KS_META",
+            },
             "timeout": 120,
         },
         "users": {
