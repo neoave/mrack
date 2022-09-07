@@ -300,7 +300,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 
         return result
 
-    def _get_recipe_info(self, beaker_id):
+    def _get_recipe_info(self, beaker_id, log_msg_start):
         """Get info about the recipe for beaker job id."""
         bkr_job_xml = self.hub.taskactions.to_xml(beaker_id).encode("utf8")
 
@@ -316,7 +316,12 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                 }
             )
 
-        return resources[0] if len(resources) == 1 else []
+        logger.debug(
+            f"{log_msg_start} has status:{resources[0]['status']}, "
+            f"result:{resources[0]['result']}, waiting another {self.poll_sleep:.1f}s"
+        )
+
+        return resources[0]
 
     async def wait_till_provisioned(self, resource):
         """Wait for Beaker provisioning result."""
@@ -331,7 +336,7 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
         timeout_time = datetime.now() + timedelta(minutes=self.timeout)
 
         while datetime.now() < timeout_time:
-            bkr_res = self._get_recipe_info(beaker_id)
+            bkr_res = self._get_recipe_info(beaker_id, log_msg_start=log_msg_start)
             status = bkr_res["status"]
             job_url = (
                 f"{self.hub._hub_url}"  # pylint: disable=protected-access
@@ -344,11 +349,6 @@ chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
                     f"has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
-            else:
-                logger.info(
-                    f"{log_msg_start} Job {job_url} has not changed status "
-                    f"({status}), waiting another {self.poll_sleep:.1f}s"
-                )
 
             if self.status_map.get(status) == STATUS_PROVISIONING:
                 await asyncio.sleep(self.poll_sleep)
