@@ -1,6 +1,5 @@
 import pytest
 
-from mrack.context import global_context
 from mrack.providers import providers
 from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
 from mrack.providers.beaker import BeakerProvider
@@ -20,6 +19,9 @@ class TestBeakerTransformer:
         "group": "client",
         "os": "fedora-latest",
         "restraint_id": 1,
+        "beaker": {
+            "ks_meta": "FEDORA_HOST_KS_META",
+        },
     }
 
     centos = {
@@ -74,7 +76,6 @@ class TestBeakerTransformer:
         providers.register(BEAKER, BeakerProvider)
         res = MockedBeakerTransformer()
         config = provisioning_config()
-        global_context.provisioning_config = config
         if legacy:
             del config["beaker"]["distro_variants"]
 
@@ -86,22 +87,25 @@ class TestBeakerTransformer:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "meta_host,exp_distro,exp_variant",
+        "meta_host,exp_distro,exp_variant,exp_ks_meta",
         [
-            (fedora, "Fedora-36%", "Server"),
-            (centos, "CentOS-Stream-9%", "BaseOS"),
+            (fedora, "Fedora-36%", "Server", "FEDORA_HOST_KS_META"),
+            (centos, "CentOS-Stream-9%", "BaseOS", "PROV_CONF_CENTOS_KS_META"),
             # default variant should be there,
             # windows distro does not exist so host['os'] should be copied
-            (windows, "win-2022", "BaseOS"),
-            (rhel86, "RHEL-8.6%", "BaseOS"),
+            (windows, "win-2022", "BaseOS", "PROV_CONF_DEFAULT"),
+            (rhel86, "RHEL-8.6%", "BaseOS", "PROV_CONF_RHEL86_KS_META"),
         ],
     )
-    async def test_beaker_requirement(self, meta_host, exp_distro, exp_variant):
+    async def test_beaker_requirement(
+        self, meta_host, exp_distro, exp_variant, exp_ks_meta
+    ):
         """Test expected Beaker VM variant and distro"""
         bkr_transformer = await self.create_transformer()
         req = bkr_transformer.create_host_requirement(meta_host)
         assert req.get("distro") == exp_distro
         assert req.get("variant") == exp_variant
+        assert req.get("ks_meta") == exp_ks_meta
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
