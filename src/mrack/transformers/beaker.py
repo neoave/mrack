@@ -40,7 +40,6 @@ class BeakerTransformer(Transformer):
             distros=self.config["distros"].values(),
             timeout=self.config["timeout"],
             reserve_duration=self.config["reserve_duration"],
-            pubkey=self.config["pubkey"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
         )
@@ -88,7 +87,7 @@ class BeakerTransformer(Transformer):
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
         distro, variant = self._get_distro_and_variant(host)
-        return {
+        specs = {
             "name": host["name"],
             "distro": distro,
             "os": host["os"],
@@ -97,5 +96,58 @@ class BeakerTransformer(Transformer):
             "arch": host.get("arch", "x86_64"),
             "variant": variant,
             "ks_meta": self._get_ks_meta(host),
+            "retention_tag": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "retention_tag",
+                "retention_tag",
+                host["os"],
+                default="audit",
+            ),
+            "product": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "product",
+                "product",
+                host["os"],
+                default="[internal]",
+            ),
+            "whiteboard": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "whiteboard",
+                "whiteboard",
+                host["os"],
+                default="This job has been created using mrack.",
+            ),
+            "priority": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "priority",
+                "priority",
+                host["os"],
+                default="Normal",
+            ),
+            # Recipe task definition
+            "tasks": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "tasks",
+                "tasks",
+                host["os"],
+                default=[  # we use dummy task because beaker require a task in recipe
+                    {"name": "/distribution/dummy", "role": "STANDALONE"}
+                ],
+            ),
             f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
         }
+
+        config_pubkey = self.config.get("pubkey")
+        if not config_pubkey:
+            return specs
+
+        pubkeys = []
+        if isinstance(config_pubkey, str):
+            # keep this backward compatible by this section
+            pubkeys.append(config_pubkey)
+        elif isinstance(config_pubkey, list):
+            pubkeys = config_pubkey
+
+        specs.update({"ssh_pubkeys": pubkeys})
+
+        return specs

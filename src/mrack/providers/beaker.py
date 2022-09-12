@@ -80,7 +80,6 @@ class BeakerProvider(Provider):
         self.dsp_name = "Beaker"
         self.conf = PyConfigParser()
         self.poll_sleep = 45  # seconds
-        self.pubkey = None
         self.max_retry = 1  # for retry strategy
         self.status_map = {
             "Reserved": STATUS_ACTIVE,
@@ -103,7 +102,6 @@ class BeakerProvider(Provider):
         distros,
         timeout,
         reserve_duration,
-        pubkey,
         strategy=STRATEGY_ABORT,
         max_retry=1,
     ):
@@ -114,7 +112,6 @@ class BeakerProvider(Provider):
         self.distros = distros
         self.timeout = timeout
         self.reserve_duration = reserve_duration
-        self.pubkey = pubkey
         login_start = datetime.now()
         default_config = os.path.expanduser(
             os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
@@ -144,10 +141,14 @@ class BeakerProvider(Provider):
         """Check that hosts can be provisioned."""
         return True
 
-    def _allow_ssh_key(self, pubkey):
+    def _allow_ssh_keys(self, pubkeys):
         """Create ssh key content to be injected to xml."""
-        with open(os.path.expanduser(pubkey), "r") as key_file:
-            key_content = key_file.read()
+        keys_content = "# keys added by mrack:\n"
+        for key in set(pubkeys):
+            with open(os.path.expanduser(key), "r") as key_file:
+                keys_content += f"{key_file.read().strip()}\n"
+
+        keys_content += "# end section of keys added by mrack\n"
 
         return [
             """%%post
@@ -157,30 +158,17 @@ cat >>/root/.ssh/authorized_keys << "__EOF__"
 restorecon -R /root/.ssh
 chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
 %%end"""
-            % "".join(key_content)
+            % "".join(keys_content)
         ]
 
     def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
         """Transform requirement to beaker job xml."""
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
-        # Job attributes:
-        specs.update({"retention_tag": "audit"})
-        specs.update({"product": "[internal]"})
-        specs.update({"whiteboard": "This job has been created using mrack."})
-
-        # RecipeSet attributes
-        specs.update({"priority": "Normal"})
-
-        # Add allowed keys
-        specs.update({"ks_append": self._allow_ssh_key(self.pubkey)})
-
-        # Recipe task definition
-        specs.update(
-            {  # we use dummy task because beaker require a task in recipe
-                "tasks": [{"name": "/distribution/dummy", "role": "STANDALONE"}]
-            }
-        )
+        # Add allowed keys using kickstart append
+        if "ssh_pubkeys" in specs:
+            specs.update({"ks_append": self._allow_ssh_keys(specs["ssh_pubkeys"])})
+            del specs["ssh_pubkeys"]
 
         # Create recipe with the specifications
         recipe = BeakerRecipe(**specs)
