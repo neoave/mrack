@@ -10,8 +10,12 @@ from .mock_data import MockedBeakerTransformer, provisioning_config
 class TestBeakerTransformer:
     """Test the Beaker Transformer"""
 
+    default_prio = "Normal"
     domain_name = "example.test"
     ad_domain_name = "ad.test"
+    cat_release = "cat /etc/redhat-release"
+    wget = "wget redhat.com"
+    default_whiteboard = "This job has been created using mrack."
 
     fedora = {
         "name": f"fedora.{domain_name}",
@@ -21,6 +25,12 @@ class TestBeakerTransformer:
         "restraint_id": 1,
         "beaker": {
             "ks_meta": "FEDORA_HOST_KS_META",
+            "tasks": [
+                {
+                    "name": "/distribution/check-install",
+                    "role": "SERVER",
+                }
+            ],
         },
     }
 
@@ -30,6 +40,11 @@ class TestBeakerTransformer:
         "group": "ipaserver",
         "os": "c9s",
         "restraint_id": 2,
+        "beaker": {
+            "ks_append": [
+                cat_release,
+            ],
+        },
     }
 
     rhel86 = {
@@ -38,6 +53,12 @@ class TestBeakerTransformer:
         "group": "ipaserver",
         "os": "rhel-8.6",
         "restraint_id": 3,
+        "beaker": {
+            "ks_append": [
+                cat_release,
+                wget,
+            ],
+        },
     }
 
     windows = {
@@ -47,6 +68,10 @@ class TestBeakerTransformer:
         "os": "win-2022",
         "domain_level": "top",
         "netbios": ad_domain_name.split(".", maxsplit=1)[0].upper(),
+        "beaker": {
+            "whiteboard": "BEAKER DOES NOT SUPPORT WINDOWS THIS JOB MUST FAIL",
+            "priority": "ULTRAHIGH",
+        },
     }
 
     hosts_metadata = {
@@ -89,30 +114,57 @@ class TestBeakerTransformer:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "meta_host,exp_distro,exp_variant,exp_ks_meta,exp_ks_append",
+        "meta_host,exp_distro,exp_variant,exp_ks_meta,exp_ks_append,exp_whiteboard,exp_prio",  # noqa: E501
         [
-            (fedora, "Fedora-36%", "Server", "FEDORA_HOST_KS_META", default_ks_append),
+            (
+                fedora,
+                "Fedora-36%",
+                "Server",
+                "FEDORA_HOST_KS_META",
+                default_ks_append,
+                default_whiteboard,
+                default_prio,
+            ),
             (
                 centos,
                 "CentOS-Stream-9%",
                 "BaseOS",
                 "PROV_CONF_CENTOS_KS_META",
-                default_ks_append,
+                ["%post\ncat /etc/redhat-release\n%end"],
+                default_whiteboard,
+                default_prio,
             ),
             # default variant should be there,
             # windows distro does not exist so host['os'] should be copied
-            (windows, "win-2022", "BaseOS", "PROV_CONF_DEFAULT", default_ks_append),
+            (
+                windows,
+                "win-2022",
+                "BaseOS",
+                "PROV_CONF_DEFAULT",
+                default_ks_append,
+                "BEAKER DOES NOT SUPPORT WINDOWS THIS JOB MUST FAIL",
+                "ULTRAHIGH",
+            ),
             (
                 rhel86,
                 "RHEL-8.6%",
                 "BaseOS",
                 "PROV_CONF_RHEL86_KS_META",
-                default_ks_append,
+                ["%post\ncat /etc/redhat-release\nwget redhat.com\n%end"],
+                default_whiteboard,
+                default_prio,
             ),
         ],
     )
     async def test_beaker_requirement(
-        self, meta_host, exp_distro, exp_variant, exp_ks_meta, exp_ks_append
+        self,
+        meta_host,
+        exp_distro,
+        exp_variant,
+        exp_ks_meta,
+        exp_ks_append,
+        exp_whiteboard,
+        exp_prio,
     ):
         """Test expected Beaker VM variant and distro"""
         bkr_transformer = await self.create_transformer()
@@ -121,6 +173,8 @@ class TestBeakerTransformer:
         assert req.get("variant") == exp_variant
         assert req.get("ks_meta") == exp_ks_meta
         assert req.get("ks_append") == exp_ks_append
+        assert req.get("whiteboard") == exp_whiteboard
+        assert req.get("priority") == exp_prio
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
