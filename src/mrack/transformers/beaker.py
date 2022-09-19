@@ -90,8 +90,7 @@ class BeakerTransformer(Transformer):
             return []
 
         res_ks_append = ["%post"]
-
-        if pubkeys is not None:
+        if pubkeys:
             ks_append += self._allow_ssh_keys(pubkeys)
 
         res_ks_append += ks_append
