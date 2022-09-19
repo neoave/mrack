@@ -70,6 +70,8 @@ class TestBeakerTransformer:
         ],
     }
 
+    default_ks_append = []
+
     @pytest.mark.asyncio
     async def create_transformer(self, legacy=False):
         """Initialize the Beaker transformer"""
@@ -87,18 +89,30 @@ class TestBeakerTransformer:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "meta_host,exp_distro,exp_variant,exp_ks_meta",
+        "meta_host,exp_distro,exp_variant,exp_ks_meta,exp_ks_append",
         [
-            (fedora, "Fedora-36%", "Server", "FEDORA_HOST_KS_META"),
-            (centos, "CentOS-Stream-9%", "BaseOS", "PROV_CONF_CENTOS_KS_META"),
+            (fedora, "Fedora-36%", "Server", "FEDORA_HOST_KS_META", default_ks_append),
+            (
+                centos,
+                "CentOS-Stream-9%",
+                "BaseOS",
+                "PROV_CONF_CENTOS_KS_META",
+                default_ks_append,
+            ),
             # default variant should be there,
             # windows distro does not exist so host['os'] should be copied
-            (windows, "win-2022", "BaseOS", "PROV_CONF_DEFAULT"),
-            (rhel86, "RHEL-8.6%", "BaseOS", "PROV_CONF_RHEL86_KS_META"),
+            (windows, "win-2022", "BaseOS", "PROV_CONF_DEFAULT", default_ks_append),
+            (
+                rhel86,
+                "RHEL-8.6%",
+                "BaseOS",
+                "PROV_CONF_RHEL86_KS_META",
+                default_ks_append,
+            ),
         ],
     )
     async def test_beaker_requirement(
-        self, meta_host, exp_distro, exp_variant, exp_ks_meta
+        self, meta_host, exp_distro, exp_variant, exp_ks_meta, exp_ks_append
     ):
         """Test expected Beaker VM variant and distro"""
         bkr_transformer = await self.create_transformer()
@@ -106,6 +120,7 @@ class TestBeakerTransformer:
         assert req.get("distro") == exp_distro
         assert req.get("variant") == exp_variant
         assert req.get("ks_meta") == exp_ks_meta
+        assert req.get("ks_append") == exp_ks_append
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

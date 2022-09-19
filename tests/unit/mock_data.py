@@ -205,7 +205,6 @@ def provisioning_config(inventory_layout=None):
                 "CentOS-Stream-9%": "BaseOS",
                 "Fedora-36%": "Server",
             },
-            "pubkey": "config/id_rsa.pub",
             "reserve_duration": 86400,
             "kickstart_metadata": {
                 "default": "PROV_CONF_DEFAULT",
