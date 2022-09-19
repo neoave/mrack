@@ -28,7 +28,6 @@ from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
 
-from mrack.context import global_context
 from mrack.errors import ProvisioningError, ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
@@ -155,11 +154,7 @@ class BeakerProvider(Provider):
         arch_node.setAttribute("value", specs["arch"])
         recipe.addDistroRequires(arch_node)
 
-        host_requires = global_context.PROV_CONFIG[PROVISIONER_KEY].get(
-            "hostRequires",
-            specs.get(f"mrack_{PROVISIONER_KEY}", {}).get("hostRequires", {}),
-        )
-
+        host_requires = specs.get("hostRequires")
         if host_requires:  # suppose to be dict like {"or": [dict()], "and": [dict()]}
             for operand, operand_value in host_requires.items():
                 if operand.startswith("_"):
@@ -178,9 +173,9 @@ class BeakerProvider(Provider):
                 )
 
         # Specify the custom xml distro_tag node with values from provisioning config
-        distro_tags = global_context.PROV_CONFIG["beaker"].get("distro_tags")
+        distro_tags = specs.get("distro_tags")
         if distro_tags:
-            for tag in distro_tags.get(specs["distro"], []):
+            for tag in distro_tags:
                 tag_node = xml_doc().createElement("distro_tag")
                 tag_node.setAttribute("op", "=")
                 tag_node.setAttribute("value", tag)
