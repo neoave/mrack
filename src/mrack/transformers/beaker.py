@@ -194,7 +194,21 @@ class BeakerTransformer(Transformer):
                 ),
                 self._get_pubkeys(host),
             ),
-            f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
+            # TODO: should have similar logic as _get_flavor
+            "hostRequires": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "hostRequires",
+                "hostRequires",
+                host["group"],
+                default=None,
+            ),
+            "distro_tags": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "distro_tags",
+                "distro_tags",
+                distro,
+                default=[],
+            ),
         }
 
         return specs
