@@ -53,6 +53,31 @@ def test_find_value_in_config_hierarchy(
     )
     assert value == "Administrator"
 
+    # Check that dictionary is not returned if dict name is the same as attr and
+    # the dict doesn't have the value for given key
+    value = find_value_in_config_hierarchy(
+        provisioning_config,
+        "beaker",
+        metahost1,
+        host1_osp,
+        "distro_tags",
+        "distro_tags",
+        "RHEL-8.5%",
+    )
+    assert value is None
+
+    # Check that finding value when dict name is the same as attr works
+    value = find_value_in_config_hierarchy(
+        provisioning_config,
+        "beaker",
+        metahost1,
+        host1_osp,
+        "distro_tags",
+        "distro_tags",
+        "RHEL-9.0%",
+    )
+    assert value == "CTS_NIGHTLY"
+
 
 def test_find_simple_value_in_hierarchy(
     provisioning_config, host1_aws, metahost1, host_win_aws, metahost_win
