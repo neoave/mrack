@@ -69,6 +69,9 @@ def get_value_or_dict_value(config_dict, attr, dict_name, key):
             value = get_config_value(value_dict, key)
             if value:
                 return value
+        # avoid to return the whole value_dict if dict name is the same as attr
+        if attr == dict_name:
+            return None
 
     value = config_dict.get(attr)
     return value

@@ -89,10 +89,39 @@ def aws_config():
 
 
 @pytest.fixture
-def provisioning_config(openstack_config, aws_config):
+def beaker_config():
+    return {
+        "strategy": "abort",
+        "distros": {
+            "rhel-8.5": "RHEL-8.5%",
+            "fedora-34": "Fedora-34%",
+        },
+        "distro_variants": {
+            "default": "BaseeOS",
+            "RHEL-7.9%": "Server",
+            "Fedora-34%": "Server",
+        },
+        "distro_tags": {
+            "RHEL-9.0%": "CTS_NIGHTLY",
+        },
+        "pubkey": "config/id_rsa.pub",
+        "reserve_duration": 86400,
+        "timeout:": 230,
+        "flavors": {
+            "ipaserver": "test.medium",
+            "ipaclient": "test.micro",
+            "ad": "test.medium",
+            "default": "test.nano",
+        },
+    }
+
+
+@pytest.fixture
+def provisioning_config(openstack_config, aws_config, beaker_config):
     raw = {
         "openstack": openstack_config,
         "aws": aws_config,
+        "beaker": beaker_config,
         "users": {
             "rhel-8.5": "cloud-user",
             "fedora-34": "fedora",
