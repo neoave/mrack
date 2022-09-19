@@ -141,34 +141,9 @@ class BeakerProvider(Provider):
         """Check that hosts can be provisioned."""
         return True
 
-    def _allow_ssh_keys(self, pubkeys):
-        """Create ssh key content to be injected to xml."""
-        keys_content = "# keys added by mrack:\n"
-        for key in set(pubkeys):
-            with open(os.path.expanduser(key), "r") as key_file:
-                keys_content += f"{key_file.read().strip()}\n"
-
-        keys_content += "# end section of keys added by mrack\n"
-
-        return [
-            """%%post
-mkdir -p /root/.ssh
-cat >>/root/.ssh/authorized_keys << "__EOF__"
-%s__EOF__
-restorecon -R /root/.ssh
-chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
-%%end"""
-            % "".join(keys_content)
-        ]
-
     def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
         """Transform requirement to beaker job xml."""
         specs = deepcopy(req)  # work with own copy, do not modify the input
-
-        # Add allowed keys using kickstart append
-        if "ssh_pubkeys" in specs:
-            specs.update({"ks_append": self._allow_ssh_keys(specs["ssh_pubkeys"])})
-            del specs["ssh_pubkeys"]
 
         # Create recipe with the specifications
         recipe = BeakerRecipe(**specs)

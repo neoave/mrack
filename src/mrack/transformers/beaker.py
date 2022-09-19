@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Beaker transformer module."""
+import os
 import re
 
 from mrack.providers.provider import STRATEGY_ABORT
@@ -28,7 +29,6 @@ class BeakerTransformer(Transformer):
     _config_key = CONFIG_KEY
     _required_config_attrs = [
         "distros",
-        "pubkey",
         "reserve_duration",
         "timeout",
     ]  # List[str]
@@ -84,6 +84,57 @@ class BeakerTransformer(Transformer):
         )
         return res
 
+    def _construct_ks_append_script(self, ks_append, pubkeys=None):
+        """Create ks_appdend from requirements."""
+        if not ks_append and not pubkeys:
+            return []
+
+        res_ks_append = ["%post"]
+
+        if pubkeys is not None:
+            ks_append += self._allow_ssh_keys(pubkeys)
+
+        res_ks_append += ks_append
+
+        res_ks_append.append("%end")
+        return ["\n".join(res_ks_append)]
+
+    def _allow_ssh_keys(self, pubkeys):
+        """Create ssh key content to be injected to xml."""
+        keys_content = []
+        keys_content.append("mkdir -p /root/.ssh")
+        keys_content.append('cat >>/root/.ssh/authorized_keys << "__EOF__"')
+        keys_content.append("# keys added by mrack:")
+
+        for key in set(pubkeys):
+            with open(os.path.expanduser(key), "r") as key_file:
+                keys_content.append(f"{key_file.read().strip()}")
+
+        keys_content.append("# end section of keys added by mrack")
+        keys_content.append("__EOF__")
+        keys_content.append("restorecon -R /root/.ssh")
+        keys_content.append("chmod go-w /root /root/.ssh /root/.ssh/authorized_keys")
+
+        return keys_content
+
+    def _get_pubkeys(self, host):
+        """Get public keys list defined per host."""
+        host_beaker_config = host.get(CONFIG_KEY, {})
+        pubkey = self._find_value(host_beaker_config, "pubkey", "pubkey", None, None)
+
+        # add support for more keys defined in list
+        pubkeys = self._find_value(
+            host_beaker_config, "pubkeys", "pubkeys", host["os"], None
+        )
+
+        # normalize and merge them
+        if not pubkeys:
+            pubkeys = []
+        if pubkey:
+            pubkeys.append(pubkey)
+
+        return pubkeys
+
     def create_host_requirement(self, host):
         """Create single input for Beaker provisioner."""
         distro, variant = self._get_distro_and_variant(host)
@@ -134,20 +185,17 @@ class BeakerTransformer(Transformer):
                     {"name": "/distribution/dummy", "role": "STANDALONE"}
                 ],
             ),
+            "ks_append": self._construct_ks_append_script(
+                self._find_value(
+                    host.get(CONFIG_KEY, {}),
+                    "ks_append",
+                    "ks_append",
+                    host["os"],
+                    default=[],
+                ),
+                self._get_pubkeys(host),
+            ),
             f"mrack_{CONFIG_KEY}": host.get(CONFIG_KEY, {}),
         }
-
-        config_pubkey = self.config.get("pubkey")
-        if not config_pubkey:
-            return specs
-
-        pubkeys = []
-        if isinstance(config_pubkey, str):
-            # keep this backward compatible by this section
-            pubkeys.append(config_pubkey)
-        elif isinstance(config_pubkey, list):
-            pubkeys = config_pubkey
-
-        specs.update({"ssh_pubkeys": pubkeys})
 
         return specs
