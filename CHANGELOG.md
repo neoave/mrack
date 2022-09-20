@@ -2,6 +2,17 @@
 
 <!--next-version-placeholder-->
 
+## v1.7.0 (2022-09-20)
+### Feature
+* **Beaker:** Specify ks_append per host or config ([`59ba489`](https://github.com/neoave/mrack/commit/59ba489e70e7c83fc56d006ca0073d010dd4564f))
+* **Beaker:** Support configurable jobxml specs ([`e9b6fa7`](https://github.com/neoave/mrack/commit/e9b6fa7a1c7bd550953d5905f5fe262787559070))
+* **Beaker:** Support custom configurable ks_meta values ([`e167443`](https://github.com/neoave/mrack/commit/e16744346169ca375cea005c9e5989ff30bfc43b))
+
+### Fix
+* **Beaker:** Do not throw an Exception when not authenticated ([`d1b794b`](https://github.com/neoave/mrack/commit/d1b794b9622b27a6c776e9699bb21bb7032db173))
+* Issue when searching for value when dict_name == attr ([`98255c7`](https://github.com/neoave/mrack/commit/98255c78ec52053c508170238951daff90f4f5c6))
+* Beaker log polling to logfile instead of console ([`be560d9`](https://github.com/neoave/mrack/commit/be560d9b59fae0f8d142e737db99d7077ee8cf92))
+
 ## v1.6.0 (2022-07-27)
 ### Feature
 * **pytest-multihost:** Arbitrary attributes for hosts ([`d0c28f6`](https://github.com/neoave/mrack/commit/d0c28f62dad1cb8cf99704973209102cc0deab2f))
