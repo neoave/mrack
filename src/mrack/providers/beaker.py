@@ -27,8 +27,9 @@ from xmlrpc.client import Fault
 from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
+from gssapi.exceptions import MissingCredentialsError
 
-from mrack.errors import ProvisioningError, ValidationError
+from mrack.errors import NotAuthenticatedError, ProvisioningError, ValidationError
 from mrack.host import (
     STATUS_ACTIVE,
     STATUS_DELETED,
@@ -116,7 +117,14 @@ class BeakerProvider(Provider):
             os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
         )  # get the beaker config for initialization of hub
         self.conf.load_from_file(default_config)
-        self.hub = HubProxy(logger=logger, conf=self.conf)
+        try:
+            self.hub = HubProxy(logger=logger, conf=self.conf)
+        except MissingCredentialsError as kinit_err:
+            raise NotAuthenticatedError(
+                f"{self.dsp_name} needs Kerberos ticket to authenticate to BeakerHub. "
+                "Run 'kinit $USER' command to obtain Kerberos credentials."
+            ) from kinit_err
+
         login_end = datetime.now()
         login_duration = login_end - login_start
         logger.info(f"{self.dsp_name} Init duration {login_duration}")
