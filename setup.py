@@ -18,13 +18,13 @@ import sys
 
 from setuptools import find_packages, setup
 
-with open("README.md") as f:
+with open("README.md", encoding="utf-8") as f:
     readme = f.read()
 
-with open("requirements.txt") as req:
+with open("requirements.txt", encoding="utf-8") as req:
     reqs = req.readlines()
 
-with open("src/mrack/version.py", "r") as fd:
+with open("src/mrack/version.py", "r", encoding="utf-8") as fd:
     version = re.search(r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE)
     if version is None:
         sys.stderr.write("Could not parse the version string.\n")
