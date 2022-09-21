@@ -18,6 +18,7 @@ import asyncio
 import logging
 import sys
 from functools import update_wrapper
+from typing import Set, Tuple, Type
 
 import click
 
@@ -36,21 +37,63 @@ from mrack.errors import (
     ValidationError,
 )
 from mrack.providers import providers
-from mrack.providers.aws import PROVISIONER_KEY as AWS
-from mrack.providers.aws import AWSProvider
-from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
-from mrack.providers.beaker import BeakerProvider
-from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
-from mrack.providers.openstack import OpenStackProvider
-from mrack.providers.podman import PROVISIONER_KEY as PODMAN
-from mrack.providers.podman import PodmanProvider
-from mrack.providers.static import PROVISIONER_KEY as STATIC
-from mrack.providers.static import StaticProvider
-from mrack.providers.virt import PROVISIONER_KEY as VIRT
-from mrack.providers.virt import VirtProvider
+from mrack.providers.provider import Provider
 from mrack.version import VERSION
 
+PROVIDER_NAME = 0
+PROVIDER_CLASS = 1
+installed_providers: Set[Tuple[str, Type[Provider]]] = set()
 logger = logging.getLogger(__name__)
+IMPORT_ERR_TEMPLATE = "Provider '%s' not installed, skipping provider registration"
+
+
+try:
+    from mrack.providers.aws import PROVISIONER_KEY as AWS
+    from mrack.providers.aws import AWSProvider
+
+    installed_providers.add((AWS, AWSProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
+
+try:
+    from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
+    from mrack.providers.beaker import BeakerProvider
+
+    installed_providers.add((BEAKER, BeakerProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
+
+try:
+    from mrack.providers.openstack import PROVISIONER_KEY as OPENSTACK
+    from mrack.providers.openstack import OpenStackProvider
+
+    installed_providers.add((OPENSTACK, OpenStackProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
+
+try:
+    from mrack.providers.podman import PROVISIONER_KEY as PODMAN
+    from mrack.providers.podman import PodmanProvider
+
+    installed_providers.add((PODMAN, PodmanProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
+
+try:
+    from mrack.providers.static import PROVISIONER_KEY as STATIC
+    from mrack.providers.static import StaticProvider
+
+    installed_providers.add((STATIC, StaticProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
+
+try:
+    from mrack.providers.virt import PROVISIONER_KEY as VIRT
+    from mrack.providers.virt import VirtProvider
+
+    installed_providers.add((VIRT, VirtProvider))
+except ModuleNotFoundError as err:
+    logger.debug(IMPORT_ERR_TEMPLATE, err.name)
 
 
 def async_run(func):
@@ -66,12 +109,16 @@ def async_run(func):
 
 def init_providers():
     """Register all providers usable in this session."""
-    providers.register(OPENSTACK, OpenStackProvider)
-    providers.register(AWS, AWSProvider)
-    providers.register(BEAKER, BeakerProvider)
-    providers.register(PODMAN, PodmanProvider)
-    providers.register(STATIC, StaticProvider)
-    providers.register(VIRT, VirtProvider)
+    if not installed_providers:
+        raise ApplicationError("FATAL: mrack did not find any installed providers")
+
+    for installed_provider in installed_providers:
+        providers.register(
+            installed_provider[PROVIDER_NAME],
+            installed_provider[PROVIDER_CLASS],
+        )
+
+    logger.info(f"Installed providers: {', '.join(providers.names)}")
 
 
 async def generate_outputs(ctx):
