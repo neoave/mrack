@@ -151,5 +151,7 @@ class Transformer:
     def create_host_requirements(self):
         """Create inputs for all host for provisioner."""
         reqs = [self.create_host_requirement(host) for host in self.hosts]
-        logger.info(f"{self.dsp_name} Created requirement(s): {object2json(reqs)}")
+        logger.info(
+            f"{self.dsp_name} Created {len(reqs)} requirement(s): {object2json(reqs)}"
+        )
         return reqs
