@@ -11,14 +11,178 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import deepcopy
 from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
 
+from mrack.errors import ProviderError
 from mrack.providers.openstack import OpenStackProvider
 
 from .utils import get_data  # FIXME do not use relative import
+
+predefined_hosts = [
+    {
+        "name": "f-latest-0.mrack.test",
+        "os": "fedora-latest",
+        "group": "ipaclient",
+        "flavor": "ci.standard.xs",
+        "image": "idm-Fedora-Cloud-Base-37-latest",
+        "key_name": "idm-jenkins",
+        "network": "IPv4",
+        "config_drive": True,
+    },
+    {
+        "name": "f-latest-1.mrack.test",
+        "os": "fedora-latest",
+        "group": "ipaclient",
+        "flavor": "ci.standard.xs",
+        "image": "idm-Fedora-Cloud-Base-37-latest",
+        "key_name": "idm-jenkins",
+        "network": "IPv4",
+        "config_drive": True,
+    },
+    {
+        "name": "f-latest-2.mrack.test",
+        "os": "fedora-latest",
+        "group": "ipaclient",
+        "flavor": "ci.standard.xs",
+        "image": "idm-Fedora-Cloud-Base-37-latest",
+        "key_name": "idm-jenkins",
+        "network": "IPv4",
+        "config_drive": True,
+    },
+]
+
+mocked_nets = get_data("network_availabilities.json")
+
+net3_usable = deepcopy(mocked_nets)
+networks = net3_usable["network_ip_availabilities"]
+net_1 = networks[0]
+net_1["used_ips"] = 999
+net_1["subnet_ip_availability"][0]["used_ips"] = 999
+
+low_availability_net1_prio = deepcopy(net3_usable)
+networks = low_availability_net1_prio["network_ip_availabilities"]
+net_3 = networks[2]
+net_3["used_ips"] = 1000
+net_3["subnet_ip_availability"][0]["used_ips"] = 1000
+
+low_availability_net3_prio = deepcopy(net3_usable)
+networks = low_availability_net3_prio["network_ip_availabilities"]
+net_3 = networks[2]
+net_3["used_ips"] = 989
+net_3["subnet_ip_availability"][0]["used_ips"] = 989
+
+no_usable_traceback_2ips_left = deepcopy(mocked_nets)
+networks = no_usable_traceback_2ips_left["network_ip_availabilities"]
+net_1 = networks[0]
+net_1["used_ips"] = net_1["total_ips"] - 1
+net_1["subnet_ip_availability"][0]["used_ips"] = net_1["total_ips"] - 1
+net_3 = networks[2]
+net_3["used_ips"] = net_3["total_ips"] - 1
+net_3["subnet_ip_availability"][0]["used_ips"] = net_3["total_ips"] - 1
+
+no_usable_traceback_no_ips_left = deepcopy(mocked_nets)
+networks = no_usable_traceback_no_ips_left["network_ip_availabilities"]
+net_1 = networks[0]
+net_1["used_ips"] = net_1["total_ips"]
+net_1["subnet_ip_availability"][0]["used_ips"] = net_1["total_ips"]
+net_3 = networks[2]
+net_3["used_ips"] = net_3["total_ips"]
+net_3["subnet_ip_availability"][0]["used_ips"] = net_3["total_ips"]
+
+
+net_pools = get_data("network_pools.json")
+network_data = [
+    (
+        "empty-hosts",  # test name
+        [],  # hosts
+        {},  # network pools
+        {},  # networks
+        [],  # result
+    ),
+    (
+        "test1-host_net3-usable",
+        [deepcopy(predefined_hosts[0])],
+        net_pools,
+        net3_usable,
+        [["net_3"]],
+    ),
+    (
+        "test2-hosts_net3-usable",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+        ],
+        net_pools,
+        net3_usable,
+        [["net_3"], ["net_3"]],
+    ),
+    (
+        "test3-hosts_net3-usable",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+            deepcopy(predefined_hosts[2]),
+        ],
+        net_pools,
+        net3_usable,
+        [["net_3"], ["net_3"], ["net_3"]],
+    ),
+    (
+        "test3-hosts_low-availability_net1_prio",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+            deepcopy(predefined_hosts[2]),
+        ],
+        net_pools,
+        low_availability_net1_prio,
+        [["net_1"], ["net_1"], ["net_3"]],
+    ),
+    (
+        "test3-hosts_low-availability_net3_prio",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+            deepcopy(predefined_hosts[2]),
+        ],
+        net_pools,
+        low_availability_net3_prio,
+        [["net_3"], ["net_3"], ["net_1"]],
+    ),
+    (
+        "test3-hosts_no_usable_traceback_2ips_left",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+            deepcopy(predefined_hosts[2]),
+        ],
+        net_pools,
+        no_usable_traceback_2ips_left,
+        ProviderError("OpenStack Error: no available networks for 3 hosts with IPv4"),
+    ),
+    (
+        "test1-host_low-availability_1random_from_all_nets",
+        [deepcopy(predefined_hosts[0])],
+        net_pools,
+        low_availability_net3_prio,
+        [["net_3", "net_1"]],
+    ),
+    (
+        "test3-hosts_no_usable_traceback_no_ips_left",
+        [
+            deepcopy(predefined_hosts[0]),
+            deepcopy(predefined_hosts[1]),
+            deepcopy(predefined_hosts[2]),
+        ],
+        net_pools,
+        no_usable_traceback_no_ips_left,
+        ProviderError("OpenStack Error: no available networks for 3 hosts with IPv4"),
+    ),
+]
 
 
 def AsyncMock(*args, **kwargs):
@@ -37,6 +201,7 @@ class TestOpenStackProvider:
         self.flavors = get_data("flavors.json")
         self.images = get_data("images.json")
         self.availabilities = get_data("network_availabilities.json")
+        self.network_pools = get_data("network_pools.json")
         self.networks = get_data("networks.json")
 
         self.auth_patcher = patch("mrack.providers.openstack.AuthPassword")
@@ -127,3 +292,38 @@ class TestOpenStackProvider:
     async def test_provision(self):
         provider = OpenStackProvider()
         await provider.init(image_names=[])
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("x", network_data, ids=[x[0] for x in network_data])
+    async def test_network_picking_validation(self, x):
+        _, hosts, pools, availability, exp_nets = x
+        reqs = deepcopy(hosts)
+        if availability:
+            del self.mock_neutron
+            self.mock_neutron = Mock()
+            self.mock_neutron.init_api = AsyncMock(return_value=True)
+            self.mock_neutron.network.list = AsyncMock(return_value=self.networks)
+            self.mock_neutron.ip.list = AsyncMock(return_value=availability)
+
+            self.mock_neutron_class = Mock(return_value=self.mock_neutron)
+            self.neutron_patcher = patch(
+                "mrack.providers.openstack.NeutronClient", new=self.mock_neutron_class
+            )
+            self.neutron_patcher.start()
+
+        provider = OpenStackProvider()
+
+        await provider.init(image_names=[], networks=pools)
+        try:
+            provider.translate_network_types(hosts)
+        except ProviderError as no_nets:
+            assert isinstance(exp_nets, ProviderError) is True
+            assert "no available networks" in str(no_nets)
+            assert str(len(hosts)) in str(no_nets)
+            return True
+
+        assert len(hosts) == len(reqs)
+        for i, host in enumerate(hosts):
+            assert host != reqs[i]
+            assert host["network"] in pools.get(reqs[i]["network"])
+            assert host["network"] in exp_nets[i]
