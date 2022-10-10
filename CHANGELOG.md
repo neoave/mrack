@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.1 (2022-10-10)
+### Fix
+* Add missing split support for transformer ([`d22d360`](https://github.com/neoave/mrack/commit/d22d36071dc922e088ede8df63576988e2c8bd52))
+
 ## v1.8.0 (2022-10-10)
 ### Feature
 * Add support to dynamically load providers ([`607c99c`](https://github.com/neoave/mrack/commit/607c99c7cd6aef5fdf10dd4f634fe3c99543ff96))
