@@ -117,7 +117,7 @@ class AWSProvider(Provider):
         """
         Get a loaded image.
 
-        Does also basic image defintion validation.
+        Does also basic image definition validation.
 
         Return None if image is not yet loaded.
         """
@@ -148,7 +148,7 @@ class AWSProvider(Provider):
         else:
             raise ValidationError(
                 f"{log_msg_start} Invalid image "
-                f"definion. Must be 'tags' definition or AMI ID"
+                f"definition. Must be 'tags' definition or AMI ID"
             )
         return None
 
@@ -185,7 +185,7 @@ class AWSProvider(Provider):
 
     def load_images(self, reqs):
         """
-        Load AMI images for all reqs.
+        Load AMI images for all requirements.
 
         Done sequentially, already loaded images are not loaded again. Basically also
         validates that images are available and that their definition is correct.
