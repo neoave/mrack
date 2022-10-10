@@ -18,19 +18,65 @@ Transformers take job definitions, combine it with provisioning configuration
 and returns provisioning requirements (input for provisioners).
 """
 
+import logging
+from typing import Set, Tuple, Type
+
 from mrack.errors import ProviderNotExists
-from mrack.transformers.aws import CONFIG_KEY as AWS_KEY
-from mrack.transformers.aws import AWSTransformer
-from mrack.transformers.beaker import CONFIG_KEY as BEAKER_KEY
-from mrack.transformers.beaker import BeakerTransformer
-from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
-from mrack.transformers.openstack import OpenStackTransformer
-from mrack.transformers.podman import CONFIG_KEY as PODMAN_KEY
-from mrack.transformers.podman import PodmanTransformer
-from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
-from mrack.transformers.static import StaticTransformer
-from mrack.transformers.virt import CONFIG_KEY as VIRT_KEY
-from mrack.transformers.virt import VirtTransformer
+from mrack.transformers.transformer import Transformer
+
+NAME = 0
+CLASS = 1
+installed_transformers: Set[Tuple[str, Type[Transformer]]] = set()
+IMPORT_ERR_TEMPLATE = "Transformer '%s' not installed, skipping registration"
+logger = logging.getLogger(__name__)
+
+try:
+    from mrack.transformers.aws import CONFIG_KEY as AWS_KEY
+    from mrack.transformers.aws import AWSTransformer
+
+    installed_transformers.add((AWS_KEY, AWSTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+try:
+    from mrack.transformers.beaker import CONFIG_KEY as BEAKER_KEY
+    from mrack.transformers.beaker import BeakerTransformer
+
+    installed_transformers.add((BEAKER_KEY, BeakerTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+try:
+    from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
+    from mrack.transformers.openstack import OpenStackTransformer
+
+    installed_transformers.add((OPENSTACK_KEY, OpenStackTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+try:
+    from mrack.transformers.podman import CONFIG_KEY as PODMAN_KEY
+    from mrack.transformers.podman import PodmanTransformer
+
+    installed_transformers.add((PODMAN_KEY, PodmanTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+try:
+    from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
+    from mrack.transformers.static import StaticTransformer
+
+    installed_transformers.add((STATIC_KEY, StaticTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+try:
+    from mrack.transformers.virt import CONFIG_KEY as VIRT_KEY
+    from mrack.transformers.virt import VirtTransformer
+
+    installed_transformers.add((VIRT_KEY, VirtTransformer))
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
 
 
 class Registry:
@@ -66,9 +112,9 @@ class Registry:
 
 
 transformers = Registry()
-transformers.register(OPENSTACK_KEY, OpenStackTransformer)
-transformers.register(AWS_KEY, AWSTransformer)
-transformers.register(BEAKER_KEY, BeakerTransformer)
-transformers.register(PODMAN_KEY, PodmanTransformer)
-transformers.register(STATIC_KEY, StaticTransformer)
-transformers.register(VIRT_KEY, VirtTransformer)
+
+for installed_transformer in installed_transformers:
+    transformers.register(
+        installed_transformer[NAME],
+        installed_transformer[CLASS],
+    )
