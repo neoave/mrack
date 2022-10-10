@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.8.0 (2022-10-10)
+### Feature
+* Add support to dynamically load providers ([`607c99c`](https://github.com/neoave/mrack/commit/607c99c7cd6aef5fdf10dd4f634fe3c99543ff96))
+
+### Fix
+* Use encoding when opening files in setup.py ([`3ef4b92`](https://github.com/neoave/mrack/commit/3ef4b92ac2751cbc2144e86bb12ae56da8833bae))
+
 ## v1.7.0 (2022-09-20)
 ### Feature
 * **Beaker:** Specify ks_append per host or config ([`59ba489`](https://github.com/neoave/mrack/commit/59ba489e70e7c83fc56d006ca0073d010dd4564f))
