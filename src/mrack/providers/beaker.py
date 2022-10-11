@@ -293,27 +293,39 @@ class BeakerProvider(Provider):
         bkr_res = {}
         prev_status = ""
         job_url = ""
+        hub_url = self.hub._hub_url  # pylint: disable=protected-access
 
         # let us use timeout variable which is in minutes to define
         # maximum time to wait for beaker recipe to provide VM
         timeout_time = datetime.now() + timedelta(minutes=self.timeout)
 
         while datetime.now() < timeout_time:
-            bkr_res = self._get_recipe_info(beaker_id, log_msg_start=log_msg_start)
-            status = bkr_res["status"]
-            job_url = (
-                f"{self.hub._hub_url}"  # pylint: disable=protected-access
-                f"/jobs/{bkr_res['id']}"
-            )
+            prev_bkr_res = bkr_res
+            try:
+                bkr_res = self._get_recipe_info(beaker_id, log_msg_start=log_msg_start)
+            except TimeoutError as timeout:
+                logger.warning(
+                    f"{log_msg_start} Can not connect to {hub_url}: {timeout}"
+                )
+                logger.debug(
+                    f"{log_msg_start} Using previous result "
+                    f"and retrying in {self.poll_sleep:.1f}s"
+                )
+                bkr_res = prev_bkr_res
 
-            if prev_status != status:
+            status = bkr_res.get("status", "")
+            job_url = f"{hub_url}/jobs/{bkr_res.get('id', None)}"
+
+            status_changed = prev_status != status
+            if status_changed:
                 logger.info(
                     f"{log_msg_start} Job {job_url} "
                     f"has changed status ({prev_status} -> {status})"
                 )
                 prev_status = status
 
-            if self.status_map.get(status) == STATUS_PROVISIONING:
+            # if we have problem contacting hub from beginning: status will not change
+            if self.status_map.get(status) == STATUS_PROVISIONING or not status_changed:
                 await asyncio.sleep(self.poll_sleep)
             elif self.status_map.get(status) == STATUS_ACTIVE:
                 break
