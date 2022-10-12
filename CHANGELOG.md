@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.9.0 (2022-10-12)
+### Feature
+* Split mrack spec to multiple packages ([`1709af0`](https://github.com/neoave/mrack/commit/1709af06150c567f91e44584375bddf79b993807))
+
+### Documentation
+* Update installation steps based on mrack package division ([`48b16f4`](https://github.com/neoave/mrack/commit/48b16f45acf96e9129507037e2fcac1a0abf0045))
+
 ## v1.8.1 (2022-10-10)
 ### Fix
 * Add missing split support for transformer ([`d22d360`](https://github.com/neoave/mrack/commit/d22d36071dc922e088ede8df63576988e2c8bd52))

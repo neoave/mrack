@@ -1,6 +1,6 @@
 # Created by pyp2rpm-3.3.5
 Name:           mrack
-Version:        1.8.1
+Version:        1.9.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner for CIs and testing during development
 
@@ -145,6 +145,9 @@ rm -rf %{name}.egg-info
 %{python3_sitelib}/%{name}/transformers/{,__pycache__/}virt.*
 
 %changelog
+* Wed Oct 12 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.9.0-1
+- Released upstream version 1.9.0
+
 * Mon Oct 10 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.8.1-1
 - Released upstream version 1.8.1
 
