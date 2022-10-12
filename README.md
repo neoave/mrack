@@ -121,9 +121,36 @@ pip install mrack
 It is also available for Fedora 32+ via [COPR](https://copr.fedorainfracloud.org/coprs/g/freeipa/neoave/package/mrack/):
 
 ```
+# enable the copr at your system
 sudo dnf copr enable @freeipa/neoave
+
+# install mrack package with all supported providers and cli
 sudo dnf install mrack
+
+# install mrack command and e.g. AWS provider
+sudo dnf install mrack-cli python3-mrack-aws
+
+# install mrack library to be later used as an import with support of OpenStack provider:
+sudo dnf install python3-mrack-openstack
+
 ```
+---
+**NOTE**
+
+Above command will install `mrack` package which depends on (contains) following packages:
+- mrack-cli
+- python3-mracklib
+- python3-mrack-aws
+- python3-mrack-beaker
+- python3-mrack-openstack
+- python3-mrack-podman
+- python3-mrack-virt
+
+The `python3-mracklib` is mandatory as it contains core mrack library.
+To install only some of `mrack` providers you should install `python3-mrack-{provider_name}`.
+To install mrack command a package `mrack-cli` is required.
+
+---
 
 ## Run mrack
 
