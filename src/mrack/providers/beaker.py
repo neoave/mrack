@@ -28,6 +28,7 @@ from bkr.client import BeakerJob, BeakerRecipe, BeakerRecipeSet
 from bkr.common.hub import HubProxy
 from bkr.common.pyconfig import PyConfigParser
 from gssapi.exceptions import MissingCredentialsError
+from gssapi.raw.misc import GSSError
 
 from mrack.errors import NotAuthenticatedError, ProvisioningError, ValidationError
 from mrack.host import (
@@ -124,6 +125,10 @@ class BeakerProvider(Provider):
                 f"{self.dsp_name} needs Kerberos ticket to authenticate to BeakerHub. "
                 "Run 'kinit $USER' command to obtain Kerberos credentials."
             ) from kinit_err
+        except GSSError as hub_err:
+            raise NotAuthenticatedError(
+                f"{self.dsp_name} Unable to Create session: {hub_err}"
+            ) from hub_err
 
         login_end = datetime.now()
         login_duration = login_end - login_start
