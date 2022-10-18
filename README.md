@@ -154,7 +154,7 @@ To install mrack command a package `mrack-cli` is required.
 
 ## Run mrack
 
-In order to use the mrack utility a mrack.conf (e.g. [mrack.conf] from the repository(repo/blob/master/src/mrack/data/mrack.conf)) is needed.
+In order to use the mrack utility a mrack.conf (e.g. [mrack.conf] from the repository(repo/blob/main/src/mrack/data/mrack.conf)) is needed.
 
 mrack looks for the config file in following order:
 - `./` actual directory

@@ -21,6 +21,6 @@ version_variable = [
 version_pattern = [
     "mrack.spec:Version:\\s+{version}",
 ]
-branch = "master"
+branch = "main"
 commit = true
 tag = true

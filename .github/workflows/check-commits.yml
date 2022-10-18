@@ -4,7 +4,7 @@ name: Check commit message and PR header format
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   check-commit-message:
