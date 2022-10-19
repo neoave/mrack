@@ -57,6 +57,39 @@ class AWSTransformer(Transformer):
             sc_ids.add(sc_id)
         return list(sc_ids)
 
+    def _find_subnet_ids(self, host):
+        """Get subnet id/s from config.
+
+        Note: 'subnet_ids' has preference against legacy way 'subnet_id'.
+
+        Returns: List of found subnet ids
+        """
+        subnet_ids = self._find_value(
+            host.get(CONFIG_KEY, {}),
+            "subnet_ids",
+            "subnet_ids",
+            host["os"],
+            default=[],
+        )
+        subnet_id = self._find_value(
+            host.get(CONFIG_KEY, {}),
+            "subnet_id",
+            None,
+            None,
+            default="",
+        )
+
+        if "subnet_ids" in host.get(CONFIG_KEY, {}):
+            return subnet_ids
+        if "subnet_id" in host.get(CONFIG_KEY, {}):
+            return [subnet_id]
+        if subnet_ids:
+            return subnet_ids
+        if subnet_id:
+            return [subnet_id]
+
+        return []
+
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
         del_vol = self._find_value(
@@ -71,7 +104,7 @@ class AWSTransformer(Transformer):
             "security_group_ids": self._get_security_groups(),
             "spot": self._find_value(host, "spot", None, None),
             "delete_volume_on_termination": del_vol,
+            "subnet_ids": self._find_subnet_ids(host),
         }
-        if self.config.get("subnet_id"):
-            req["subnet_id"] = self.config.get("subnet_id")
+
         return req

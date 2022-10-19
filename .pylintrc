@@ -16,3 +16,6 @@ disable=fixme,too-many-instance-attributes,no-self-use,attribute-defined-outside
 
 # Minimum lines number of a similarity.
 min-similarity-lines=11
+
+# Maximum number of locals for function / method body
+max-locals=25

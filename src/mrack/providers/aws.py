@@ -14,10 +14,12 @@
 
 """AWS Provider interface."""
 
+import asyncio
 import logging
 import secrets
 from copy import deepcopy
 from datetime import datetime
+from random import shuffle
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
@@ -43,6 +45,7 @@ class AWSProvider(Provider):
         self.ssh_key = None
         self.instance_tags = None
         self.max_retry = 1  # for retry strategy
+        self.subnets_capacity = {}
         self.status_map = {
             "running": STATUS_ACTIVE,
             "pending": STATUS_PROVISIONING,
@@ -209,8 +212,88 @@ class AWSProvider(Provider):
         """Validate that host requirements are well specified."""
         return
 
-    async def can_provision(self, hosts):
-        """Check that hosts can be provisioned."""
+    async def get_subnet_available_ips(self, subnet_id, log_msg_start):
+        """Get number of IPs available in a subnet."""
+        try:
+            subnet = self.ec2.Subnet(subnet_id)
+        except ClientError:
+            logger.warning(
+                f"{log_msg_start} Error retrieving info from subnet: {subnet_id}"
+            )
+            return 0
+
+        logger.debug(f"{log_msg_start} Subnet {subnet_id}")
+        logger.debug(
+            f"{log_msg_start}   available: {subnet.available_ip_address_count}"
+        )
+
+        return subnet.available_ip_address_count
+
+    async def can_provision(self, hosts):  # pylint: disable=too-many-branches
+        """Check that all host can be provisioned.
+
+        Checks:
+        * Available IPv4 addresses are enough
+        """
+        log_msg_start = self.dsp_name
+
+        ip_availabilities = {}  # Dict for storing available IPs in every subnet
+        single_subnet_prov = []  # List for storing provided single subnets
+        mult_subnets_prov = []  # List for storing lists of provided multiple subnets
+
+        # For all hosts, get subnets in dict (with no repetitions) and list of
+        # provided single & multiple subnets
+        for host in hosts:
+            if subnet_ids := host.get("subnet_ids"):
+                if len(subnet_ids) == 1:
+                    single_subnet_prov.append(subnet_ids[0])
+                    if subnet_ids[0] not in ip_availabilities:
+                        ip_availabilities[subnet_ids[0]] = 0
+                else:
+                    mult_subnets_prov.append(subnet_ids)
+                    for subnet_id in subnet_ids:
+                        if subnet_id not in ip_availabilities:
+                            ip_availabilities[subnet_id] = 0
+            else:
+                logger.debug(
+                    f"{log_msg_start} No subnet/s specified for host {host['name']}."
+                )
+
+        # Get available IPs from AWS for every subnet
+        logger.info(f"{log_msg_start} Checking IP availability")
+        ips_count_wait = [
+            self.get_subnet_available_ips(subnet_id, log_msg_start)
+            for subnet_id in ip_availabilities
+        ]
+        ips_count_result = await asyncio.gather(*ips_count_wait)
+        ip_availabilities = dict(zip(ip_availabilities, ips_count_result))
+
+        self.subnets_capacity = ip_availabilities.copy()
+
+        # Discount hosts with single subnet specified from available IPs
+        for subnet_id in single_subnet_prov:
+            if ip_availabilities[subnet_id] > 0:
+                ip_availabilities[subnet_id] -= 1
+            else:
+                logger.info(
+                    f"{log_msg_start} Not enougn IP addresses available "
+                    f"in subnet: {subnet_id}"
+                )
+                return False
+
+        # Discount hosts with multiple subnets specified from available IPs
+        for subnet_ids in mult_subnets_prov:
+            for subnet_id in subnet_ids:
+                if ip_availabilities[subnet_id] > 0:
+                    ip_availabilities[subnet_id] -= 1
+                    break
+            else:
+                logger.info(
+                    f"{log_msg_start} Not enougn IP addresses available "
+                    f"in subnet/s: {subnet_ids}"
+                )
+                return False
+
         return True
 
     async def create_server(self, req):
@@ -265,8 +348,22 @@ class AWSProvider(Provider):
             ],
             "TagSpecifications": [{"ResourceType": "instance", "Tags": taglist}],
         }
-        if specs.get("subnet_id"):
-            request["SubnetId"] = specs.get("subnet_id")
+
+        if subnet_ids := specs.get("subnet_ids"):
+            shuffle(subnet_ids)  # Randomize subnets order
+            for subnet_id in subnet_ids:
+                if self.subnets_capacity[subnet_id] > 0:
+                    self.subnets_capacity[subnet_id] -= 1
+                    request["SubnetId"] = subnet_id
+                    break
+            if not request["SubnetId"]:
+                raise ProvisioningError(
+                    f"There are no subnets with IPs available"
+                    f"for use from {subnet_ids}",
+                    req,
+                )
+        else:
+            logger.warning(f"{log_msg_start} No subnet/s specified. Using default...")
 
         if specs.get("spot"):
             request["InstanceMarketOptions"] = {
