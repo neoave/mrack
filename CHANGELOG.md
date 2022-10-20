@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.9.1 (2022-10-20)
+### Fix
+* Add CHANGELOG.md to MANIFEST.in ([`64fa546`](https://github.com/neoave/mrack/commit/64fa546e9fc24e30ea655c2ee211f5b348272929))
+* Update spec to match fedora community standard ([`91726d7`](https://github.com/neoave/mrack/commit/91726d786414620b5556165e7a90adc672bfc3d2))
+* **Beaker:** Traceback when hub is not accessible at session creation ([`18f6b78`](https://github.com/neoave/mrack/commit/18f6b7898130cf8c5c7e4c392b1d4ad72b15f1ba))
+* **Beaker:** Connection to hub timing out ([`9c258d8`](https://github.com/neoave/mrack/commit/9c258d8bf4eea248e8220d0b697ea0126e24b23b))
+
 ## v1.9.0 (2022-10-12)
 ### Feature
 * Split mrack spec to multiple packages ([`1709af0`](https://github.com/neoave/mrack/commit/1709af06150c567f91e44584375bddf79b993807))
