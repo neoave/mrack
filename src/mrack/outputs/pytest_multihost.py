@@ -67,6 +67,7 @@ class PytestMultihostOutput:
             "username",
             "password",
             "host_type",
+            "config",
         ]
 
         # Use values from provisioning-config mhcfg section - as default values
