@@ -38,7 +38,7 @@ the aim is to be able to describe host from application perspective.
 %{?python_provide:%python_provide %{name}}
 
 %package        cli
-Summary:        mrack command
+Summary:        Command line interface for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
 
 %package -n     python3-%{name}lib
@@ -47,31 +47,46 @@ Requires:       python3-click
 Requires:       python3-pyyaml
 Requires:       sshpass
 
+%{?python_provide:%python_provide python3-%{name}lib}
+
 %package -n     python3-%{name}-aws
 Summary:        AWS provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
 Requires:       python3-boto3
 Requires:       python3-botocore
 
+%{?python_provide:%python_provide python3-%{name}-aws}
+
+
 %package -n     python3-%{name}-beaker
 Summary:        Beaker provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
 Requires:       beaker-client
+
+%{?python_provide:%python_provide python3-%{name}-beaker}
+
 
 %package -n     python3-%{name}-openstack
 Summary:        Openstack provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
 Recommends:     python3-AsyncOpenStackClient
 
+%{?python_provide:%python_provide python3-%{name}-openstack}
+
+
 %package -n     python3-%{name}-podman
 Summary:        Podman provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
 Requires:       podman
 
+%{?python_provide:%python_provide python3-%{name}-podman}
+
 %package -n     python3-%{name}-virt
 Summary:        Virtualization provider plugin for mrack using testcloud
 Requires:       python3-%{name}lib = %{version}-%{release}
 Requires:       testcloud
+
+%{?python_provide:%python_provide python3-%{name}-virt}
 
 %description        cli
 %{name}-cli contains mrack command which functionality
@@ -130,9 +145,9 @@ rm -rf %{name}.egg-info
 %doc CHANGELOG.md
 %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}-%{version}-py%{python3_version}.egg-info
-%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}osapi.py
-%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.py
-%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}podman.py
+%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}osapi.*
+%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
+%exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}podman.*
 %exclude %{python3_sitelib}/%{name}/providers/{,__pycache__/}{%{provider_plugins}}.*
 %exclude %{python3_sitelib}/%{name}/transformers/{,__pycache__/}{%{provider_plugins}}.*
 
@@ -147,17 +162,17 @@ rm -rf %{name}.egg-info
 %files -n python3-%{name}-openstack
 %{python3_sitelib}/%{name}/transformers/{,__pycache__/}openstack.*
 %{python3_sitelib}/%{name}/providers/{,__pycache__/}openstack.*
-%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}osapi.py
+%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}osapi.*
 
 %files -n python3-%{name}-podman
 %{python3_sitelib}/%{name}/transformers/{,__pycache__/}podman.*
 %{python3_sitelib}/%{name}/providers/{,__pycache__/}podman.*
-%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}podman.py
+%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}podman.*
 
 %files -n python3-%{name}-virt
 %{python3_sitelib}/%{name}/transformers/{,__pycache__/}virt.*
 %{python3_sitelib}/%{name}/providers/{,__pycache__/}virt.*
-%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.py
+%{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
 * Thu Oct 20 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.9.1-1
