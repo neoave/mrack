@@ -169,14 +169,14 @@ def json_convertor(obj):
 
 def load_json(path):
     """Load JSON file into Python object."""
-    with open(os.path.expanduser(path), "r") as file_data:
+    with open(os.path.expanduser(path), "r", encoding="utf-8") as file_data:
         data = json.load(file_data)
     return data
 
 
 def load_yaml(path):
     """Load YAML file into Python object."""
-    with open(os.path.expanduser(path), "r") as file_data:
+    with open(os.path.expanduser(path), "r", encoding="utf-8") as file_data:
         data = yaml.safe_load(file_data)
     return data
 
@@ -184,7 +184,7 @@ def load_yaml(path):
 def save_to_json(path, data):
     """Serialize object into JSON file."""
     try:
-        with open(os.path.expanduser(path), "w") as output:
+        with open(os.path.expanduser(path), "w", encoding="utf-8") as output:
             json.dump(data, output, default=json_convertor, indent=2, sort_keys=True)
     except IOError as exc:
         logger.exception(exc)
@@ -195,7 +195,7 @@ def save_to_json(path, data):
 def fd_open(filename=None):
     """Use file or stout as output file descriptor."""
     if filename:
-        file_d = open(os.path.expanduser(filename), "w")
+        file_d = open(os.path.expanduser(filename), "w", encoding="utf-8")
     else:
         file_d = sys.stdout
 

@@ -33,7 +33,7 @@ class EtcHostsUpdater:
     def __init__(self, path="/etc/hosts"):
         """Init the updater."""
         self.path = path
-        with open(self.path, "r") as etc_hosts:
+        with open(self.path, "r", encoding="utf-8") as etc_hosts:
             self.lines = etc_hosts.readlines()
 
         # Trigger validation
@@ -106,7 +106,7 @@ class EtcHostsUpdater:
     def save(self):
         """Save changes into /etc/hosts."""
         try:
-            with open(self.path, "w") as etc_file:
+            with open(self.path, "w", encoding="utf-8") as etc_file:
                 etc_file.writelines(self.lines)
         except PermissionError as perm_err:
             name = getpass.getuser()
