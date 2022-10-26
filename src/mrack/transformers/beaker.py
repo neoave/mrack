@@ -106,7 +106,7 @@ class BeakerTransformer(Transformer):
         keys_content.append("# keys added by mrack:")
 
         for key in set(pubkeys):
-            with open(os.path.expanduser(key), "r") as key_file:
+            with open(os.path.expanduser(key), "r", encoding="utf-8") as key_file:
                 keys_content.append(f"{key_file.read().strip()}")
 
         keys_content.append("# end section of keys added by mrack")
