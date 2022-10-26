@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v1.10.0 (2022-10-26)
+### Feature
+* **OpenStack:** Pick from all networks based on load ([`317c2ac`](https://github.com/neoave/mrack/commit/317c2ac8c11580b078f306192309a0637522aed5))
+
+### Fix
+* Update paths in specfile and python_provide ([`5262bca`](https://github.com/neoave/mrack/commit/5262bca0782e343927aa0c5ee2be63c10f9c9e0d))
+* **utils:** Add encoding to open functions ([`e28e044`](https://github.com/neoave/mrack/commit/e28e044e9398c380d64ef0980eab4239881f98d1))
+* **Podman:** Add encoding to open function ([`84cd4dc`](https://github.com/neoave/mrack/commit/84cd4dcf53d5888c6537fdb5f3bd4ec99c83583c))
+* **Beaker:** Add encoding to open when opening ssh key ([`71ef2f1`](https://github.com/neoave/mrack/commit/71ef2f102f8110f84c12914a1bbd2308a5f592b2))
+
 ## v1.9.1 (2022-10-20)
 ### Fix
 * Add CHANGELOG.md to MANIFEST.in ([`64fa546`](https://github.com/neoave/mrack/commit/64fa546e9fc24e30ea655c2ee211f5b348272929))
