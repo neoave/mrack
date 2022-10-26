@@ -193,7 +193,7 @@ class PodmanProvider(Provider):
 
         logger.debug(f"{log_msg_start} Resource: {object2json(server)}")
 
-        with open(os.path.expanduser(self.ssh_key), "r") as key_file:
+        with open(os.path.expanduser(self.ssh_key), "r", encoding="utf-8") as key_file:
             key_content = key_file.read()
 
         if not await self.podman.exec_command(cont_id, "mkdir -p /root/.ssh/"):
