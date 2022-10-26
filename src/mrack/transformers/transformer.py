@@ -15,9 +15,12 @@
 """Generic Transformer."""
 
 import logging
+import os
 import typing
+from functools import cache
 
-from mrack.errors import ConfigError, MetadataError
+from mrack.context import global_context
+from mrack.errors import ConfigError, MetadataError, ValidationError
 from mrack.providers import providers
 from mrack.utils import (
     find_value_in_config_hierarchy,
@@ -29,6 +32,12 @@ from mrack.utils import (
 DEFAULT_ATTEMPTS = 1
 
 logger = logging.getLogger(__name__)
+
+IMPORT_ERR = "gssapi not imported, VM owner info fetch from krb will fail"
+try:
+    import gssapi
+except ModuleNotFoundError as import_err:
+    logger.debug(IMPORT_ERR, import_err.name)
 
 
 class Transformer:
@@ -134,6 +143,7 @@ class Transformer:
     def validate_host(self, host):
         """Validate host input that it contains everything needed by provider."""
         log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
+        self.validate_ownership_and_lifetime(host)
         # attribute check
         validate_dict_attrs(host, self._required_host_attrs, "host")
         # provider check
@@ -155,3 +165,64 @@ class Transformer:
             f"{self.dsp_name} Created {len(reqs)} requirement(s): {object2json(reqs)}"
         )
         return reqs
+
+    @cache
+    def get_vm_owner(self):
+        """Return ownership info for host."""
+        owner = os.getenv("MRACK_VM_OWNER")
+        logger.debug(f"MRACK_VM_OWNER: {owner}")
+        if not owner and gssapi:
+            try:
+                creds = gssapi.Credentials(usage="initiate")
+                logger.debug(f"GSSAPI credentials: {creds}")
+                owner = str(creds.name).split("@")[0]
+            except gssapi.exceptions.MissingCredentialsError:
+                logger.debug("No kerberos credentials discovered.")
+            except gssapi.exceptions.GSSError as exc:
+                logger.exception(exc)
+        return owner
+
+    @cache
+    def get_vm_lifetime(self):
+        """Return lifetime info for host."""
+        return os.getenv("MRACK_VM_LIFETIME")
+
+    def validate_ownership_and_lifetime(self, host):
+        """Validate if ownership and lifetime exists for host."""
+        log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
+        require_owner = global_context.CONFIG.require_owner()
+        owner = self.get_vm_owner()
+        if require_owner and not owner:
+            raise ValidationError(
+                f"{log_msg_start} VM ownership information is required. "
+                "Run kinit and try provisioning again"
+            )
+
+        lifetime = self.get_vm_lifetime()
+        if lifetime:
+            try:
+                val = int(lifetime)
+            except ValueError as value_err:
+                error = f"{log_msg_start} VM lifetime must be integer"
+                raise ValidationError(error) from value_err
+            if val < 0:
+                raise ValidationError(
+                    f"{log_msg_start} VM lifetime must be greater than 0"
+                )
+            if not owner:
+                raise ValidationError(
+                    f"{log_msg_start} Owner is required when vm lifetime is set"
+                )
+
+    def update_metadata_for_owner_lifetime(self, req):
+        """Update VM metadata for owner and lifetime."""
+        owner = self.get_vm_owner()
+        lifetime = self.get_vm_lifetime()
+        metadata = req.get("metadata", {})
+        if owner:
+            metadata["owner"] = owner
+        if lifetime:
+            metadata["lifetime"] = lifetime
+        if owner or lifetime:
+            req["metadata"] = metadata
+        return req

@@ -137,3 +137,7 @@ class MrackConfig:
     def pytest_multihost_path(self, default=None):
         """Return configured path to pytest-multihost configuration output."""
         return self.get("pytest-multihost", default)
+
+    def require_owner(self, default=False):
+        """Return value of require-owner."""
+        return bool(self.get("require-owner", default))

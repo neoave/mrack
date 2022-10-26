@@ -76,4 +76,5 @@ class OpenStackTransformer(Transformer):
         if config_drive_req:
             req.update({"config_drive": config_drive_req})
 
+        req = self.update_metadata_for_owner_lifetime(req)
         return req
