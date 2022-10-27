@@ -35,8 +35,6 @@ testing supporting multiple provisioning providers (e.g. AWS, Beaker,
 Openstack). But in comparison to other multi-cloud libraries,
 the aim is to be able to describe host from application perspective.
 
-%{?python_provide:%python_provide %{name}}
-
 %package        cli
 Summary:        Command line interface for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
