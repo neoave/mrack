@@ -16,6 +16,9 @@ class TestBeakerTransformer:
     cat_release = "cat /etc/redhat-release"
     wget = "wget redhat.com"
     default_whiteboard = "This job has been created using mrack."
+    default_tasks = [{"name": "/distribution/dummy", "role": "STANDALONE"}]
+    default_retention_tag = "audit"
+    default_product = "[internal]"
 
     fedora = {
         "name": f"fedora.{domain_name}",
@@ -125,6 +128,11 @@ class TestBeakerTransformer:
                     "ks_append": default_ks_append,
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
+                    "tasks": [
+                        {"name": "/distribution/check-install", "role": "SERVER"}
+                    ],
+                    "retention_tag": default_retention_tag,
+                    "product": default_product,
                 },
             ),
             (
@@ -136,6 +144,9 @@ class TestBeakerTransformer:
                     "ks_append": ["%post\ncat /etc/redhat-release\n%end"],
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
+                    "tasks": default_tasks,
+                    "retention_tag": default_retention_tag,
+                    "product": default_product,
                 },
             ),
             # default variant should be there,
@@ -149,6 +160,9 @@ class TestBeakerTransformer:
                     "ks_append": default_ks_append,
                     "whiteboard": "BEAKER DOES NOT SUPPORT WINDOWS THIS JOB MUST FAIL",
                     "priority": "ULTRAHIGH",
+                    "tasks": default_tasks,
+                    "retention_tag": default_retention_tag,
+                    "product": default_product,
                 },
             ),
             (
@@ -162,6 +176,9 @@ class TestBeakerTransformer:
                     ],
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
+                    "tasks": default_tasks,
+                    "retention_tag": default_retention_tag,
+                    "product": default_product,
                 },
             ),
         ],
@@ -179,6 +196,9 @@ class TestBeakerTransformer:
             "ks_append",
             "whiteboard",
             "priority",
+            "tasks",
+            "retention_tag",
+            "product",
         ]
         bkr_transformer = await self.create_transformer()
         req = bkr_transformer.create_host_requirement(meta_host)
