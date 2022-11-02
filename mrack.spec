@@ -117,7 +117,7 @@ library extending mrack package using testcloud
 %prep
 %autosetup -p1 -n %{name}-%{version}
 # Remove bundled egg-info
-rm -rf %{name}.egg-info
+rm -r src/%{name}.egg-info
 
 %build
 %py3_build
