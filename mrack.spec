@@ -38,10 +38,10 @@ the aim is to be able to describe host from application perspective.
 %package        cli
 Summary:        Command line interface for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
+Requires:       python3-click
 
 %package -n     python3-%{name}lib
 Summary:        Core mrack libraries
-Requires:       python3-click
 Requires:       python3-pyyaml
 Requires:       sshpass
 
@@ -136,6 +136,7 @@ rm -rf %{name}.egg-info
 %doc README.md
 %doc CHANGELOG.md
 %{_bindir}/%{name}
+%{python3_sitelib}/%{name}/{,__pycache__/}run.*
 
 %files -n python3-%{name}lib
 %license LICENSE
@@ -143,6 +144,7 @@ rm -rf %{name}.egg-info
 %doc CHANGELOG.md
 %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}-%{version}-py%{python3_version}.egg-info
+%exclude %{python3_sitelib}/%{name}/{,__pycache__/}run.*
 %exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}osapi.*
 %exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 %exclude %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}podman.*
