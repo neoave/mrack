@@ -20,9 +20,13 @@ from mrack.actions.action import Action
 from mrack.context import global_context
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
-from mrack.providers.utils.podman import Podman
 from mrack.utils import get_username_pass_and_ssh_key
 from mrack.utils import ssh_to_host as utils_ssh_to_host
+
+try:
+    from mrack.providers.utils.podman import Podman
+except ModuleNotFoundError:
+    pass  # Ignore the module import error if plugin not available
 
 logger = logging.getLogger(__name__)
 
