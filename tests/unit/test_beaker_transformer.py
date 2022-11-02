@@ -37,6 +37,20 @@ class TestBeakerTransformer:
         },
     }
 
+    fedora_server = {
+        "name": f"fedora-server.{domain_name}",
+        "role": "server",
+        "group": "server",
+        "os": "fedora-latest",
+        "restraint_id": 1,
+        "beaker": {
+            "ks_meta": "FEDORA_HOST_KS_META",
+            "retention_tag": "active",
+            "product": "cpe:/a:redhat:jboss_operations_network:2.3",
+            "tasks": [{"name": "/distribution/sleep", "role": "STANDALONE"}],
+        },
+    }
+
     centos = {
         "name": f"centos.{domain_name}",
         "role": "server",
@@ -47,6 +61,21 @@ class TestBeakerTransformer:
             "ks_append": [
                 cat_release,
             ],
+        },
+    }
+
+    centos_client = {
+        "name": f"centos-client.{domain_name}",
+        "role": "client",
+        "group": "ipaclient",
+        "os": "c9s",
+        "restraint_id": 2,
+        "beaker": {
+            "ks_append": [
+                cat_release,
+            ],
+            "retention_tag": "scratch",
+            "product": "",
         },
     }
 
@@ -84,7 +113,9 @@ class TestBeakerTransformer:
                 "type": "linux",
                 "hosts": [
                     fedora,
+                    fedora_server,
                     centos,
+                    centos_client,
                     rhel86,
                 ],
             },
@@ -136,6 +167,20 @@ class TestBeakerTransformer:
                 },
             ),
             (
+                fedora_server,
+                {
+                    "distro": "Fedora-36%",
+                    "variant": "Server",
+                    "ks_meta": "FEDORA_HOST_KS_META",
+                    "ks_append": default_ks_append,
+                    "whiteboard": default_whiteboard,
+                    "priority": default_prio,
+                    "retention_tag": "active",
+                    "product": "cpe:/a:redhat:jboss_operations_network:2.3",
+                    "tasks": [{"name": "/distribution/sleep", "role": "STANDALONE"}],
+                },
+            ),
+            (
                 centos,
                 {
                     "distro": "CentOS-Stream-9%",
@@ -147,6 +192,20 @@ class TestBeakerTransformer:
                     "tasks": default_tasks,
                     "retention_tag": default_retention_tag,
                     "product": default_product,
+                },
+            ),
+            (
+                centos_client,
+                {
+                    "distro": "CentOS-Stream-9%",
+                    "variant": "BaseOS",
+                    "ks_meta": "PROV_CONF_CENTOS_KS_META",
+                    "ks_append": ["%post\ncat /etc/redhat-release\n%end"],
+                    "whiteboard": default_whiteboard,
+                    "priority": default_prio,
+                    "tasks": default_tasks,
+                    "retention_tag": "scratch",
+                    "product": "",
                 },
             ),
             # default variant should be there,
