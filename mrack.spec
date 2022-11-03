@@ -28,6 +28,7 @@ Requires:       python3-%{name}-virt = %{version}-%{release}
 # so it is not forcing installation of missing dependencies in Fedora
 # Once python3-AsyncOpenStackClient is in fedora we can drop this line
 %global __requires_exclude asyncopenstackclient
+%{?python_disable_dependency_generator}
 
 %description
 mrack is a provisioning tool and a library for CI and local multi-host
