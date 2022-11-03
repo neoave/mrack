@@ -2,6 +2,16 @@
 
 <!--next-version-placeholder-->
 
+## v1.11.0 (2022-11-03)
+### Feature
+* **AWS:** Add multiple subnet support & IPs availability check ([`742ed9c`](https://github.com/neoave/mrack/commit/742ed9cf2e6ffe32575584ab405aa034f8049128))
+
+### Fix
+* **mrack.spec:** Fix the location for mrack.egg-info ([`9a998bc`](https://github.com/neoave/mrack/commit/9a998bce750c09aa1bd2d2f0007cc67b729ab8f3))
+* **mrack.spec:** Cli package files and deps ([`f76c31a`](https://github.com/neoave/mrack/commit/f76c31a7fdd297ae121f2001980742783cf62687))
+* **Podman:** Fix action ssh import failing if podman provider not found ([`87c397e`](https://github.com/neoave/mrack/commit/87c397eb0fd1c84384bda7dfe28e446d35158764))
+* **mrack.spec:** Remove unecessary statement ([`dbb43f3`](https://github.com/neoave/mrack/commit/dbb43f30a0a978ce8570f1d3d23efb28cfd440a5))
+
 ## v1.10.0 (2022-10-26)
 ### Feature
 * **OpenStack:** Pick from all networks based on load ([`317c2ac`](https://github.com/neoave/mrack/commit/317c2ac8c11580b078f306192309a0637522aed5))
