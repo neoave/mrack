@@ -329,6 +329,10 @@ class AWSProvider(Provider):
         for key, value in self.instance_tags.items():
             taglist.append({"Key": key, "Value": value})
 
+        if specs.get("metadata"):
+            for key, value in specs.get("metadata").items():
+                taglist.append({"Key": key, "Value": value})
+
         logger.debug(f"{log_msg_start} Tagging instance with: {object2json(taglist)}")
 
         request = {

@@ -107,4 +107,5 @@ class AWSTransformer(Transformer):
             "subnet_ids": self._find_subnet_ids(host),
         }
 
+        req = self.update_metadata_for_owner_lifetime(req)
         return req
