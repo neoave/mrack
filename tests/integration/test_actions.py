@@ -6,6 +6,7 @@ from mrack.actions.destroy import Destroy as DestroyAction
 from mrack.actions.list import List as ListAction
 from mrack.actions.output import Output as OutputAction
 from mrack.actions.up import Up as UpAction
+from mrack.context import global_context
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED
 from mrack.providers import aws, openstack, providers, static
 
@@ -15,6 +16,11 @@ def setup_providers():
     providers.register(aws.PROVISIONER_KEY, aws.AWSProvider)
     providers.register(openstack.PROVISIONER_KEY, openstack.OpenStackProvider)
     providers.register(static.PROVISIONER_KEY, static.StaticProvider)
+
+
+@pytest.fixture(autouse=True)
+def global_context_init(provisioning_config_file, mrack_config_file=None, db_file=None):
+    global_context.init(mrack_config_file, provisioning_config_file, db_file)
 
 
 class TestStaticProvider:

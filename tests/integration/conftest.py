@@ -21,6 +21,11 @@ def provisioning_config(datadir):
 
 
 @pytest.fixture()
+def provisioning_config_file(datadir):
+    return os.path.join(datadir, "provisioning-config.yaml")
+
+
+@pytest.fixture()
 def metadata(datadir):
     data = (datadir / "metadata-hosts.yaml").read_text()
     return yaml.safe_load(data)
