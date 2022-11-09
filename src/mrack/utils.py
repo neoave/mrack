@@ -24,7 +24,7 @@ import logging
 import os
 import subprocess
 import sys
-from functools import update_wrapper
+from functools import wraps
 from xml.dom.minidom import Document as xml_doc
 
 import yaml
@@ -390,13 +390,12 @@ async def exec_async_subprocess(program, args, raise_on_err=True):
 
 def async_run(func):
     """Decorate click actions to run as async."""
-    func = asyncio.coroutine(func)
 
-    def wrapper(*args, **kwargs):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(func(*args, **kwargs))
+    @wraps(func)
+    def update_wrapper(*args, **kwargs):
+        return asyncio.run(func(*args, **kwargs))
 
-    return update_wrapper(wrapper, func)
+    return update_wrapper
 
 
 class NoSuchFileHandler:

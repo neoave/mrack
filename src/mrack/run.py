@@ -14,10 +14,8 @@
 
 """mrack default app."""
 #  pylint: disable=no-name-in-module
-import asyncio
 import logging
 import sys
-from functools import update_wrapper
 from typing import Set, Tuple, Type
 
 import click
@@ -38,6 +36,7 @@ from mrack.errors import (
 )
 from mrack.providers import providers
 from mrack.providers.provider import Provider
+from mrack.utils import async_run
 from mrack.version import VERSION
 
 PROVIDER_NAME = 0
@@ -94,17 +93,6 @@ try:
     installed_providers.add((VIRT, VirtProvider))
 except ModuleNotFoundError as err:
     logger.debug(IMPORT_ERR_TEMPLATE, err.name)
-
-
-def async_run(func):
-    """Decorate click actions to run as async."""
-    func = asyncio.coroutine(func)
-
-    def wrapper(*args, **kwargs):
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(func(*args, **kwargs))
-
-    return update_wrapper(wrapper, func)
 
 
 def init_providers():
