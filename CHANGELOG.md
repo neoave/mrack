@@ -2,6 +2,15 @@
 
 <!--next-version-placeholder-->
 
+## v1.12.0 (2022-11-14)
+### Feature
+* **aws:** Add owner/lifetime info in VM's metadata ([`ed9e977`](https://github.com/neoave/mrack/commit/ed9e977f4f56c5cc5cda6f0b4ad0f09cdaab89b9))
+* **openstack:** Add owner/lifetime info in VM's metadata ([`e33038e`](https://github.com/neoave/mrack/commit/e33038e4de2fcca8d58564508b1d6786fbe8d01b))
+
+### Fix
+* Integration test_actions test fixes ([`07682c1`](https://github.com/neoave/mrack/commit/07682c148a7fe7d40b8e5761e9845cdd85972013))
+* Do not use deprecated asyncio.coroutine wrapper ([`c66fef7`](https://github.com/neoave/mrack/commit/c66fef729754d3f28f8014e901524184bba5e18d))
+
 ## v1.11.0 (2022-11-03)
 ### Feature
 * **AWS:** Add multiple subnet support & IPs availability check ([`742ed9c`](https://github.com/neoave/mrack/commit/742ed9cf2e6ffe32575584ab405aa034f8049128))
