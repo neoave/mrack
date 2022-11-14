@@ -44,6 +44,7 @@ Requires:       python3-click
 %package -n     python3-%{name}lib
 Summary:        Core mrack libraries
 Requires:       python3-pyyaml
+Recommends:     python3-gssapi
 Requires:       sshpass
 
 %{?python_provide:%python_provide python3-%{name}lib}

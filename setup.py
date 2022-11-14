@@ -54,4 +54,7 @@ setup(
     package_data={
         "mrack": [f"data/{datafile}" for datafile in [MRACK_CONF, PROV_CONF]]
     },
+    extras_require={
+        "krb-owner": ["gssapi"],
+    },
 )
