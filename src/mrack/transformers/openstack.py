@@ -59,6 +59,11 @@ class OpenStackTransformer(Transformer):
             )
         return network_type
 
+    def validate_host(self, host):
+        """Validate host input that it contains what OpenStack needs."""
+        super().validate_host(host)
+        self.validate_ownership_and_lifetime(host)
+
     def create_host_requirement(self, host):
         """Create single input for OpenStack provisioner."""
         req = {

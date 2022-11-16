@@ -90,6 +90,11 @@ class AWSTransformer(Transformer):
 
         return []
 
+    def validate_host(self, host):
+        """Validate host input that it contains what AWS needs."""
+        super().validate_host(host)
+        self.validate_ownership_and_lifetime(host)
+
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
         del_vol = self._find_value(
