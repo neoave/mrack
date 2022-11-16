@@ -143,7 +143,6 @@ class Transformer:
     def validate_host(self, host):
         """Validate host input that it contains everything needed by provider."""
         log_msg_start = f"{self.dsp_name} [{host.get('name')}]"
-        self.validate_ownership_and_lifetime(host)
         # attribute check
         validate_dict_attrs(host, self._required_host_attrs, "host")
         # provider check
