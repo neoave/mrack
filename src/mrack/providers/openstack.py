@@ -316,9 +316,10 @@ class OpenStackProvider(Provider):
             usable += low_avail_nets
 
         if not usable:
-            raise ProviderError(
-                f"{self.dsp_name} Error: no available networks"
-                f" for {requested_ip_cnt} hosts with {network_type}"
+            raise ValidationError(
+                "Error: no available networks for "
+                f"{requested_ip_cnt} hosts with {network_type}",
+                self.dsp_name,
             )
 
         if len(usable) > requested_ip_cnt:
