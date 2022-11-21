@@ -15,19 +15,25 @@
 """Provisioning errors."""
 
 
-class ConfigError(Exception):
+class MrackError(Exception):
+    """Base mrack error."""
+
+    pass
+
+
+class ConfigError(MrackError):
     """Error in configuration."""
 
     pass
 
 
-class ApplicationError(Exception):
+class ApplicationError(MrackError):
     """General application error."""
 
     pass
 
 
-class MetadataError(Exception):
+class MetadataError(MrackError):
     """Error in job metadata."""
 
     pass
@@ -53,13 +59,13 @@ class JobConfigError(ConfigError):
     pass
 
 
-class ValidationError(Exception):
+class ValidationError(MrackError):
     """Error found in validation of values."""
 
     pass
 
 
-class ProviderError(Exception):
+class ProviderError(MrackError):
     """General provider error."""
 
     pass
