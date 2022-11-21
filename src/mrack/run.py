@@ -27,13 +27,7 @@ from mrack.actions.output import Output
 from mrack.actions.ssh import SSH
 from mrack.actions.up import Up
 from mrack.context import GlobalContext, global_context
-from mrack.errors import (
-    ApplicationError,
-    ConfigError,
-    MetadataError,
-    ProviderError,
-    ValidationError,
-)
+from mrack.errors import ApplicationError, MrackError
 from mrack.providers import providers
 from mrack.providers.provider import Provider
 from mrack.utils import async_run
@@ -236,11 +230,7 @@ def exception_handler(func):
             ret_code = func(*args, **kwargs)
         except (
             FileNotFoundError,
-            ConfigError,
-            MetadataError,
-            ValidationError,
-            ProviderError,
-            ApplicationError,
+            MrackError,
         ) as known_error:
             logger.error(known_error)
             sys.exit(1)
