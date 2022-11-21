@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from mrack.errors import ProviderError
+from mrack.errors import MrackError, ValidationError
 from mrack.providers.openstack import OpenStackProvider
 
 from .utils import get_data  # FIXME do not use relative import
@@ -162,7 +162,7 @@ network_data = [
         ],
         net_pools,
         no_usable_traceback_2ips_left,
-        ProviderError("OpenStack Error: no available networks for 3 hosts with IPv4"),
+        ValidationError("OpenStack Error: no available networks for 3 hosts with IPv4"),
     ),
     (
         "test1-host_low-availability_1random_from_all_nets",
@@ -180,7 +180,7 @@ network_data = [
         ],
         net_pools,
         no_usable_traceback_no_ips_left,
-        ProviderError("OpenStack Error: no available networks for 3 hosts with IPv4"),
+        ValidationError("Error: no available networks for 3 hosts with IPv4"),
     ),
 ]
 
@@ -316,8 +316,8 @@ class TestOpenStackProvider:
         await provider.init(image_names=[], networks=pools)
         try:
             provider.translate_network_types(hosts)
-        except ProviderError as no_nets:
-            assert isinstance(exp_nets, ProviderError) is True
+        except MrackError as no_nets:
+            assert isinstance(exp_nets, ValidationError) is True
             assert "no available networks" in str(no_nets)
             assert str(len(hosts)) in str(no_nets)
             return True
