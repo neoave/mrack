@@ -18,7 +18,7 @@ import asyncio
 import logging
 
 from mrack.actions.action import Action
-from mrack.errors import MetadataError, ProvisioningError
+from mrack.errors import MetadataError, MrackError, ProvisioningError
 from mrack.providers import providers
 from mrack.utils import validate_dict_attrs
 
@@ -90,7 +90,7 @@ class Up(Action):
         success_hosts = []
         failed_providers = []
         for results in provisioning_results:
-            if isinstance(results, ProvisioningError):
+            if isinstance(results, MrackError):
                 # in this case some of any provider fails to provision
                 # we need to cleanup all the remaining resources
                 # even when provisioned successfully
