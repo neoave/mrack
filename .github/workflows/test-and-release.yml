@@ -54,6 +54,7 @@ jobs:
           echo "RELEASE_ACTOR=${!RELEASE_ACTOR}" >> ${GITHUB_ENV}
       - uses: actions/checkout@v3
         with:
+          persist-credentials: false  # do not set the actions user to git config
           fetch-depth: 0
       - name: Get the new version using python-semantic-releaseq
         run: |
