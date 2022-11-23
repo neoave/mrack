@@ -52,7 +52,7 @@ class GlobalContext:
         """Get ProvisioningConfig object."""
         return self.metadata
 
-    def init(self, mrack_config, provisioning_config, db_file):
+    def init(self, mrack_config, provisioning_config=None, db_file=None):
         """Initialize Global Context object with all needed values."""
         self._init_mrack_config(mrack_config)
         self.mrack_conf.load()
