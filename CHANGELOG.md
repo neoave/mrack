@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.12.1 (2022-11-24)
+### Fix
+* Make db file and provisioning file optional ([`9449082`](https://github.com/neoave/mrack/commit/94490824e8e6d3713328e08b99acb2a8a83623f8))
+* Use MrackError in action Up to catch all possible mrack errors at once ([`990224b`](https://github.com/neoave/mrack/commit/990224bd326ee2a70021a558a46596005121159b))
+* Validate ownership and lifetime only for AWS and OpenStack ([`111d481`](https://github.com/neoave/mrack/commit/111d481e9bac692854a1b2764a760608b7fc2046))
+
 ## v1.12.0 (2022-11-14)
 ### Feature
 * **aws:** Add owner/lifetime info in VM's metadata ([`ed9e977`](https://github.com/neoave/mrack/commit/ed9e977f4f56c5cc5cda6f0b4ad0f09cdaab89b9))
