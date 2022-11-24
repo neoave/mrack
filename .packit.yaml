@@ -13,6 +13,9 @@ files_to_sync:
 upstream_package_name: mrack
 # downstream (Fedora) RPM package name
 downstream_package_name: mrack
+# mrack uses tag v(ver_number) and we need to make sure packit know what to expect
+# see: https://packit.dev/docs/configuration/#upstream_tag_template
+upstream_tag_template: "v{version}"
 
 actions:
   create-archive:
