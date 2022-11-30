@@ -9,6 +9,9 @@ multi_line_output = 3
 markers = [
     "etc_hosts: passes path for etc_hosts fixture",
 ]
+pythonpath = [
+  "./src"
+]
 
 [tool.semantic_release]
 version_source = "commit"
