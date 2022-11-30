@@ -22,6 +22,7 @@ import os
 from configparser import ConfigParser, NoOptionError, ParsingError
 
 from mrack.errors import ConfigError
+from mrack.utils import value_to_bool
 
 logger = logging.getLogger(__name__)
 
@@ -140,4 +141,4 @@ class MrackConfig:
 
     def require_owner(self, default=False):
         """Return value of require-owner."""
-        return bool(self.get("require-owner", default))
+        return value_to_bool(self.get("require-owner", default))

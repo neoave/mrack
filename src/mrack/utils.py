@@ -34,6 +34,27 @@ from mrack.errors import ConfigError, ProvisioningError
 logger = logging.getLogger(__name__)
 
 
+def value_to_bool(value):
+    """Convert Python variable value to boolean."""
+    _false_set = {"no", "false", "f", "n", "0"}
+    _true_set = {"yes", "true", "t", "y", "1"}
+    if isinstance(value, str):
+        if value.lower() in _true_set:
+            return True
+
+        if value.lower() in _false_set:
+            return False
+
+        raise ValueError(
+            f"Invalid input string for boolean conversion '{value}',"
+            "supported values are:\n"
+            f"False:\t{_true_set}\n"
+            f"True:\t{_false_set}"
+        )
+
+    return bool(value)
+
+
 def get_config_value(config_dict, key, default=None):
     """Get configuration value or default value from dictionary.
 
