@@ -84,8 +84,8 @@ class Registry:
 
     def __init__(self):
         """Initialize transformer registry."""
-        self._transformer_cls = dict()
-        self._transformers = dict()
+        self._transformer_cls = {}
+        self._transformers = {}
 
     def register(self, name, transformer_cls):
         """Register new tranformer class."""

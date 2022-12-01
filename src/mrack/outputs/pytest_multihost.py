@@ -36,7 +36,7 @@ class PytestMultihostOutput:
     metadata definition.
     """
 
-    def __init__(self, config, db, metadata, path=None):
+    def __init__(self, config, db, metadata, path=None):  # pylint: disable=invalid-name
         """Init the output module."""
         self._config = config
         self._db = db

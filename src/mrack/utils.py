@@ -353,8 +353,8 @@ def ssh_to_host(
     cmd = " ".join(cmd)
 
     logger.debug(f"Running: {cmd}")
-    process = subprocess.Popen(cmd, **run_args)
-    std_out, std_err = process.communicate()
+    with subprocess.Popen(cmd, **run_args) as process:
+        std_out, std_err = process.communicate()
 
     if not interactive:
         for o_line in std_out.decode().splitlines():

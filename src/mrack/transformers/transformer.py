@@ -40,6 +40,29 @@ except ModuleNotFoundError as import_err:
     logger.debug(IMPORT_ERR, import_err.name)
 
 
+@cache
+def cached_get_vm_owner():
+    """Return ownership info for host."""
+    owner = os.getenv("MRACK_VM_OWNER")
+    logger.debug(f"MRACK_VM_OWNER: {owner}")
+    if not owner and gssapi:
+        try:
+            creds = gssapi.Credentials(usage="initiate")
+            logger.debug(f"GSSAPI credentials: {creds}")
+            owner = str(creds.name).split("@", maxsplit=1)[0]
+        except gssapi.exceptions.MissingCredentialsError:
+            logger.debug("No kerberos credentials discovered.")
+        except gssapi.exceptions.GSSError as exc:
+            logger.exception(exc)
+    return owner
+
+
+@cache
+def cached_get_vm_lifetime():
+    """Return lifetime info for host."""
+    return os.getenv("MRACK_VM_LIFETIME")
+
+
 class Transformer:
     """Base class for transformers."""
 
@@ -165,26 +188,13 @@ class Transformer:
         )
         return reqs
 
-    @cache
     def get_vm_owner(self):
         """Return ownership info for host."""
-        owner = os.getenv("MRACK_VM_OWNER")
-        logger.debug(f"MRACK_VM_OWNER: {owner}")
-        if not owner and gssapi:
-            try:
-                creds = gssapi.Credentials(usage="initiate")
-                logger.debug(f"GSSAPI credentials: {creds}")
-                owner = str(creds.name).split("@")[0]
-            except gssapi.exceptions.MissingCredentialsError:
-                logger.debug("No kerberos credentials discovered.")
-            except gssapi.exceptions.GSSError as exc:
-                logger.exception(exc)
-        return owner
+        return cached_get_vm_owner()
 
-    @cache
     def get_vm_lifetime(self):
         """Return lifetime info for host."""
-        return os.getenv("MRACK_VM_LIFETIME")
+        return cached_get_vm_lifetime()
 
     def validate_ownership_and_lifetime(self, host):
         """Validate if ownership and lifetime exists for host."""
