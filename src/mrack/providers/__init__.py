@@ -26,8 +26,8 @@ class Registry:
 
     def __init__(self):
         """Initialize Registry."""
-        self._provider_cls = dict()
-        self._providers = dict()
+        self._provider_cls = {}
+        self._providers = {}
 
     def register(self, name, provider_cls):
         """Register new provider."""

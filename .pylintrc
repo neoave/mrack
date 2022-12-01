@@ -12,7 +12,7 @@
 #disable=
 # mrack is starting to use f style strings string-interpolation and have some
 # specific classes which are adding functionality to ones they inherit from
-disable=fixme,too-many-instance-attributes,no-self-use,attribute-defined-outside-init,unnecessary-pass,super-init-not-called,too-many-arguments,too-few-public-methods,logging-fstring-interpolation,
+disable=fixme,too-many-instance-attributes,attribute-defined-outside-init,unnecessary-pass,super-init-not-called,too-many-arguments,too-few-public-methods,logging-fstring-interpolation,import-error
 
 # Minimum lines number of a similarity.
 min-similarity-lines=11

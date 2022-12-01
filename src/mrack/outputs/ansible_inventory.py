@@ -111,7 +111,7 @@ class AnsibleInventoryOutput:
     files and information in DB.
     """
 
-    def __init__(self, config, db, metadata, path=None):
+    def __init__(self, config, db, metadata, path=None):  # pylint: disable=invalid-name
         """Init the output module."""
         self._config = config
         self._db = db
@@ -138,6 +138,7 @@ class AnsibleInventoryOutput:
         dom_name = meta_domain["name"]
 
         # Common attributes
+        dc_list = [f"DC={dc}" for dc in dom_name.split(".")]
         host_info = {
             "ansible_host": ansible_host,
             "ansible_python_interpreter": python,
@@ -148,7 +149,7 @@ class AnsibleInventoryOutput:
             "meta_provider": db_host.provider.name,
             "meta_provider_id": db_host.host_id,
             "meta_ip": ip_addr,
-            "meta_dc_record": ",".join("DC=%s" % dc for dc in dom_name.split(".")),
+            "meta_dc_record": ",".join(dc_list),
         }
 
         if "restraint_id" in meta_host:
