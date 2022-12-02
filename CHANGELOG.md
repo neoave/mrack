@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.12.2 (2022-12-02)
+### Fix
+* Owner requirement boolean parsing from string ([`592f364`](https://github.com/neoave/mrack/commit/592f364e86d838e630259c0ce91928d15c10d00d))
+
 ## v1.12.1 (2022-11-24)
 ### Fix
 * Make db file and provisioning file optional ([`9449082`](https://github.com/neoave/mrack/commit/94490824e8e6d3713328e08b99acb2a8a83623f8))
