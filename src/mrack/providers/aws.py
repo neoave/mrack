@@ -244,7 +244,8 @@ class AWSProvider(Provider):
         # For all hosts, get subnets in dict (with no repetitions) and list of
         # provided single & multiple subnets
         for host in hosts:
-            if subnet_ids := host.get("subnet_ids"):
+            subnet_ids = host.get("subnet_ids")
+            if subnet_ids:
                 if len(subnet_ids) == 1:
                     single_subnet_prov.append(subnet_ids[0])
                     if subnet_ids[0] not in ip_availabilities:
@@ -353,7 +354,8 @@ class AWSProvider(Provider):
             "TagSpecifications": [{"ResourceType": "instance", "Tags": taglist}],
         }
 
-        if subnet_ids := specs.get("subnet_ids"):
+        subnet_ids = specs.get("subnet_ids")
+        if subnet_ids:
             shuffle(subnet_ids)  # Randomize subnets order
             for subnet_id in subnet_ids:
                 if self.subnets_capacity[subnet_id] > 0:
