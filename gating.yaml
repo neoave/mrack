@@ -1,0 +1,10 @@
+--- !Policy
+product_versions:
+  - fedora-*
+  - epel-8
+  - epel-9
+decision_contexts:
+  - bodhi_update_push_stable
+subject_type: koji_build
+rules:
+  - !PassingTestCaseRule {test_case_name: fedora-ci.koji-build./plans/tests.functional}

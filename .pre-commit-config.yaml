@@ -7,6 +7,12 @@ repos:
     rev: v4.3.0
     hooks:
       - id: check-yaml
+        exclude: gating.yaml
+      - id: check-yaml
+        name: check-yaml-gating
+        # --unsafe is a workaround for the use of !! in gating.yaml.
+        args: [--unsafe]
+        files: gating.yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
         exclude: ^.*\.(md|rst)$

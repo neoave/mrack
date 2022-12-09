@@ -1,0 +1,9 @@
+summary: Smoke test for mrack
+discover:
+  how: fmf
+prepare:
+- how: shell
+  script:
+  - dnf remove -y `rpm -qa | grep mrack`
+execute:
+  how: tmt
