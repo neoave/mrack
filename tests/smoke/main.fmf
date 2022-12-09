@@ -1,0 +1,8 @@
+summary: Run Smoke tests
+test: ./smoke-test.sh
+enabled: true
+path: /tests/smoke
+require:
+- which
+framework: beakerlib
+duration: 10m
