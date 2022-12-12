@@ -61,7 +61,12 @@ Requires:       python3-botocore
 %package -n     python3-%{name}-beaker
 Summary:        Beaker provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
+%if 0%{?rhel} == 8
+# c8s has missing beaker-client package
+Recommends:     beaker-client
+%else
 Requires:       beaker-client
+%endif
 
 %{?python_provide:%python_provide python3-%{name}-beaker}
 
