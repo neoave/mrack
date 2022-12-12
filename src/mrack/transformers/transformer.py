@@ -16,8 +16,8 @@
 
 import logging
 import os
+import sys
 import typing
-from functools import cache
 
 from mrack.context import global_context
 from mrack.errors import ConfigError, MetadataError, ValidationError
@@ -28,6 +28,21 @@ from mrack.utils import (
     object2json,
     validate_dict_attrs,
 )
+
+if sys.version_info >= (3, 9):
+    from functools import cache
+else:
+    from functools import lru_cache
+
+    # Add cache decorator for the releases using python <= 3.9, e.g. c8s with py3.6
+    def cache(user_function):
+        """
+        Add simple lightweight unbounded cache.
+
+        Sometimes called "memoize".
+        """
+        return lru_cache(maxsize=None)(user_function)
+
 
 DEFAULT_ATTEMPTS = 1
 
