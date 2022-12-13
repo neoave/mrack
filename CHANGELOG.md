@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.12.3 (2022-12-13)
+### Fix
+* Add cache decorator for older python versions. ([`c4c1a67`](https://github.com/neoave/mrack/commit/c4c1a6701eee9d17df20c66527c062f407d260ae))
+* **mrack.spec:** Missing dependency in c8s for beaker-client ([`aac3ed4`](https://github.com/neoave/mrack/commit/aac3ed4fe89f42be9fb0df85fad5d0decc635607))
+* **AWS:** Refactor sources to be py3.6 compatible ([`cd0335a`](https://github.com/neoave/mrack/commit/cd0335aa8c3115260c83c4f0e84cd5be10a84c0d))
+
 ## v1.12.2 (2022-12-02)
 ### Fix
 * Owner requirement boolean parsing from string ([`592f364`](https://github.com/neoave/mrack/commit/592f364e86d838e630259c0ce91928d15c10d00d))

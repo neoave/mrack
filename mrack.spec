@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.12.2
+Version:        1.12.3
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Dec 13 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.12.3-1
+- Released upstream version 1.12.3
+
 * Fri Dec 02 2022 Tibor Dudlák <tdudlak@redhat.com> - 1.12.2-1
 - Released upstream version 1.12.2
 
