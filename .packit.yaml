@@ -10,6 +10,11 @@ files_to_sync:
   - .packit.yaml
   - gating.yaml
   - ci.fmf
+# we need to sync tmt for TF to work in Fedora updates
+  - src: ./tests/smoke/*
+    dest: ./tests/smoke/
+  - src: ./plans/*
+    dest: ./plans/
 
 # Allow dist git reactions on packit and tdudlak commits and PRs
 allowed_pr_authors:
