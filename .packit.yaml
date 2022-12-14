@@ -9,6 +9,7 @@ files_to_sync:
   - README.md
   - .packit.yaml
   - gating.yaml
+  - ci.fmf
 
 # name in upstream package repository/registry (e.g. in PyPI)
 upstream_package_name: mrack
