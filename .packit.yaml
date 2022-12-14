@@ -11,6 +11,14 @@ files_to_sync:
   - gating.yaml
   - ci.fmf
 
+# Allow dist git reactions on packit and tdudlak commits and PRs
+allowed_pr_authors:
+  - packit
+  - tdudlak
+allowed_committers:
+  - packit
+  - tdudlak
+
 # name in upstream package repository/registry (e.g. in PyPI)
 upstream_package_name: mrack
 # downstream (Fedora) RPM package name
