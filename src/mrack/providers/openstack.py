@@ -61,6 +61,7 @@ class OpenStackProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "OpenStack"
         self.max_retry = 1  # provisioning retries
@@ -671,6 +672,10 @@ class OpenStackProvider(Provider):
         )
 
         return req_vcpus <= limit_vcpus and req_memory <= limit_memory
+
+    async def utilization(self):
+        """Check utilization of provider."""
+        return 0  # TODO
 
     async def create_server(self, req):
         """Issue creation of a server.

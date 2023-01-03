@@ -39,6 +39,7 @@ class VirtProvider(Provider):
 
     def __init__(self):
         """Initialize provider."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "Virt"
         self.testcloud = Testcloud()
@@ -127,6 +128,10 @@ class VirtProvider(Provider):
         """Check that provider has enough resources to provision hosts."""
         # We'd need to check available memory, this is TODO
         return bool(hosts)
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
+        return 0
 
     async def create_server(self, req):
         """Request and create resource on Virt provider."""

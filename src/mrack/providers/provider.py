@@ -15,6 +15,7 @@
 """General Provider interface."""
 import asyncio
 import logging
+import random
 import socket
 from datetime import datetime, timedelta
 
@@ -40,6 +41,7 @@ class Provider:
         """Initialize provider."""
         self._name = "dummy"
         self.dsp_name = "Dummy"
+        self.timeout = 60
         self.max_retry = 1
         self.strategy = STRATEGY_ABORT
         self.status_map = {"OTHER": STATUS_OTHER}
@@ -55,6 +57,10 @@ class Provider:
 
     async def can_provision(self, hosts):
         """Check that provider has enough resources to provision hosts."""
+        raise NotImplementedError()
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
         raise NotImplementedError()
 
     async def create_server(self, req):
@@ -227,17 +233,21 @@ class Provider:
         return success_hosts, error_hosts
 
     async def _provision_base(
-        self, reqs, res_check_timeout=60, res_busy_sleep=10
+        self,
+        reqs,
+        timeout=None,
     ):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         """Provision hosts based on list of host requirements.
 
         Main function which does provisioning and validation.
         Parameters:
             reqs - dictionary with requirements for provider
-            res_check_timeout (default 60) - timeout (minutes) to wait for resources
-            res_busy_sleep (default 10) - time to wait before checking again (minutes)
+            timeout - base timeout (minutes) to wait for resources
         """
-        log_msg_start = f"{self.dsp_name}"  # use display name at log message begining
+        if not timeout:
+            timeout = self.timeout
+
+        log_msg_start = f"{self.dsp_name}"  # use display name at log message beginning
         logger.info(f"{log_msg_start} Validating host(s) definitions")
         if not reqs:
             raise ProvisioningError(
@@ -247,12 +257,28 @@ class Provider:
         await self.validate_hosts(reqs)
         logger.info(f"{log_msg_start} Host(s) definitions valid")
 
-        logger.info(f"{log_msg_start} Checking available resources")
+        delta = abs(self.timeout - timeout)
+        slow_down = random.choice(range(delta, self.timeout + delta))
 
-        error_hosts = []
+        logger.debug(
+            f"{log_msg_start} Slowing down the execution for {slow_down} s "
+            "(This will help mrack to get better resource overview for concurrent runs)"
+        )
+
+        await asyncio.sleep(slow_down)
+        # This slows down the provisioning at the beginning using a variable time
+        # to sleep so we prevent mrack executions to provision at the same time.
+        logger.info(
+            f"{log_msg_start} Setting timeout to wait "
+            f"for resources to {timeout} min(s)"
+        )
+
+        logger.info(f"{log_msg_start} Checking available resources")
         res_check_start = datetime.now()
+        error_hosts = []
+
         while not await self.can_provision(reqs):
-            if datetime.now() - res_check_start >= timedelta(minutes=res_check_timeout):
+            if datetime.now() - res_check_start >= timedelta(minutes=timeout):
                 # create error host object so retry strategy can continue
                 # instead of throwing exception to fail at once without retry
                 err_str = "Not enough resources to provision"
@@ -275,9 +301,10 @@ class Provider:
 
             logger.info(
                 f"{log_msg_start} Not enough resources to provision, "
-                f"checking again in {res_busy_sleep} min(s)"
+                f"checking again in {timeout * 10} seconds(s)"
             )
-            await asyncio.sleep(res_busy_sleep * 60)
+            # Sleep time to wait to check if resources are available again.
+            await asyncio.sleep(timeout * 10)
 
         logger.info(f"{log_msg_start} Resource availability: OK")
         started = datetime.now()
@@ -393,6 +420,8 @@ class Provider:
         attempts = 0
         success_hosts = []
         error_hosts = []
+        delta_sleep = global_context.CONFIG.delta_sleep()
+        max_utilization = global_context.CONFIG.max_utilization()
 
         while missing_reqs:
             # number of attempts should be greater than max_retry
@@ -408,8 +437,16 @@ class Provider:
                 break
 
             attempts += 1
+
+            # set the waiting timeout to vary from 45-75 minutes randomly
+            # so if there are multiple parallel runs of mrack they wait
+            # different amount time before poll and increase chance to get resources
+            # quicker than other concurrent runs of mrack requests
+            delta = random.choice(range(-delta_sleep, delta_sleep))
+            res_check_timeout = self.timeout + delta
+
             s_hosts, error_hosts, missing_reqs = await self._provision_base(
-                missing_reqs
+                missing_reqs, timeout=res_check_timeout
             )
             success_hosts.extend(s_hosts)
 
@@ -417,14 +454,45 @@ class Provider:
             # in case of last attempt which is `self.max_retry`
             # we skip this part at it done in provision_hosts() method while
             # awaiting the self.abort_and_delete(error hosts)
+
             if error_hosts and attempts <= self.max_retry:
                 count = len(error_hosts)
                 err = f"{count} hosts were not provisioned properly, deleting."
                 logger.info(f"{log_msg_start} {err}")
+                out_of_resources = False
                 for host in error_hosts:
                     logger.error(f"{log_msg_start} Error: {str(host.error)}")
+                    if host.error.get("code", None) == 500:  # 500 = SERVER ERROR
+                        logger.info(
+                            f"{log_msg_start} Provider is out of resources, "
+                            "increasing cooldown time before another retry"
+                        )
+                        out_of_resources = True
+
+                if await self.utilization() >= max_utilization or out_of_resources:
+                    # delete all hosts when there is high utilization of provider
+                    error_hosts += success_hosts
+
                 await self.delete_hosts(error_hosts)
-                logger.info(f"{log_msg_start} Retrying to provision these hosts.")
+
+                # multiply the sleep time to increase the cooldown period
+                # to get range from 15 to 30 minutes
+                # before another retry (using default delta_sleep=15)
+                res_check_timeout += (
+                    (delta_sleep - 1) * res_check_timeout * int(out_of_resources)
+                )  # -1 because we do addition to original value and multiply by 14
+
+                cooldown = random.choice(
+                    range(res_check_timeout, 2 * res_check_timeout)
+                )
+                logger.info(
+                    f"{log_msg_start} Retrying to provision these hosts in {cooldown}s"
+                )
+                # In this case we haven't been able to provision all resources
+                # despite the previous waits, so we probably are in a race condition
+                # with concurrent runs, and thus we free all resources and try again
+                # in `cooldown` seconds to give chance other mrack requests.
+                await asyncio.sleep(cooldown)
 
         return success_hosts, error_hosts, missing_reqs
 

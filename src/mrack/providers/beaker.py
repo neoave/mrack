@@ -77,6 +77,7 @@ class BeakerProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "Beaker"
         self.conf = PyConfigParser()
@@ -152,6 +153,10 @@ class BeakerProvider(Provider):
     async def can_provision(self, hosts):
         """Check that hosts can be provisioned."""
         return True
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
+        return 0
 
     def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
         """Transform requirement to beaker job xml."""
