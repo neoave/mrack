@@ -156,11 +156,11 @@ class OpenStackProvider(Provider):
         object_start = datetime.now()
 
         _, _, self.limits, _, _ = await self._opentack_gather_responses(
-            self.load_flavors(),
-            self.load_images(image_names),
+            self._load_flavors(),
+            self._load_images(image_names),
             self.nova.limits.show(),
-            self.load_networks(),
-            self.load_ip_availabilities(),
+            self._load_networks(),
+            self._load_ip_availabilities(),
         )
 
         object_duration = datetime.now() - object_start
@@ -286,8 +286,8 @@ class OpenStackProvider(Provider):
         Available networks with most IPs available is picked.
         """
         possible_nets = self.network_pools[network_type]
-        # filter out the None values - the get_network return None if network not found
-        networks = list(filter(None, [self.get_network(net) for net in possible_nets]))
+        # filter out the None values - the _get_network return None if network not found
+        networks = list(filter(None, [self._get_network(net) for net in possible_nets]))
         usable = []
         low_avail_nets = []
         total_available = 0
@@ -295,7 +295,7 @@ class OpenStackProvider(Provider):
             if not network:
                 continue
 
-            ips = self.get_ips(ref=network.get("id"))
+            ips = self._get_ips(ref=network.get("id"))
 
             available = ips["total_ips"] - ips["used_ips"]
             logger.debug(f"{self.dsp_name} Network: {network['name']}")
@@ -359,7 +359,7 @@ class OpenStackProvider(Provider):
 
         return weights
 
-    def translate_network_types(self, hosts):
+    def _translate_network_types(self, hosts):
         """Pick the right OpenStack networks for all hosts.
 
         Pick the network based on network type, networks configured for the
@@ -413,21 +413,21 @@ class OpenStackProvider(Provider):
             self.networks[network["name"]] = network
             self.networks_by_ref[network["id"]] = network
 
-    def get_flavor(self, name=None, ref=None):
+    def _get_flavor(self, name=None, ref=None):
         """Get flavor by name or UUID."""
         flavor = self.flavors.get(name)
         if not flavor:
             flavor = self.flavors_by_ref.get(ref)
         return flavor
 
-    def get_image(self, name=None, ref=None):
+    def _get_image(self, name=None, ref=None):
         """Get image by name or UUID."""
         image = self.images.get(name)
         if not image:
             image = self.images_by_ref.get(ref)
         return image
 
-    def get_network(self, name=None, ref=None):
+    def _get_network(self, name=None, ref=None):
         """Get network by name or UUID."""
         network = self.networks.get(name)
         if not network:
@@ -441,21 +441,21 @@ class OpenStackProvider(Provider):
 
         return network
 
-    def get_ips(self, name=None, ref=None):
+    def _get_ips(self, name=None, ref=None):
         """Get network availability by network name or network UUID."""
         aval = self.ips.get(name)
         if not aval:
             aval = self.ips_by_ref.get(ref)
         return aval
 
-    async def load_flavors(self):
+    async def _load_flavors(self):
         """Extend provider configuration by loading all flavors from OpenStack."""
         resp = await self.nova.flavors.list()
         flavors = resp["flavors"]
         self._set_flavors(flavors)
         return flavors
 
-    async def load_images(self, image_names=None):
+    async def _load_images(self, image_names=None):
         """
         Extend provider configuration by loading information about images.
 
@@ -489,14 +489,14 @@ class OpenStackProvider(Provider):
 
         return images
 
-    async def load_networks(self):
+    async def _load_networks(self):
         """Extend provider configuration by loading all networks from OpenStack."""
         resp = await self.neutron.network.list()
         networks = resp["networks"]
         self._set_networks(networks)
         return networks
 
-    async def load_ip_availabilities(self):
+    async def _load_ip_availabilities(self):
         """Extend provider configuration by loading networks availabilities."""
         resp = await self.neutron.ip.list()
         availabilities = resp["network_ip_availabilities"]
@@ -510,9 +510,9 @@ class OpenStackProvider(Provider):
         flavor_ref = req.get("flavorRef")
         flavor = None
         if flavor_ref:
-            flavor = self.get_flavor(ref=flavor_ref)
+            flavor = self._get_flavor(ref=flavor_ref)
         if flavor_spec:
-            flavor = self.get_flavor(flavor_spec, flavor_spec)
+            flavor = self._get_flavor(flavor_spec, flavor_spec)
 
         if not flavor:
             specs = f"flavor: {flavor_spec}, ref: {flavor_ref}"
@@ -524,9 +524,9 @@ class OpenStackProvider(Provider):
         image_ref = req.get("imageRef")
         image = None
         if image_ref:
-            image = self.get_image(ref=image_ref)
+            image = self._get_image(ref=image_ref)
         if image_spec:
-            image = self.get_image(image_spec, image_spec)
+            image = self._get_image(image_spec, image_spec)
         if not image:
             specs = f"image: {image_spec}, ref: {image_ref}"
             raise ValidationError(f"Image not found {specs}")
@@ -541,12 +541,12 @@ class OpenStackProvider(Provider):
             network_specs = []
         for network_spec in network_specs:
             uuid = network_spec.get("uuid")
-            network = self.get_network(ref=uuid)
+            network = self._get_network(ref=uuid)
             if not network:
                 raise ValidationError(f"Network not found: {network_spec}")
             networks.append(network)
         if network_req:
-            network = self.get_network(name=network_req, ref=network_req)
+            network = self._get_network(name=network_req, ref=network_req)
             if not network:
                 raise ValidationError(f"Network not found: {network_req}")
 
@@ -595,7 +595,7 @@ class OpenStackProvider(Provider):
         if prepare_images:
             im_list = ", ".join(prepare_images)
             logger.debug(f"{self.dsp_name} Loading image info for: '{im_list}'")
-            await self.load_images(list(prepare_images))
+            await self._load_images(list(prepare_images))
             logger.debug(f"{self.dsp_name} Loading images info done.")
 
         self._set_poll_sleep_times(reqs)
@@ -604,7 +604,7 @@ class OpenStackProvider(Provider):
     async def validate_hosts(self, reqs):
         """Validate that all hosts requirements contains existing required objects."""
         # translate network type to actual network and check network availabilities
-        self.translate_network_types(reqs)
+        self._translate_network_types(reqs)
 
         for req in reqs:
             logger.info(f"{self.dsp_name} Validating host: {object2json(req)}")
@@ -617,9 +617,9 @@ class OpenStackProvider(Provider):
         flavor_ref = req.get("flavorRef")
         flavor = None
         if flavor_ref:
-            flavor = self.get_flavor(ref=flavor_ref)
+            flavor = self._get_flavor(ref=flavor_ref)
         if flavor_spec:
-            flavor = self.get_flavor(flavor_spec, flavor_spec)
+            flavor = self._get_flavor(flavor_spec, flavor_spec)
 
         try:
             res = {"ram": flavor["ram"], "vcpus": flavor["vcpus"]}
