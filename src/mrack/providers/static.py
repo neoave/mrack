@@ -36,6 +36,7 @@ class StaticProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "Static"
         self.max_retry = 1  # for retry strategy
@@ -63,6 +64,10 @@ class StaticProvider(Provider):
     async def can_provision(self, hosts):
         """Behave as that we can."""
         return True
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
+        return 0
 
     async def provision_hosts(self, reqs):
         """Fake provision - behave as if it was provisioned."""

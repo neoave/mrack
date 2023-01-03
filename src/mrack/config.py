@@ -142,3 +142,11 @@ class MrackConfig:
     def require_owner(self, default=False):
         """Return value of require-owner."""
         return value_to_bool(self.get("require-owner", default))
+
+    def delta_sleep(self, default=15):
+        """Return value of require-owner."""
+        return int(self.get("delta-sleep", default))
+
+    def max_utilization(self, default=90):
+        """Return value of require-owner."""
+        return int(self.get("max-utilization", default))

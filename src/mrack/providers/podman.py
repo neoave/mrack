@@ -35,6 +35,7 @@ class PodmanProvider(Provider):
 
     def __init__(self):
         """Initialize provider."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "Podman"
         self.max_retry = 1  # for retry strategy
@@ -126,6 +127,10 @@ class PodmanProvider(Provider):
     async def can_provision(self, hosts):
         """Check that provider has enough resources to provision hosts."""
         return bool(hosts)  # TODO
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
+        return 0
 
     async def create_server(self, req):
         """Request and create resource on selected provider."""

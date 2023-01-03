@@ -40,6 +40,7 @@ class AWSProvider(Provider):
 
     def __init__(self):
         """Object initialization."""
+        super().__init__()
         self._name = PROVISIONER_KEY
         self.dsp_name = "AWS"
         self.ssh_key = None
@@ -296,6 +297,10 @@ class AWSProvider(Provider):
                 return False
 
         return True
+
+    async def utilization(self):
+        """Check percentage utilization of given provider."""
+        return 0  # TODO
 
     async def create_server(self, req):
         """Issue creation of a server.
