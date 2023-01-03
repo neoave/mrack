@@ -251,27 +251,27 @@ class TestOpenStackProvider:
         for network in self.networks["networks"]:
             name = network["name"]
             uuid = network["id"]
-            net = provider.get_network(name)
+            net = provider._get_network(name)  # pylint: disable=protected-access
             assert net["id"] == uuid
-            net = provider.get_network(ref=uuid)
+            net = provider._get_network(ref=uuid)  # pylint: disable=protected-access
             assert net["name"] == name
 
         # Provider loaded images
         for image in self.images["images"]:
             name = image["name"]
             uuid = image["id"]
-            im = provider.get_image(name)
+            im = provider._get_image(name)  # pylint: disable=protected-access
             assert im["id"] == uuid
-            im = provider.get_image(ref=uuid)
+            im = provider._get_image(ref=uuid)  # pylint: disable=protected-access
             assert im["name"] == name
 
         # Provider loaded flavors
         for flavor in self.flavors["flavors"]:
             name = flavor["name"]
             uuid = flavor["id"]
-            fla = provider.get_flavor(name)
+            fla = provider._get_flavor(name)  # pylint: disable=protected-access
             assert fla["id"] == uuid
-            fla = provider.get_flavor(ref=uuid)
+            fla = provider._get_flavor(ref=uuid)  # pylint: disable=protected-access
             assert fla["name"] == name
 
         # Provider loaded limits
@@ -283,9 +283,9 @@ class TestOpenStackProvider:
         for net_ava in self.availabilities["network_ip_availabilities"]:
             name = net_ava["network_name"]
             uuid = net_ava["network_id"]
-            net = provider.get_ips(name)
+            net = provider._get_ips(name)  # pylint: disable=protected-access
             assert net["network_id"] == uuid
-            net = provider.get_ips(ref=uuid)
+            net = provider._get_ips(ref=uuid)  # pylint: disable=protected-access
             assert net["network_name"] == name
 
     @pytest.mark.asyncio
@@ -315,7 +315,7 @@ class TestOpenStackProvider:
 
         await provider.init(image_names=[], networks=pools)
         try:
-            provider.translate_network_types(hosts)
+            provider._translate_network_types(hosts)  # pylint: disable=protected-access
         except MrackError as no_nets:
             assert isinstance(exp_nets, ValidationError) is True
             assert "no available networks" in str(no_nets)
