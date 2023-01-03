@@ -89,7 +89,7 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
-    async def _opentack_gather_responses(self, *functions):
+    async def _openstack_gather_responses(self, *functions):
         """Gather the async result of functions from parameters.
 
         Returns:
@@ -156,7 +156,7 @@ class OpenStackProvider(Provider):
         self.network_pools = networks
         object_start = datetime.now()
 
-        _, _, self.limits, _, _ = await self._opentack_gather_responses(
+        _, _, self.limits, _, _ = await self._openstack_gather_responses(
             self._load_flavors(),
             self._load_images(image_names),
             self.nova.limits.show(),
@@ -649,7 +649,7 @@ class OpenStackProvider(Provider):
 
         # poll the actual openstack load
         logger.debug(f"{self.dsp_name} Loading nova limits")
-        limits_await = await self._opentack_gather_responses(self.nova.limits.show())
+        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
         self.limits = limits_await[0]  # gather returns list
 
         limits = self.limits["limits"]["absolute"]
@@ -675,7 +675,15 @@ class OpenStackProvider(Provider):
 
     async def utilization(self):
         """Check utilization of provider."""
-        return 0  # TODO
+        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
+        self.limits = limits_await[0]  # gather returns list
+        used_vcpus = self.limits["totalCoresUsed"]
+        used_memory = self.limits["totalRAMUsed"]
+        limit_vcpus = self.limits["maxTotalCores"]
+        limit_memory = self.limits["maxTotalRAMSize"]
+        cpu_util = used_vcpus / limit_vcpus * 100
+        memory_util = used_memory / limit_memory * 100
+        return cpu_util if memory_util <= cpu_util else memory_util
 
     async def create_server(self, req):
         """Issue creation of a server.
