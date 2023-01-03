@@ -300,7 +300,23 @@ class AWSProvider(Provider):
 
     async def utilization(self):
         """Check percentage utilization of given provider."""
-        return 0  # TODO
+        net_sizes = {
+            "28": 14,
+            "27": 30,
+            "26": 62,
+            "25": 126,
+            "24": 254,
+            "23": 510,
+        }
+        res = 0
+        for net, _availability in self.subnets_capacity.items():
+            subnet = self.ec2.Subnet(net)
+            size = net_sizes[subnet.cidr_block.split("/")[-1]]
+            self.subnets_capacity[net] = subnet.available_ip_address_count
+            usage = (size - self.subnets_capacity[net]) / size * 100
+            res = usage if usage > res else res
+
+        return res
 
     async def create_server(self, req):
         """Issue creation of a server.
