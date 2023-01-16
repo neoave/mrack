@@ -24,6 +24,7 @@ from urllib.parse import parse_qs, urlparse
 from asyncopenstackclient import AuthPassword, GlanceClient
 from simple_rest_client.exceptions import NotFoundError, ServerError
 
+from mrack.context import global_context
 from mrack.errors import (
     NotAuthenticatedError,
     ProviderError,
@@ -286,47 +287,107 @@ class OpenStackProvider(Provider):
 
         Available networks with most IPs available is picked.
         """
-        possible_nets = self.network_pools[network_type]
-        # filter out the None values - the _get_network return None if network not found
-        networks = list(filter(None, [self._get_network(net) for net in possible_nets]))
-        usable = []
-        low_avail_nets = []
+        usable = set()
+        low_avail_nets = set()
         total_available = 0
-        for network in networks:
-            if not network:
-                continue
+        max_size_net = 0
+        threshold = global_context.CONFIG.usable_network_threshold
+        spread_option = global_context.CONFIG.network_spread
+        big_request = False
 
+        # filter out the None values - the get_network return None if network not found
+        for network in list(
+            filter(
+                None,
+                [self._get_network(net) for net in self.network_pools[network_type]],
+            )
+        ):
             ips = self._get_ips(ref=network.get("id"))
 
             available = ips["total_ips"] - ips["used_ips"]
-            logger.debug(f"{self.dsp_name} Network: {network['name']}")
+            max_size_net = available if available > max_size_net else max_size_net
+
+            logger.debug(
+                f"{self.dsp_name} Network: {network['name']}"
+                f"{' - unusable (0 IPs left) skipping' if not available else ''}"
+            )
             logger.debug(f"  total: {ips['total_ips']}")
             logger.debug(f"  used: {ips['used_ips']}")
             logger.debug(f"  available: {available}")
 
-            total_available += available
-
-            #  assume network is unusable when < 5% IPs left - (12/251) when IPv4
-            if available / ips["total_ips"] < 0.05:
-                low_avail_nets.append((network["name"], available))
+            if not available:
                 continue
 
-            usable.append((network["name"], available))
+            total_available += available
+
+            #  assume network is unusable when usable_threshold is reached
+            if ips["used_ips"] / ips["total_ips"] > threshold / 100:
+                low_avail_nets.add((network["name"], available))
+                continue
+
+            usable.add((network["name"], available))
 
         if not usable and (total_available >= requested_ip_cnt) and low_avail_nets:
-            usable += low_avail_nets
+            usable = usable.union(low_avail_nets)
 
         if not usable:
             raise ValidationError(
-                "Error: no available networks for "
+                "No available networks for "
                 f"{requested_ip_cnt} hosts with {network_type}",
                 self.dsp_name,
             )
 
-        if len(usable) > requested_ip_cnt:
-            usable = sample(usable, requested_ip_cnt)
+        if requested_ip_cnt > max_size_net:
+            big_request = True
+            # if we request more IPs than maximum size net consider the request big
+            # adding even small networks to the usable set to spread the load
+            usable = usable.union(low_avail_nets)
 
-        return sorted(usable, key=lambda u: u[NETWORK_SIZE], reverse=True)
+        logger.debug(
+            f"{self.dsp_name} Default mrack behavior is to 'allow' spread"
+            " the load to all available networks, to disable this feature set"
+            " the 'network-spread' option in the mrack.conf file to 'no'"
+        )
+        logger.debug(
+            f"{self.dsp_name} 'network-spread' option is set to '{spread_option}'"
+        )
+        logger.debug(
+            f"{self.dsp_name} Considering this request "
+            f"{'big' if big_request else 'small'} - requesting {requested_ip_cnt} "
+            f"IP(s) from total available {total_available} IP(s)"
+        )
+
+        size_for_spread = (
+            len(usable) if len(usable) <= requested_ip_cnt else requested_ip_cnt
+        )
+
+        # number of networks which we will consider to pass to picking algorithm
+        network_subset_size = 0
+
+        if spread_option == "force":
+            network_subset_size = size_for_spread
+        elif spread_option == "no":
+            if not big_request:
+                network_subset_size = 1
+        else:  # spread option is allow or some unknown string -> fallback to default
+            if usable.intersection(low_avail_nets) or big_request:
+                network_subset_size = size_for_spread
+            else:
+                network_subset_size = 1
+
+        if network_subset_size:
+            return sorted(
+                set(sample(sorted(usable), network_subset_size)),
+                key=lambda u: u[NETWORK_SIZE],
+                reverse=True,
+            )
+        # If the above return does not happened because there is 0 usable networks
+        # we will raise a ValidationError
+        raise ValidationError(
+            f"Can not satisfy request for {requested_ip_cnt} hosts ({network_type}) "
+            "Change the 'network-spread' in mrack.conf or try provisioning again later",
+            self.dsp_name,
+        )
 
     def _get_weights_from_usable(self, usable_networks):
         """
@@ -373,6 +434,7 @@ class OpenStackProvider(Provider):
         nt_requirements = self._aggregate_networks(hosts)
         nt_map = {}
         for network_type, count in nt_requirements.items():
+            # count is crucial
             nt_map[network_type] = self._get_usable_networks(network_type, count)
 
         weight_map = {}
@@ -402,6 +464,7 @@ class OpenStackProvider(Provider):
                 continue
 
             networks_weights = weight_map[network_type]
+
             host["network"] = self._pick_network(
                 host_name=host["name"],
                 host_weight=hosts.index(host) / len(hosts),

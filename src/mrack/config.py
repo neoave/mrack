@@ -144,9 +144,26 @@ class MrackConfig:
         return value_to_bool(self.get("require-owner", default))
 
     def delta_sleep(self, default=15):
-        """Return value of require-owner."""
+        """Return value of `delta-sleep` value from config to randomize sleep window."""
         return int(self.get("delta-sleep", default))
 
+    @property
     def max_utilization(self, default=90):
-        """Return value of require-owner."""
+        """Return value `max-utilization` from mrack config file."""
         return int(self.get("max-utilization", default))
+
+    @property
+    def usable_network_threshold(self, default=95):
+        """Return maximum acceptable network utilization of provider."""
+        return int(self.get("usable-network-threshold", default))
+
+    @property
+    def network_spread(self, default="allow"):
+        """Return `network-spread` setting value from mrack config.
+
+        Possible values are:
+        - no: disable network spreading feature
+        - allow: allow network spreading feature (default)
+        - force: always use network spreading feature
+        """
+        return self.get("network-spread", default).lower()
