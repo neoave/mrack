@@ -1,0 +1,72 @@
+---
+# for Mrack provisioner
+ssh_key_filename: 'config/id_rsa'
+
+# mrack provisioning supports also static provisioning
+# this record is needed (mrack v0.5.2) to enable it
+static: {}
+
+
+openstack:
+    images:
+        fedora-37: Fedora-Cloud-Base-37-latest
+
+
+    flavors:
+        default: medium
+
+
+    networks:
+        IPv4:
+            - net1
+
+    default_network: IPv4
+
+    # OpenStack vm config
+    keypair: default_keypair
+
+    # OpenStack security/auth config for linchpin
+    credentials_file: clouds.yaml
+    profile: devstack
+
+
+# default user of image
+users:
+    fedora-37: fedora
+    default: cloud-user
+
+# ansible_python_interpreter
+python:
+    fedora-37: /usr/bin/python3
+    default: /usr/libexec/platform-python
+
+mhcfg:
+    ssh_key_filename: 'config/id_rsa'
+    ad_admin_name: Administrator
+    ad_admin_password: Secret123
+    admin_name: admin
+    admin_password: Secret.123
+    dirman_dn: cn=Directory Manager
+    dirman_password: Secret.123
+    dns_forwarder: '10.11.5.19' # taken from OpenStack machine
+
+inventory_layout:
+    all:
+        children:
+            ad:
+                children:
+                    ad_root: {}
+                    ad_subdomain: {}
+                    ad_treedomain: {}
+                    ad_member: {}
+            ipa:
+                children:
+                    ipaclient: {}
+                    ipaserver: {}
+            linux:
+                children:
+                    ipa: {}
+                    runner: {}
+            windows:
+                children:
+                    ad: {}
