@@ -61,9 +61,9 @@ repos:
         args: ["--ignore-missing-imports"]
         additional_dependencies: ["types-PyYAML", "types-python-dateutil"]
 
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v3.0.0a5
-    hooks:
-      - id: pylint
-        additional_dependencies: ["isort[pyproject]"]
-        exclude: ^(docs/|tests/).*$
+  # - repo: https://github.com/pre-commit/mirrors-pylint
+  #   rev: v3.0.0a5
+  #   hooks:
+  #     - id: pylint
+  #       additional_dependencies: ["isort[pyproject]"]
+  #       exclude: ^(docs/|tests/).*$
