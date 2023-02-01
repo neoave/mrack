@@ -190,9 +190,10 @@ class AnsibleInventoryOutput:
             if key.startswith("meta_"):
                 host_info[key] = val
 
-        ansible_inventory = meta_host.get("ansible_inventory")
-        if isinstance(ansible_inventory, dict):
-            host_info.update(ansible_inventory)
+        dom_ansible_inventory = deepcopy(meta_domain.get("ansible_inventory", {}))
+        ansible_inventory = deepcopy(meta_host.get("ansible_inventory", {}))
+        if ansible_inventory or dom_ansible_inventory:
+            host_info.update(dom_ansible_inventory | ansible_inventory)
 
         return host_info
 

@@ -227,3 +227,77 @@ class TestAnsibleInventory:
         assert "something_else" in srv2
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
+
+    def test_domain_arbitrary_attrs(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in host part
+        of job metadata file gets into host attributes in generated ansible
+        inventory.
+        """
+        metadata = metadata_extra()
+        metadata["domains"][0]["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "not_funny",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "readonly_dc" not in srv1
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "not_funny"
+        assert "no_ca" in srv1
+        assert "something_else" in srv1
+        assert srv1["no_ca"] == "no"
+        assert srv1["something_else"] == "not_funny"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "no"
+        assert srv2["something_else"] == "not_funny"
+
+    def test_domain_arbitrary_attrs_override(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in host part
+        of job metadata file gets into host attributes in generated ansible
+        inventory.
+        """
+        metadata = metadata_extra()
+        metadata["domains"][0]["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "not_funny",
+        }
+        m_srv1 = metadata["domains"][0]["hosts"][0]
+        m_srv2 = metadata["domains"][0]["hosts"][1]
+        m_srv1["ansible_inventory"] = {
+            "readonly_dc": "yes",
+        }
+        m_srv2["ansible_inventory"] = {
+            "no_ca": "yes",
+            "something_else": "for_fun",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "readonly_dc" in srv1
+        assert srv1["readonly_dc"] == "yes"
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "not_funny"
+        assert "no_ca" in srv1
+        assert srv1["no_ca"] == "no"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "yes"
+        assert srv2["something_else"] == "for_fun"
