@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 
 from mrack.errors import ConfigError
@@ -187,6 +189,7 @@ class TestAnsibleInventory:
         assert srv1["meta_os"] == "windows-2019"
 
         srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+
         assert "meta_something_else" not in srv2
         assert "meta_readonly_dc" in srv2
         assert srv2["meta_readonly_dc"] == "no"
@@ -223,6 +226,7 @@ class TestAnsibleInventory:
         assert srv1["something_else"] == "for_fun"
 
         srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+
         assert "no_ca" in srv2
         assert "something_else" in srv2
         assert srv2["no_ca"] == "yes"
@@ -230,9 +234,9 @@ class TestAnsibleInventory:
 
     def test_domain_arbitrary_attrs(self):
         """
-        Test that values defined in `ansible_inventory` dictionary in host part
-        of job metadata file gets into host attributes in generated ansible
-        inventory.
+        Test that values defined in `ansible_inventory` dictionary in domain
+        section of job metadata file gets into host attributes in generated ansible
+        inventory to each host of affected domain.
         """
         metadata = metadata_extra()
         metadata["domains"][0]["ansible_inventory"] = {
@@ -247,15 +251,13 @@ class TestAnsibleInventory:
 
         srv1 = inventory["all"]["hosts"]["srv1.example.test"]
 
-        assert "readonly_dc" not in srv1
         assert "something_else" in srv1
         assert srv1["something_else"] == "not_funny"
         assert "no_ca" in srv1
-        assert "something_else" in srv1
         assert srv1["no_ca"] == "no"
-        assert srv1["something_else"] == "not_funny"
 
         srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+
         assert "no_ca" in srv2
         assert "something_else" in srv2
         assert srv2["no_ca"] == "no"
@@ -263,9 +265,9 @@ class TestAnsibleInventory:
 
     def test_domain_arbitrary_attrs_override(self):
         """
-        Test that values defined in `ansible_inventory` dictionary in host part
-        of job metadata file gets into host attributes in generated ansible
-        inventory.
+        Test that values defined in `ansible_inventory` dictionary in domain
+        section of job metadata file gets into host attributes in generated ansible
+        inventory and can be overriden by attributes in host section.
         """
         metadata = metadata_extra()
         metadata["domains"][0]["ansible_inventory"] = {
@@ -301,3 +303,182 @@ class TestAnsibleInventory:
         assert "something_else" in srv2
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
+
+    def test_global_arbitrary_attrs(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in global
+        section of job metadata file gets into host attributes in generated ansible
+        inventory to each host in metadata.
+        """
+        metadata = metadata_extra()
+        metadata["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "not_funny",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "readonly_dc" not in srv1
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "not_funny"
+        assert "no_ca" in srv1
+        assert srv1["no_ca"] == "no"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "no"
+        assert srv2["something_else"] == "not_funny"
+
+    def test_global_arbitrary_attrs_domain_override(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in global
+        section of job metadata file gets into host attributes in generated ansible
+        inventory to each host in metadata and can be overriden by domain records.
+        """
+        metadata = metadata_extra()
+        metadata["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "not_funny",
+        }
+
+        metadata["domains"][0]["ansible_inventory"] = {
+            "no_ca": "yes",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "not_funny"
+        assert "no_ca" in srv1
+        assert srv1["no_ca"] == "yes"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "yes"
+        assert srv2["something_else"] == "not_funny"
+
+    def test_global_arbitrary_attrs_host_override(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in global
+        section of job metadata file gets into host attributes in generated ansible
+        inventory to each host in metadata and can be overriden by host records.
+        """
+        metadata = metadata_extra()
+        metadata["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "not_funny",
+        }
+
+        metadata["domains"][0]["ansible_inventory"] = {
+            "no_ca": "yes",
+        }
+
+        m_srv1 = metadata["domains"][0]["hosts"][0]
+        m_srv2 = metadata["domains"][0]["hosts"][1]
+        m_srv1["ansible_inventory"] = {
+            "readonly_dc": "yes",
+        }
+        m_srv2["ansible_inventory"] = {
+            "no_ca": "whatever",
+            "something_else": "host_value",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+
+        assert "readonly_dc" in srv1
+        assert srv1["readonly_dc"] == "yes"
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "not_funny"
+        assert "no_ca" in srv1
+        assert srv1["no_ca"] == "yes"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "whatever"
+        assert srv2["something_else"] == "host_value"
+
+    def test_global_arbitrary_attrs_host_override_multiple_domains(self):
+        """
+        Test that values defined in `ansible_inventory` dictionary in global
+        section of job metadata file gets into host attributes in generated ansible
+        inventory to each host in metadata. This particular check aims to
+        make sure the domain records are affecting only hosts in domain
+        where they suppose to affect the host records.
+        Secondary domain does has to contain attributes set on global level.
+        """
+        metadata = metadata_extra()
+        metadata["ansible_inventory"] = {
+            "no_ca": "no",
+            "something_else": "default_global",
+        }
+
+        metadata["domains"].append(deepcopy(metadata["domains"][0]))
+        for host in metadata["domains"][-1]["hosts"]:
+            host["name"] = f"d1-{host['name']}"
+
+        metadata["domains"][0]["ansible_inventory"] = {
+            "no_ca": "yes",  # change the value only for one domain
+            "something_else": "domain_0_value",  # change the value only for one domain
+        }
+
+        d0_m_srv1 = metadata["domains"][0]["hosts"][0]
+        d0_m_srv2 = metadata["domains"][0]["hosts"][1]
+        d0_m_srv1["ansible_inventory"] = {
+            "readonly_dc": "yes",
+        }
+        d0_m_srv2["ansible_inventory"] = {
+            "no_ca": "whatever",
+            "something_else": "host_value",
+        }
+
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        srv1 = inventory["all"]["hosts"]["srv1.example.test"]
+        assert "readonly_dc" in srv1
+        assert srv1["readonly_dc"] == "yes"
+        assert "something_else" in srv1
+        assert srv1["something_else"] == "domain_0_value"
+        assert "no_ca" in srv1
+        assert srv1["no_ca"] == "yes"
+
+        srv2 = inventory["all"]["hosts"]["srv2.example.test"]
+        assert "no_ca" in srv2
+        assert "something_else" in srv2
+        assert srv2["no_ca"] == "whatever"
+        assert srv2["something_else"] == "host_value"
+
+        d1_srv1 = inventory["all"]["hosts"]["d1-srv1.example.test"]
+        assert "no_ca" in d1_srv1
+        assert "readonly_dc" not in d1_srv1
+        assert "something_else" in d1_srv1
+        assert d1_srv1["no_ca"] == "no"
+        assert d1_srv1["something_else"] == "default_global"
+
+        d1_srv2 = inventory["all"]["hosts"]["d1-srv2.example.test"]
+        assert "no_ca" in d1_srv2
+        assert "something_else" in d1_srv2
+        assert d1_srv2["no_ca"] == "no"
+        assert d1_srv2["something_else"] == "default_global"
