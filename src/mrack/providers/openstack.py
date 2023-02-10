@@ -241,11 +241,11 @@ class OpenStackProvider(Provider):
         Full capacity of these 5 nets: 500
 
         Normalized network range:
-        net 4 - <0, 0.29>
-        net 3 - (0,29, 0.55>
-        net 5 - (0.55, 0.76>
-        net 2 - (0.76, 0.96>
-        net 1 - (0.96, 1>
+        net 4 - <0, 0.29)
+        net 3 - <0,29, 0.55)
+        net 5 - <0.55, 0.76)
+        net 2 - <0.76, 0.96)
+        net 1 - <0.96, 1)
 
         Which will divide networks for hosts:
         host 1 => net 4 (0 falls into net 4 interval)
@@ -258,7 +258,7 @@ class OpenStackProvider(Provider):
         """
         chosen = tuple()
         for index, net in enumerate(nets_weights):
-            if host_weight <= net[NETWORK_SIZE]:
+            if host_weight < net[NETWORK_SIZE]:
                 chosen = net
                 # print details only if there is more one network to be picked from
                 if len(nets_weights) > 1:
