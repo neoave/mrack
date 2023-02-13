@@ -62,13 +62,42 @@ class TestStaticProvider:
             assert record.message == line
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "config,files",
+        [
+            (None, ["mrack-inventory.yaml", "pytest-multihost.yaml"]),
+            (
+                ["ansible-inventory", "pytest-mh"],
+                ["mrack-inventory.yaml", "pytest-mh.yaml"],
+            ),
+            (
+                ["ansible-inventory", "pytest-multihost"],
+                ["mrack-inventory.yaml", "pytest-multihost.yaml"],
+            ),
+            (["ansible-inventory"], ["mrack-inventory.yaml"]),
+            (["pytest-mh"], ["pytest-mh.yaml"]),
+            (["pytest-multihost"], ["pytest-multihost.yaml"]),
+        ],
+    )
     async def test_output_action(
-        self, provisioning_config, metadata, database, setup_providers, cleandir
+        self,
+        provisioning_config,
+        metadata,
+        database,
+        setup_providers,
+        cleandir,
+        config,
+        files,
     ):
         workdir = os.getcwd()
 
         # Check that workdir is empty
         assert os.listdir(workdir) == []
+
+        if config is not None:
+            metadata["config"] = dict(outputs=config)
+
+        print(metadata)
 
         output_action = OutputAction(
             config=provisioning_config,
@@ -76,13 +105,12 @@ class TestStaticProvider:
             db_driver=database,
             ansible_path=None,
             pytest_multihost_path=None,
+            pytest_mh_path=None,
         )
         await output_action.generate_outputs()
 
         # Check for generated files
-        assert set(os.listdir(workdir)) == set(
-            ["mrack-inventory.yaml", "pytest-multihost.yaml"]
-        )
+        assert set(os.listdir(workdir)) == set(files)
 
     @pytest.mark.asyncio
     async def test_destroy_action(

@@ -19,8 +19,8 @@ from mrack.actions.action import Action
 from mrack.context import global_context
 from mrack.errors import MetadataError
 from mrack.outputs.ansible_inventory import AnsibleInventoryOutput
-from mrack.outputs.pytest_multihost import PytestMultihostOutput
 from mrack.outputs.pytest_mh import PytestMhOutput
+from mrack.outputs.pytest_multihost import PytestMultihostOutput
 
 logger = logging.getLogger(__name__)
 
@@ -61,22 +61,24 @@ class Output(Action):
         """Generate outputs."""
         logger.info("Output generation started")
 
+        outputs = self._metadata.get("config", {}).get(
+            "outputs", ["ansible-inventory", "pytest-multihost"]
+        )
+        outputs_map = {
+            "ansible-inventory": (AnsibleInventoryOutput, self._ansible_path),
+            "pytest-multihost": (PytestMultihostOutput, self._pytest_multihost_path),
+            "pytest-mh": (PytestMhOutput, self._pytest_mh_path),
+        }
+
         if not self._db_driver.hosts:
             raise MetadataError("No hosts found.")
 
-        ansible_o = AnsibleInventoryOutput(
-            self._config, self._db_driver, self._metadata, self._ansible_path
-        )
-        multihost_o = PytestMultihostOutput(
-            self._config, self._db_driver, self._metadata, self._pytest_multihost_path
-        )
-        mh_o = PytestMhOutput(
-            self._config, self._db_driver, self._metadata, self._pytest_multihost_path
-        )
+        logger.info("Requested outputs: " + ", ".join(outputs))
 
-        ansible_o.create_output()
-        multihost_o.create_output()
-        mh_o.create_output()
+        for output in outputs:
+            (cls, path) = outputs_map[output]
+            o = cls(self._config, self._db_driver, self._metadata, path)
+            o.create_output()
 
         logger.info("Output generation done")
         return True
