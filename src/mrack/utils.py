@@ -29,7 +29,7 @@ from xml.dom.minidom import Document as xml_doc
 
 import yaml
 
-from mrack.errors import ConfigError, ProvisioningError
+from mrack.errors import ConfigError, MetadataError, ProvisioningError
 
 logger = logging.getLogger(__name__)
 
@@ -284,6 +284,21 @@ def get_shortname(hostname):
     Return the same string if it is not fqdn.
     """
     return hostname.split(".")[0]
+
+
+def get_fqdn(hostname, domain):
+    """
+    Get fqdn from hostname and domain.
+
+    Return the hostname if it is fqdn otherwise append domain.
+    @raise: MetadataError when hostname is fqdn that does not belong to domain
+    """
+    if "." in hostname:
+        if hostname.endswith(domain):
+            return hostname
+        else:
+            raise MetadataError(f"{hostname} does not belong to {domain}.")
+    return f"{hostname}.{domain}"
 
 
 def get_username(host, meta_host, config):

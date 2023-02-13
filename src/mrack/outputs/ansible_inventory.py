@@ -21,6 +21,7 @@ from copy import deepcopy
 from mrack.errors import ConfigError
 from mrack.outputs.utils import get_external_id
 from mrack.utils import (
+    get_fqdn,
     get_host_from_metadata,
     get_password,
     get_shortname,
@@ -143,9 +144,9 @@ class AnsibleInventoryOutput:
             "ansible_host": ansible_host,
             "ansible_python_interpreter": python,
             "ansible_user": ansible_user,
-            "meta_fqdn": f"{get_shortname(name)}.{dom_name}",
+            "meta_fqdn": f"{get_fqdn(name, dom_name)}",
             "meta_hostname": get_shortname(name),
-            "meta_domain": dom_name,
+            "meta_domain": f"{get_fqdn(name, dom_name).split('.', 1)[1]}",
             "meta_provider": db_host.provider.name,
             "meta_provider_id": db_host.host_id,
             "meta_ip": ip_addr,
