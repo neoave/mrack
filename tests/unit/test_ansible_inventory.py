@@ -176,6 +176,28 @@ class TestAnsibleInventory:
             in inventory["all"]["children"]["server"]["children"]["ipaserver"]["hosts"]
         )
 
+    def test_layout_overwrite(self, db, metadata):
+        metadata["config"] = {
+            "ansible": {
+                "layout": {
+                    "all": {
+                        "children": {
+                            "mylayout": {},
+                        }
+                    }
+                }
+            }
+        }
+
+        config = provisioning_config(common_inventory_layout())
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        assert "ipa" not in inventory["all"]["children"]
+        assert "linux" not in inventory["all"]["children"]
+        assert "windows" not in inventory["all"]["children"]
+        assert "mylayout" in inventory["all"]["children"]
+
     def test_meta_extra(self, db_meta_extra, metadata):
         config = provisioning_config()
         ans_inv = AnsibleInventoryOutput(config, db_meta_extra, metadata)
