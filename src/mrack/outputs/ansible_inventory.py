@@ -74,7 +74,7 @@ def get_group(inventory, groupname):
         else:
             if "children" in group:
                 found = get_group(group["children"], groupname)
-        if found:
+        if found is not None:
             break
     return found
 
@@ -86,7 +86,7 @@ def add_to_group(inventory, groupname, hostname):
     Returns group or None if it doesn't exist.
     """
     group = get_group(inventory, groupname)
-    if not group:
+    if group is None:
         return None
 
     if "hosts" not in group:

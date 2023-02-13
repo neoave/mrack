@@ -131,6 +131,51 @@ class TestAnsibleInventory:
             ans_inv.create_inventory()
         assert "dictionary" in str(excinfo.value)
 
+    def test_layout_nested_groups(self, db, metadata):
+        layout = {
+            "all": {
+                "children": {
+                    "client": {"children": {"ipaclient": {}}},
+                    "server": {"children": {"ipaserver": {}}},
+                }
+            }
+        }
+
+        config = provisioning_config(layout)
+        ans_inv = AnsibleInventoryOutput(config, db, metadata)
+        inventory = ans_inv.create_inventory()
+
+        import yaml
+
+        print(yaml.dump(inventory))
+
+        assert "all" in inventory
+        assert "children" in inventory["all"]
+
+        # check client
+        assert "client" in inventory["all"]["children"]
+        assert "children" in inventory["all"]["children"]["client"]
+        assert "ipaclient" in inventory["all"]["children"]["client"]["children"]
+        assert (
+            "hosts" in inventory["all"]["children"]["client"]["children"]["ipaclient"]
+        )
+        assert (
+            "ipaclient0@example.test"
+            in inventory["all"]["children"]["client"]["children"]["ipaclient"]["hosts"]
+        )
+
+        # check server
+        assert "server" in inventory["all"]["children"]
+        assert "children" in inventory["all"]["children"]["server"]
+        assert "ipaserver" in inventory["all"]["children"]["server"]["children"]
+        assert (
+            "hosts" in inventory["all"]["children"]["server"]["children"]["ipaserver"]
+        )
+        assert (
+            "ipaserver0@example.test"
+            in inventory["all"]["children"]["server"]["children"]["ipaserver"]["hosts"]
+        )
+
     def test_meta_extra(self, db_meta_extra, metadata):
         config = provisioning_config()
         ans_inv = AnsibleInventoryOutput(config, db_meta_extra, metadata)
