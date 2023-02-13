@@ -20,6 +20,7 @@ from mrack.context import global_context
 from mrack.errors import MetadataError
 from mrack.outputs.ansible_inventory import AnsibleInventoryOutput
 from mrack.outputs.pytest_multihost import PytestMultihostOutput
+from mrack.outputs.pytest_mh import PytestMhOutput
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class Output(Action):
         db_driver=None,
         ansible_path=None,
         pytest_multihost_path=None,
+        pytest_mh_path=None,
     ):  # pylint: disable=arguments-differ
         """Initialize the Output action."""
         super().__init__(config=config, metadata=metadata, db_driver=db_driver)
@@ -45,12 +47,15 @@ class Output(Action):
         if global_context.CONFIG:
             global_ansible_path = global_context.CONFIG.ansible_inventory_path()
             global_multihost_path = global_context.CONFIG.pytest_multihost_path()
+            global_mh_path = global_context.CONFIG.pytest_mh_path()
         else:
             global_ansible_path = None
             global_multihost_path = None
+            global_mh_path = None
 
         self._ansible_path = ansible_path or global_ansible_path
         self._pytest_multihost_path = pytest_multihost_path or global_multihost_path
+        self._pytest_mh_path = pytest_mh_path or global_mh_path
 
     async def generate_outputs(self):
         """Generate outputs."""
@@ -65,9 +70,13 @@ class Output(Action):
         multihost_o = PytestMultihostOutput(
             self._config, self._db_driver, self._metadata, self._pytest_multihost_path
         )
+        mh_o = PytestMhOutput(
+            self._config, self._db_driver, self._metadata, self._pytest_multihost_path
+        )
 
         ansible_o.create_output()
         multihost_o.create_output()
+        mh_o.create_output()
 
         logger.info("Output generation done")
         return True
