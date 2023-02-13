@@ -227,14 +227,14 @@ def fd_open(filename=None):
             file_d.close()
 
 
-def save_yaml(path, yaml_data):
+def save_yaml(path, yaml_data, **kwargs):
     """
     Write yaml data with file.write(yaml.dump()) to file specified by path.
 
     If path is not specified use stdout.
     """
     with fd_open(path) as yaml_file:
-        yaml_file.write(yaml.dump(yaml_data, default_flow_style=False))
+        yaml_file.write(yaml.dump(yaml_data, default_flow_style=False, **kwargs))
 
 
 def object2json(obj):

@@ -112,6 +112,7 @@ async def generate_outputs(ctx):
         ctx.obj.DB,
         config.ansible_inventory_path(),
         config.pytest_multihost_path(),
+        config.pytest_mh_path(),
     )
     await output_action.generate_outputs()
 
