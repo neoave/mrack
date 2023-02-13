@@ -202,12 +202,18 @@ class AnsibleInventoryOutput:
 
         return host_info
 
+    def get_inventory_layout(self):
+        """Get Ansible inventory layout."""
+        layout = self._metadata.get("config", {}).get("ansible", {}).get("layout")
+        if layout is None:
+            return self._config.get("inventory_layout", DEFAULT_INVENTORY_LAYOUT)
+
+        return layout
+
     def create_inventory(self):
         """Create the Ansible inventory in dict form."""
         provisioned = self._db.hosts
-        inventory = deepcopy(
-            self._config.get("inventory_layout", DEFAULT_INVENTORY_LAYOUT)
-        )
+        inventory = deepcopy(self.get_inventory_layout())
         if not isinstance(inventory, dict):
             raise ConfigError("Inventory layout should be a dictionary")
         all_group = ensure_all_group(inventory)
