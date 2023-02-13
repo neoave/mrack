@@ -17,3 +17,4 @@ domains:
         role: master
         ip: 192.168.100.4
     name: aiohabit.test
+    type: test
