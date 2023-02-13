@@ -1,6 +1,7 @@
 import pytest
 
-from mrack.utils import get_shortname, get_username, value_to_bool
+from mrack.errors import MetadataError
+from mrack.utils import get_fqdn, get_shortname, get_username, value_to_bool
 
 
 class TestPytestMrackUtils:
@@ -15,6 +16,21 @@ class TestPytestMrackUtils:
     )
     def test_get_shortname(self, hostname, expected):
         assert get_shortname(hostname) == expected
+
+    @pytest.mark.parametrize(
+        "hostname,domain,expected",
+        [
+            ("foo.subdomain.test", "test", "foo.subdomain.test"),
+            ("foo", "test", "foo.test"),
+            ("foo", "subdomain.test", "foo.subdomain.test"),
+        ],
+    )
+    def test_get_fqdn(self, hostname, domain, expected):
+        assert get_fqdn(hostname, domain) == expected
+
+    def test_get_fqdn_mismatch(self):
+        with pytest.raises(MetadataError):
+            get_fqdn("foo.test", "domain.com")
 
     def test_get_username(
         self,
