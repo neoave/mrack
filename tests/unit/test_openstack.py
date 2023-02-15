@@ -94,7 +94,7 @@ def assert_network_alloc_exception(expected, raised, hosts):
     Check that allocation of networks raises excepted exception
     """
     assert isinstance(expected, ValidationError), f"Unexpected exception: {raised}"
-    assert expected.args[0] in raised.args[0], "List"
+    assert str(expected).lower() in str(raised).lower(), "Unexpected exception string"
     assert str(len(hosts)) in str(raised)
 
 
@@ -107,9 +107,16 @@ def assert_network_allocation(hosts, reqs, pools, expected):
         assert host != reqs[i]
         picked = host["network"]
         assert picked in pools.get(reqs[i]["network"])
-        assert (
-            picked == expected[i]
-        ), f"host: '{i}', expected: '{expected[i]}'. Allocation: {allocation}"
+        if "OR" in expected[i]:
+            assert (
+                picked in expected[i]
+            ), f"host: '{i}', expected: '{expected[i]}'. Allocation: {allocation}"
+        else:
+            assert (
+                picked == expected[i]
+            ), f"host: '{i}', expected: '{expected[i]}'. Allocation: {allocation}"
+
+    return allocation
 
 
 def AsyncMock(*args, **kwargs):
@@ -255,13 +262,18 @@ class TestOpenStackProvider:
             provider._translate_network_types(hosts)  # pylint: disable=protected-access
         except MrackError as raised:
             assert_network_alloc_exception(expected, raised, hosts)
-            return True
+            return raised
 
-        assert_network_allocation(hosts, reqs, pools, expected)
+        allocation = assert_network_allocation(hosts, reqs, pools, expected)
+
+        unique = x.get("unique_network_count", 1)
+        assert (
+            len(set(allocation)) == unique
+        ), f"Number of unique networks in allocation should be {unique}"
 
     network_spread_data = [
         {
-            "name": "prefer_single",
+            "name": "prefer_single_from_all",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 # way below treshold, prefers single network
@@ -269,35 +281,66 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 51, 4),
                 net_availability("net3", 100, 52, 4),
             ],
-            "expected": ["net1", "net1", "net1"],
+            "expected": [
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+            ],
         },
         {
-            "name": "prefer_single_2",
+            "name": "prefer_single_from_first_2",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 # way below treshold, prefers single network
                 net_availability("net1", 100, 51, 4),
                 net_availability("net2", 100, 50, 4),
-                net_availability("net3", 100, 52, 4),
+                net_availability("net3", 100, 96, 4),
             ],
-            "expected": ["net2", "net2", "net2"],
+            "expected": [
+                "net1 OR net2",
+                "net1 OR net2",
+                "net1 OR net2",
+            ],
         },
         {
-            "name": "equal_spread",
+            "name": "spread_between_first_2",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 # all over treshold, spreads the networks equally
-                net_availability("net1", 100, 90, 4),
-                net_availability("net2", 100, 90, 4),
-                net_availability("net3", 100, 90, 4),
+                net_availability("net1", 100, 97, 4),
+                net_availability("net2", 100, 96, 4),
+                net_availability("net3", 100, 99, 4),
             ],
-            "expected": ["net1", "net2", "net2"],
+            "expected": ["net2", "net2", "net1"],
+            "unique_network_count": 2,
+        },
+        {
+            "name": "equal_spread",
+            # in this case each host will have different network
+            # however the algorithm randomizes their order
+            # so we can not tell in which order hosts
+            # will get the network assigned.
+            "hosts": [host1(), host2(), host3()],
+            "availabilities_data": [
+                # all over threshold, spreads the networks equally
+                # when networks are equally
+                net_availability("net1", 100, 96, 4),
+                net_availability("net2", 100, 96, 4),
+                net_availability("net3", 100, 96, 4),
+            ],
+            "expected": [
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+            ],
+            "unique_network_count": 3,
         },
         {
             "name": "picks_single_almost_full",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
-                net_availability("net1", 100, 90, 4),
+                net_availability("net1", 100, 97, 4),
+                net_availability("net2", 100, 100, 4),
             ],
             "expected": ["net1", "net1", "net1"],
         },
@@ -305,11 +348,16 @@ class TestOpenStackProvider:
             "name": "spread_in_usable",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
-                net_availability("net1", 100, 80, 4),
-                net_availability("net2", 100, 90, 4),
-                net_availability("net3", 100, 99, 4),
+                net_availability("net1", 100, 98, 4),
+                net_availability("net2", 100, 100, 4),
+                net_availability("net3", 100, 98, 4),
             ],
-            "expected": ["net1", "net1", "net1"],
+            "expected": [
+                "net1 OR net3",
+                "net1 OR net3",
+                "net1 OR net3",
+            ],
+            "unique_network_count": 2,
         },
         {
             "name": "no_aval",
@@ -319,7 +367,7 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 100, 4),
                 net_availability("net3", 100, 99, 4),
             ],
-            "expected": ValidationError("no available networks"),
+            "expected": ValidationError("No available networks"),
         },
         {
             "name": "can_fit",
@@ -329,7 +377,8 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 100, 4),
                 net_availability("net3", 100, 98, 4),
             ],
-            "expected": ["net1", "net3", "net3"],
+            "expected": ["net3", "net3", "net1"],
+            "unique_network_count": 2,
         },
     ]
 
@@ -338,7 +387,6 @@ class TestOpenStackProvider:
         "x", network_spread_data, ids=[x["name"] for x in network_spread_data]
     )
     async def test_network_picking_default_allow_spread(self, x):
-
         await self.translate_network_types_test_core(x, "mrack.conf", "allow", 95)
 
     network_force_spread_data = [
@@ -351,6 +399,7 @@ class TestOpenStackProvider:
                 net_availability("net3", 100, 52, 4),
             ],
             "expected": ["net1", "net1", "net2"],
+            "unique_network_count": 2,
         },
         {
             "name": "spread2",
@@ -361,34 +410,52 @@ class TestOpenStackProvider:
                 net_availability("net3", 100, 52, 4),
             ],
             "expected": ["net2", "net2", "net1"],
+            "unique_network_count": 2,
         },
         {
             "name": "equal_spread",
+            # in this case each host will have different network
+            # however the algorithm randomizes their order
+            # so we can not tell in which order hosts
+            # will get the network assigned.
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
+                # all over threshold, spreads the networks equally
+                # when networks are equally
                 net_availability("net1", 100, 90, 4),
                 net_availability("net2", 100, 90, 4),
                 net_availability("net3", 100, 90, 4),
             ],
-            "expected": ["net1", "net3", "net2"],
+            "expected": [
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+            ],
+            "unique_network_count": 3,
         },
         {
             "name": "picks_single_almost_full",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
-                net_availability("net1", 100, 90, 4),
+                net_availability("net1", 100, 97, 4),
+                net_availability("net2", 100, 100, 4),
             ],
             "expected": ["net1", "net1", "net1"],
         },
         {
-            "name": "spread_in_usable",
+            "name": "spread_in_first_2_usable",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 net_availability("net1", 100, 80, 4),
                 net_availability("net2", 100, 90, 4),
                 net_availability("net3", 100, 99, 4),
             ],
-            "expected": ["net1", "net1", "net1"],
+            "expected": [
+                "net1 OR net2",
+                "net1 OR net2",
+                "net1 OR net2",
+            ],
+            "unique_network_count": 2,
         },
         {
             "name": "no_aval",
@@ -398,7 +465,19 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 100, 4),
                 net_availability("net3", 100, 99, 4),
             ],
-            "expected": ValidationError("no available networks"),
+            "expected": ValidationError("No available networks"),
+        },
+        {
+            "name": "spread_between_first_2",
+            "hosts": [host1(), host2(), host3()],
+            "availabilities_data": [
+                # all over threshold, spreads the networks equally
+                net_availability("net1", 100, 90, 4),
+                net_availability("net2", 100, 92, 4),
+                net_availability("net3", 100, 96, 4),
+            ],
+            "expected": ["net1", "net1", "net2"],
+            "unique_network_count": 2,
         },
         {
             "name": "can_fit",
@@ -408,7 +487,8 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 100, 4),
                 net_availability("net3", 100, 98, 4),
             ],
-            "expected": ["net1", "net1", "net3"],
+            "expected": ["net3", "net3", "net1"],
+            "unique_network_count": 2,
         },
     ]
 
@@ -425,24 +505,31 @@ class TestOpenStackProvider:
 
     network_data_no = [
         {
-            "name": "picks_most_empty",
+            "name": "picks_one_from_all",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 net_availability("net1", 100, 51, 4),
                 net_availability("net2", 100, 51, 4),
                 net_availability("net3", 100, 50, 4),
             ],
-            "expected": ["net3", "net3", "net3"],
+            "expected": [
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+            ],
         },
         {
-            "name": "picks_most_empty2",
+            "name": "picks_one_from_all_2",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
                 net_availability("net1", 100, 54, 4),
                 net_availability("net2", 100, 50, 4),
-                net_availability("net3", 100, 54, 4),
             ],
-            "expected": ["net2", "net2", "net2"],
+            "expected": [
+                "net1 OR net2",
+                "net1 OR net2",
+                "net1 OR net2",
+            ],
         },
         {
             "name": "picks_first",
@@ -452,13 +539,17 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 90, 4),
                 net_availability("net3", 100, 90, 4),
             ],
-            "expected": ["net1", "net1", "net1"],
+            "expected": [
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+                "net1 OR net2 OR net3",
+            ],
         },
         {
             "name": "picks_single_almost_full",
             "hosts": [host1(), host2(), host3()],
             "availabilities_data": [
-                net_availability("net1", 100, 90, 4),
+                net_availability("net1", 100, 97, 4),
                 net_availability("net2", 100, 100, 4),
             ],
             "expected": ["net1", "net1", "net1"],
@@ -471,7 +562,7 @@ class TestOpenStackProvider:
                 net_availability("net2", 100, 100, 4),
                 net_availability("net3", 100, 99, 4),
             ],
-            "expected": ValidationError("no available networks"),
+            "expected": ValidationError("No available networks"),
         },
         {
             "name": "fails_even_if_spread_possible",
