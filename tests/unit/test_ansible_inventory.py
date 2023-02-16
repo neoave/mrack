@@ -101,7 +101,6 @@ class TestAnsibleInventory:
         ],
     )
     def test_layouts(self, layout, db, metadata):
-
         config = provisioning_config(layout)
         ans_inv = AnsibleInventoryOutput(config, db, metadata)
         inventory = ans_inv.create_inventory()
@@ -125,7 +124,6 @@ class TestAnsibleInventory:
         ],
     )
     def test_invalid_layouts(self, layout, db, metadata):
-
         config = provisioning_config(layout)
         ans_inv = AnsibleInventoryOutput(config, db, metadata)
 
@@ -134,7 +132,6 @@ class TestAnsibleInventory:
         assert "dictionary" in str(excinfo.value)
 
     def test_meta_extra(self, db_meta_extra, metadata):
-
         config = provisioning_config()
         ans_inv = AnsibleInventoryOutput(config, db_meta_extra, metadata)
         inventory = ans_inv.create_inventory()
