@@ -25,7 +25,7 @@ author = "Petr Vobornik"
 release = "1.13.3"
 
 # to work with ReadTheDocs which is using version < 2.0
-master_doc = 'index'
+master_doc = "index"
 
 # -- General configuration ---------------------------------------------------
 
