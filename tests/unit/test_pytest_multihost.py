@@ -39,3 +39,27 @@ class TestPytestMultihostOutput:
         assert "something_else" in srv2
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
+
+    def test_config_section_deleted(self):
+        """
+        Test that config section from metadata is not included in mhc.yaml.
+        """
+        metadata = metadata_extra()
+        metadata["config"] = {
+            "outputs": ["ansible-inventory", "pytest-multihost"],
+            "ansible": {
+                "layout": {
+                    "all": {
+                        "children": {
+                            "mylayout": {},
+                        }
+                    }
+                }
+            },
+        }
+        config = provisioning_config()
+        db = get_db_from_metadata(metadata)
+        mhcfg_output = PytestMultihostOutput(config, db, metadata)
+        mhcfg = mhcfg_output.create_multihost_config()
+
+        assert "config" not in mhcfg

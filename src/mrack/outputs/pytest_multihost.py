@@ -54,6 +54,9 @@ class PytestMultihostOutput:
         if "phases" in mhcfg:
             del mhcfg["phases"]
 
+        if "config" in mhcfg:
+            del mhcfg["config"]
+
         # topology config in metadata contains more values (os, group) than the ones
         # needed by pytest multihost. They need to be removed in order to work.
         host_allowed_attrs = [
