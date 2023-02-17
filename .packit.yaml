@@ -32,6 +32,8 @@ downstream_package_name: mrack
 # see: https://packit.dev/docs/configuration/#upstream_tag_template
 upstream_tag_template: "v{version}"
 
+sync_changelog: true
+
 actions:
   create-archive:
     - "python3 setup.py sdist --dist-dir ."
