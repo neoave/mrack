@@ -15,74 +15,64 @@
 """File database driver module."""
 
 from os import path
+from typing import Dict, Optional
 
+from mrack.domain import domain_from_json
 from mrack.host import host_from_json
+from mrack.session import MrackSession
 from mrack.utils import load_json, save_to_json
 
+DOMAINS_KEY = "domains"
 HOSTS_KEY = "hosts"
 
 
 class FileDBDriver:
     """File database driver.
 
-    Serialize and load information into JSON file.
+    Serialize session's hosts and domains into JSON file.
+
+    Or loads it from JSON file into session.
     """
 
-    def __init__(self, file_path):
+    _session: MrackSession
+    _path: str
+    _raw_data: Optional[Dict]
+
+    def __init__(self, session: MrackSession, file_path: str):
         """Initialize DB driver."""
+        self._session = session
         self._path = file_path
-        self._hosts = {}
         self._raw_data = None
-        self.save_on_change = True
         self.load()
 
     def load(self):
         """Load configuration from file."""
         self._hosts = {}
         if not path.exists(self._path):
-            self._raw_data = {HOSTS_KEY: {}}
-            return self._hosts
+            self._raw_data = {
+                DOMAINS_KEY: [],
+                HOSTS_KEY: [],
+            }
+            return
 
         self._raw_data = load_json(self._path)
+
         raw_hosts = self._raw_data.get(HOSTS_KEY, [])
+        raw_domains = self._raw_data.get(DOMAINS_KEY, [])
 
         self._hosts = {}
         for raw_host in raw_hosts:
-            host = host_from_json(raw_host)
-            self._hosts[host.name] = host
+            host = host_from_json(self._session, raw_host)
+            self._session.hosts[host.name] = host
 
-        return self._hosts
+        for raw_domain in raw_domains:
+            domain = domain_from_json(self._session, raw_domain)
+            self._session.domains[domain.name] = domain
 
     def save(self):
         """Save configuration to file."""
-        hosts = [host.to_json() for host in self._hosts.values()]
+        hosts = [host.to_json() for host in self._session.hosts.values()]
+        domains = [domain.to_json() for domain in self._session.domains.values()]
         self._raw_data[HOSTS_KEY] = hosts
+        self._raw_data[DOMAINS_KEY] = domains
         save_to_json(self._path, self._raw_data)
-
-    @property
-    def hosts(self):
-        """Get all host objects loaded or to be saved."""
-        return self._hosts
-
-    def add_hosts(self, hosts):
-        """Add a host object.
-
-        Save it to file automatically if `save_on_change` is set to True.
-        """
-        for host in hosts:
-            self.hosts[host.name] = host
-
-        if self.save_on_change:
-            self.save()
-
-    def update_hosts(self, hosts):
-        """Update managed host objects.
-
-        Only adds.
-        """
-        self.add_hosts(hosts)
-
-    def delete_host(self, host):
-        """Delete host object."""
-        if host.name in self.hosts:
-            del self.hosts[host.name]

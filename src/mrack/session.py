@@ -93,7 +93,7 @@ class MrackSession:
 
     def _init_db(self, path: str):
         """Initialize file database."""
-        self._database = FileDBDriver(path)
+        self._database = FileDBDriver(self, path)
 
     @NoSuchFileHandler(error="Provisioning config file not found: {path}")
     def _init_prov_config(self, path: str):
