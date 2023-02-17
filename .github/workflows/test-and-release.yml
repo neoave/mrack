@@ -62,9 +62,18 @@ jobs:
           echo "NEW_VERSION="`semantic-release print-version --noop` >> ${GITHUB_ENV}
       - name: Update the mrack.spec changelog with initiator and basic message
         run: |
-          CHANGELOG_BODY="- Released upstream version $NEW_VERSION"
+          # get the history of commits and generate changelog from it
+          git log  --pretty=format:"- %h %s (%cn)" $(git describe --tags --abbrev=0)..HEAD > changelog_changes
+          # add newline after generated changelog for changelog sections to be visually separated
+          echo -e "\n" >> changelog_changes
+          echo "============NEW CHANGELOG================="
+          cat changelog_changes
+          echo "=========================================="
+          # write changelog to mrack.spec
+          sed -i '/%changelog/r changelog_changes' mrack.spec
+          # write header of changelog to mrack.spec
           sed -ri \
-          "s/\%changelog/\%changelog\\n\*\ $TODAY\ $RELEASE_ACTOR\ -\ $NEW_VERSION-1\\n$CHANGELOG_BODY\\n/" \
+          "s/\%changelog/\%changelog\\n\*\ $TODAY\ $RELEASE_ACTOR\ -\ $NEW_VERSION-1/" \
           mrack.spec
       - name: Add specfile to commit
         run: git add mrack.spec
