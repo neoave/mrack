@@ -4,9 +4,11 @@
 
 . /usr/share/beakerlib/beakerlib.sh || ( echo "FAILED to source beakerlib" && exit 1 )
 
+export DNF_EXTRA_OPTIONS=$([[ `rpm --eval '%{?dist}' | grep .el8` > /dev/null ]] && echo "--nobest")
+
 install_package () {
     rlPhaseStartSetup "Installing $1"
-        rlRun "dnf install -y $1"
+        rlRun "dnf install -y $1 $DNF_EXTRA_OPTIONS"
     rlPhaseEnd
 }
 
