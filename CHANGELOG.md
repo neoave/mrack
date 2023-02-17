@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## v1.13.0 (2023-02-17)
+### Feature
+* **OpenStack:** Provide a way to disable network spreading ([`777862f`](https://github.com/neoave/mrack/commit/777862fc917bc1dc436f008f4693c991e101dd0d))
+* **AWS:** Add utilization check method ([`46141dc`](https://github.com/neoave/mrack/commit/46141dc4aa2cf2378aee2f03dc31e6273f5c9ec1))
+* **OpenStack:** Add utilization check method ([`bb80060`](https://github.com/neoave/mrack/commit/bb80060149e5f7228a0f56f2bfacb2ec708d5a34))
+* Do not use same sleep for every mrack run ([`55f9c2c`](https://github.com/neoave/mrack/commit/55f9c2c63c1882a0e5b1f99aa9dc94646c9b6068))
+* **AnsibleInventory:** Allow additional global level values ([`a7a896a`](https://github.com/neoave/mrack/commit/a7a896aa8879a8630dc1cfcd6572ea1402c3c7ba))
+* **AnsibleInventory:** Allow additional domain level ansible inventory values ([`91c562c`](https://github.com/neoave/mrack/commit/91c562c1af45eb747ee46de1c08ca352b3370bcb))
+
+### Fix
+* **OpenStack:** Fix condition for network to get in interval ([`ff7331d`](https://github.com/neoave/mrack/commit/ff7331d54069c4b1a264dc12f1bf1f5934762abb))
+* Fqdn in name is ignored and mrack guesses the name instead #237 ([`943316d`](https://github.com/neoave/mrack/commit/943316d736516b0b5025b10315de6599e491fdd6))
+
 ## v1.12.3 (2022-12-13)
 ### Fix
 * Add cache decorator for older python versions. ([`c4c1a67`](https://github.com/neoave/mrack/commit/c4c1a6701eee9d17df20c66527c062f407d260ae))
