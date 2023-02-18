@@ -420,8 +420,8 @@ class Provider:
         attempts = 0
         success_hosts = []
         error_hosts = []
-        delta_sleep = global_context.CONFIG.delta_sleep()
-        max_utilization = global_context.CONFIG.max_utilization()
+        delta_sleep = global_context.CONFIG.delta_sleep
+        max_utilization = global_context.CONFIG.max_utilization
 
         while missing_reqs:
             # number of attempts should be greater than max_retry
