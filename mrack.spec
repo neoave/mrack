@@ -1,6 +1,6 @@
 Name:           mrack
 Version:        1.13.1
-Release:        4%{?dist}
+Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
 License:        Apache-2.0
