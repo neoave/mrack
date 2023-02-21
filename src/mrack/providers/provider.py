@@ -462,7 +462,11 @@ class Provider:
                 out_of_resources = False
                 for host in error_hosts:
                     logger.error(f"{log_msg_start} Error: {str(host.error)}")
-                    if host.error.get("code", None) == 500:  # 500 = SERVER ERROR
+                    # if host.error is a dictionary and code is 500 = SERVER ERROR
+                    if (
+                        isinstance(host.error, dict)
+                        and host.error.get("code", None) == 500
+                    ):
                         logger.info(
                             f"{log_msg_start} Provider is out of resources, "
                             "increasing cooldown time before another retry"
