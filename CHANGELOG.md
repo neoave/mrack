@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.13.1 (2023-02-21)
+### Fix
+* **MrackConfig:** Fix MrackConfig class properties ([`1421b37`](https://github.com/neoave/mrack/commit/1421b371d1eef6509f9cdc4ef81f57c8a8a37751))
+
 ## v1.13.0 (2023-02-17)
 ### Feature
 * **OpenStack:** Provide a way to disable network spreading ([`777862f`](https://github.com/neoave/mrack/commit/777862fc917bc1dc436f008f4693c991e101dd0d))

@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.13.0
+Version:        1.13.1
 Release:        4%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Feb 21 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.13.1-1
+- 1421b37 fix(MrackConfig): Fix MrackConfig class properties (Tibor Dudlák)
+
 * Fri Feb 17 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.13.0-1
 - 72cc2f3 test: add extra dnf options when dealing with rhel/epel 8 (Tibor Dudlák)
 - 32a754b chore: set packit to sync changelog as well (Tibor Dudlák)
