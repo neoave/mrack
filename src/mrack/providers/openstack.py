@@ -580,7 +580,7 @@ class OpenStackProvider(Provider):
 
         if not flavor:
             specs = f"flavor: {flavor_spec}, ref: {flavor_ref}"
-            raise ValidationError(f"Flavor not found: {specs}")
+            raise ValidationError(f"Flavor not found: {specs}", self.dsp_name)
         return flavor
 
     def _translate_image(self, req):
@@ -593,7 +593,7 @@ class OpenStackProvider(Provider):
             image = self._get_image(image_spec, image_spec)
         if not image:
             specs = f"image: {image_spec}, ref: {image_ref}"
-            raise ValidationError(f"Image not found {specs}")
+            raise ValidationError(f"Image not found {specs}", self.dsp_name)
         return image
 
     def _translate_networks(self, req, spec=False):
@@ -607,12 +607,16 @@ class OpenStackProvider(Provider):
             uuid = network_spec.get("uuid")
             network = self._get_network(ref=uuid)
             if not network:
-                raise ValidationError(f"Network not found: {network_spec}")
+                raise ValidationError(
+                    f"Network not found: {network_spec}", self.dsp_name
+                )
             networks.append(network)
         if network_req:
             network = self._get_network(name=network_req, ref=network_req)
             if not network:
-                raise ValidationError(f"Network not found: {network_req}")
+                raise ValidationError(
+                    f"Network not found: {network_req}", self.dsp_name
+                )
 
             network_specs.append({"uuid": network["id"]})
             networks.append(network)
@@ -690,7 +694,7 @@ class OpenStackProvider(Provider):
         except TypeError as flavor_none:
             # func does not load flavor so None is used as result
             raise ValidationError(
-                f"Could not load the flavor for requirement: {req}"
+                f"Could not load the flavor for requirement: {req}", self.dsp_name
             ) from flavor_none
 
         return res
