@@ -47,7 +47,7 @@ PROVISIONER_KEY = "beaker"
 
 
 def parse_bkr_exc_str(exc_str):
-    """Parse exception string and return more readable string for mrack error."""
+    """Parse exception string and return response dictionary for mrack error."""
     # we expect exception string to look like following:
     # '<class \'bkr.common.bexceptions.BX\'>:No distro tree matches Recipe:
     # <distroRequires>
@@ -60,7 +60,7 @@ def parse_bkr_exc_str(exc_str):
         and "bkr.common.bexceptions" not in exc_str.faultString
     ):
         # we got string we do not expect so just use the traceback
-        return str(exc_str)
+        return {"response": str(exc_str)}
 
     # because of expected format we split by ":" and use last 2 values from list
     # in above example it would be
@@ -69,7 +69,7 @@ def parse_bkr_exc_str(exc_str):
     #   '\t<distroRequires><and><distro_name op="like" value="Fedora-33%"/> ...
     # ]
     fault = [f"\t{f.strip()}" for f in exc_str.faultString.split(":")[-2:]]
-    return "\n".join(fault)
+    return {"response": "\n".join(fault)}
 
 
 class BeakerProvider(Provider):
