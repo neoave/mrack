@@ -695,6 +695,18 @@ class OpenStackProvider(Provider):
 
         return res
 
+    async def _load_limits(self):
+        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
+        self.limits = limits_await[0]  # gather returns list
+
+        limits = self.limits["limits"]["absolute"]
+        used_vcpus = limits["totalCoresUsed"]
+        used_memory = limits["totalRAMUsed"]
+        limit_vcpus = limits["maxTotalCores"]
+        limit_memory = limits["maxTotalRAMSize"]
+
+        return used_vcpus, used_memory, limit_vcpus, limit_memory
+
     async def can_provision(self, hosts):  # pylint: disable=arguments-differ
         """Check that all host can be provisioned.
 
@@ -712,14 +724,7 @@ class OpenStackProvider(Provider):
 
         # poll the actual openstack load
         logger.debug(f"{self.dsp_name} Loading nova limits")
-        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
-        self.limits = limits_await[0]  # gather returns list
-
-        limits = self.limits["limits"]["absolute"]
-        used_vcpus = limits["totalCoresUsed"]
-        used_memory = limits["totalRAMUsed"]
-        limit_vcpus = limits["maxTotalCores"]
-        limit_memory = limits["maxTotalRAMSize"]
+        used_vcpus, used_memory, limit_vcpus, limit_memory = self._load_limits()
 
         req_vcpus = used_vcpus + vcpus
         req_memory = used_memory + ram
@@ -738,12 +743,7 @@ class OpenStackProvider(Provider):
 
     async def utilization(self):
         """Check utilization of provider."""
-        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
-        self.limits = limits_await[0]  # gather returns list
-        used_vcpus = self.limits["totalCoresUsed"]
-        used_memory = self.limits["totalRAMUsed"]
-        limit_vcpus = self.limits["maxTotalCores"]
-        limit_memory = self.limits["maxTotalRAMSize"]
+        used_vcpus, used_memory, limit_vcpus, limit_memory = self._load_limits()
         cpu_util = used_vcpus / limit_vcpus * 100
         memory_util = used_memory / limit_memory * 100
         return cpu_util if memory_util <= cpu_util else memory_util
