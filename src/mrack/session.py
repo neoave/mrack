@@ -22,6 +22,8 @@ from mrack.dbdrivers.file import FileDBDriver
 from mrack.domain import Domain
 from mrack.errors import ConfigError
 from mrack.host import Host
+from mrack.providers import Registry as ProviderRegistry
+from mrack.transformers import Registry as TransformerRegistry
 from mrack.utils import NoSuchFileHandler, load_yaml
 
 
@@ -34,12 +36,16 @@ class MrackSession:
     _metadata: Dict
     _hosts: Dict[str, Host]
     _domains: Dict[str, Domain]
+    _providers: ProviderRegistry
+    _transformers: TransformerRegistry
 
     def __init__(self) -> None:
         """Init session."""
         self._metadata = {}
         self._hosts = {}
         self._domains = {}
+        self._providers = ProviderRegistry()
+        self._transformers = TransformerRegistry()
 
     @property
     def database(self) -> FileDBDriver:  # pylint: disable=invalid-name
@@ -70,6 +76,16 @@ class MrackSession:
     def domains(self) -> Dict[str, Domain]:  # pylint: disable=invalid-name
         """Get dictionary of domains where key is domain name."""
         return self._domains
+
+    @property
+    def providers(self) -> ProviderRegistry:
+        """Get ProviderRegistry."""
+        return self._providers
+
+    @property
+    def transformers(self) -> TransformerRegistry:
+        """Get ProviderRegistry."""
+        return self._transformers
 
     def init(
         self,
