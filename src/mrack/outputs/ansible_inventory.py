@@ -23,6 +23,7 @@ from mrack.outputs.utils import get_external_id
 from mrack.utils import (
     get_fqdn,
     get_host_from_metadata,
+    get_os_type,
     get_password,
     get_shortname,
     get_ssh_key,
@@ -144,6 +145,7 @@ class AnsibleInventoryOutput:
             "ansible_host": ansible_host,
             "ansible_python_interpreter": python,
             "ansible_user": ansible_user,
+            "meta_os_type": get_os_type(meta_host),
             "meta_fqdn": f"{get_fqdn(name, dom_name)}",
             "meta_hostname": get_shortname(name),
             "meta_domain": f"{get_fqdn(name, dom_name).split('.', 1)[1]}",

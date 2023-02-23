@@ -277,6 +277,15 @@ def is_windows_host(meta_host):
     )
 
 
+def get_os_type(meta_host):
+    """Get os type from ``os_type`` or infer it from ``os``."""
+    os_type = meta_host.get("os_type")
+    if not os_type:
+        os_type = "linux" if not is_windows_host(meta_host) else "windows"
+
+    return os_type
+
+
 def get_shortname(hostname):
     """
     Get shortname part of fqdn.

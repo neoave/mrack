@@ -1,7 +1,13 @@
 import pytest
 
 from mrack.errors import MetadataError
-from mrack.utils import get_fqdn, get_shortname, get_username, value_to_bool
+from mrack.utils import (
+    get_fqdn,
+    get_os_type,
+    get_shortname,
+    get_username,
+    value_to_bool,
+)
 
 
 class TestPytestMrackUtils:
@@ -86,3 +92,17 @@ class TestPytestMrackUtils:
             assert value_to_bool(value) == expected
         except Exception as exc:
             assert isinstance(exc, expected)
+
+    @pytest.mark.parametrize(
+        "metahost,expected",
+        [
+            ({"os": "rhel-8.5"}, "linux"),
+            ({"os": "fedora-35"}, "linux"),
+            ({"os": "windows-2022"}, "windows"),
+            ({"os": "rhel-8.5", "os_type": "my-linux"}, "my-linux"),
+            ({"os": "fedora-35", "os_type": "my-linux"}, "my-linux"),
+            ({"os": "windows-2022", "os_type": "my-windows"}, "my-windows"),
+        ],
+    )
+    def test_get_os_type(self, metahost, expected):
+        assert get_os_type(metahost) == expected
