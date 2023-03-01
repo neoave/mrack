@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.13.2
+Version:        1.13.3
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Wed Mar 01 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.13.3-1
+- 0f62237 fix(OpenStack): await loading limits to not break provisioning (Tibor Dudlák)
+
 * Wed Mar 01 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.13.2-1
 - 06f18d1 fix: Use get method when host error object is a dictionary (Tibor Dudlák)
 - fd33d68 fix(Beaker): rerurn common dictionary when validation fails (Tibor Dudlák)

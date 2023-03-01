@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.13.3 (2023-03-01)
+### Fix
+* **OpenStack:** Await loading limits to not break provisioning ([`0f62237`](https://github.com/neoave/mrack/commit/0f622374105abb52adf160fb5dcb9240da7ae013))
+
 ## v1.13.2 (2023-03-01)
 ### Fix
 * Use get method when host error object is a dictionary ([`06f18d1`](https://github.com/neoave/mrack/commit/06f18d19353d021c9bcf0c1a509cdc0867aae2a7))
