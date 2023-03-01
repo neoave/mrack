@@ -1,6 +1,5 @@
 import pytest
 
-from mrack.errors import MetadataError
 from mrack.utils import (
     get_fqdn,
     get_os_type,
@@ -35,8 +34,7 @@ class TestPytestMrackUtils:
         assert get_fqdn(hostname, domain) == expected
 
     def test_get_fqdn_mismatch(self):
-        with pytest.raises(MetadataError):
-            get_fqdn("foo.test", "domain.com")
+        assert get_fqdn("foo.test", "domain.com") == "foo.test"
 
     def test_get_username(
         self,
