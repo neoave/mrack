@@ -728,7 +728,8 @@ class OpenStackProvider(Provider):
 
         # poll the actual openstack load
         logger.debug(f"{self.dsp_name} Loading nova limits")
-        used_vcpus, used_memory, limit_vcpus, limit_memory = self._load_limits()
+
+        used_vcpus, used_memory, limit_vcpus, limit_memory = await self._load_limits()
 
         req_vcpus = used_vcpus + vcpus
         req_memory = used_memory + ram
