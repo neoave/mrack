@@ -2,6 +2,13 @@
 
 <!--next-version-placeholder-->
 
+## v1.13.2 (2023-03-01)
+### Fix
+* Use get method when host error object is a dictionary ([`06f18d1`](https://github.com/neoave/mrack/commit/06f18d19353d021c9bcf0c1a509cdc0867aae2a7))
+* **Beaker:** Rerurn common dictionary when validation fails ([`fd33d68`](https://github.com/neoave/mrack/commit/fd33d68bd7991be61038d2df340720c7ef09b14f))
+* **OpenStack:** Add exception parameter when validation fails ([`b6c5ef4`](https://github.com/neoave/mrack/commit/b6c5ef4edbcac9ed0902eebbb705a78401345532))
+* **OpenStack:** Load limits properly by one method ([`fa2c779`](https://github.com/neoave/mrack/commit/fa2c779840e773958016dd7df37857140c4afaff))
+
 ## v1.13.1 (2023-02-21)
 ### Fix
 * **MrackConfig:** Fix MrackConfig class properties ([`1421b37`](https://github.com/neoave/mrack/commit/1421b371d1eef6509f9cdc4ef81f57c8a8a37751))
