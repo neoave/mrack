@@ -3,7 +3,7 @@
 ![pypi_badge](https://img.shields.io/pypi/v/mrack?label=PyPI&logo=pypi) ![readthedocs_badge](https://img.shields.io/readthedocs/mrack?label=Read%20the%20Docs&logo=read-the-docs) ![badge](https://copr.fedorainfracloud.org/coprs/g/freeipa/neoave/package/mrack/status_image/last_build.png)
 
 Provisioning library for CI and local multi-host testing supporting multiple
-provisioning providers e.g. OpenStack, libvirt, containers, Beaker).
+provisioning providers (OpenStack, AWS, libvirt, podman containers, Beaker).
 
 But in  comparison to multi-cloud libraries, the aim is to be able to describe
 host from application perspective. E.g.:
