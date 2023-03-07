@@ -748,7 +748,7 @@ class OpenStackProvider(Provider):
 
     async def utilization(self):
         """Check utilization of provider."""
-        used_vcpus, used_memory, limit_vcpus, limit_memory = self._load_limits()
+        used_vcpus, used_memory, limit_vcpus, limit_memory = await self._load_limits()
         cpu_util = used_vcpus / limit_vcpus * 100
         memory_util = used_memory / limit_memory * 100
         return cpu_util if memory_util <= cpu_util else memory_util
