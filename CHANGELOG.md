@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## v1.14.0 (2023-03-08)
+### Feature
+* **outputs:** Allow to overwrite ansible layout ([`d3da251`](https://github.com/neoave/mrack/commit/d3da25156f91313ea5020bace15f20b7b0b5ce3f))
+* **outputs:** Allow to choose which outputs should be generated ([`d3ac20d`](https://github.com/neoave/mrack/commit/d3ac20d4d3615893f4781c0142f47eb576db30e2))
+* **outputs:** Add support for pytest-mh ([`66f2877`](https://github.com/neoave/mrack/commit/66f2877f0b3b33ced341fd6faf307d42414a4742))
+* **utils:** Relax condition in get_fqdn ([`db633b7`](https://github.com/neoave/mrack/commit/db633b75a59880e901248b80e38d076468c7c5da))
+* **utils:** Add get_os_type ([`b1f5318`](https://github.com/neoave/mrack/commit/b1f5318f7beb0e48b702dc0eafe675c20baf3366))
+
+### Fix
+* **OpenStack:** Add missing await for self._load_limits() method call ([`d95e65f`](https://github.com/neoave/mrack/commit/d95e65f70f5c76bb08f25093ed5cafc1af32df6d))
+* **outputs:** Remove config section from pytest-multihost ([`13ad3df`](https://github.com/neoave/mrack/commit/13ad3df70f3c6adc5d5d348bb91227235b1e2ff7))
+* **outputs:** Add host to correct group in layout ([`0735e36`](https://github.com/neoave/mrack/commit/0735e36c16aec74c7920f755bf7367d8ba59c790))
+
 ## v1.13.3 (2023-03-01)
 ### Fix
 * **OpenStack:** Await loading limits to not break provisioning ([`0f62237`](https://github.com/neoave/mrack/commit/0f622374105abb52adf160fb5dcb9240da7ae013))

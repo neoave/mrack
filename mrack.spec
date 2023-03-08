@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.13.3
+Version:        1.14.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,19 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Wed Mar 08 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.14.0-1
+- e319b73 refactor(AWS): change variable name typo in get_ip_addresses (Tibor Dudlák)
+- d95e65f fix(OpenStack): Add missing await for self._load_limits() method call (Tibor Dudlák)
+- d0c2d8f refactor: Update supported providers (Tibor Dudlák)
+- 13ad3df fix(outputs): remove config section from pytest-multihost (Tibor Dudlák)
+- d3da251 feat(outputs): allow to overwrite ansible layout (Tibor Dudlák)
+- d3ac20d feat(outputs): allow to choose which outputs should be generated (Tibor Dudlák)
+- 66f2877 feat(outputs): add support for pytest-mh (Tibor Dudlák)
+- db633b7 feat(utils): relax condition in get_fqdn (Tibor Dudlák)
+- 0735e36 fix(outputs): add host to correct group in layout (Tibor Dudlák)
+- b1f5318 feat(utils): add get_os_type (Tibor Dudlák)
+- 0ab88e6 refactor(black): reformat code (Tibor Dudlák)
+
 * Wed Mar 01 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.13.3-1
 - 0f62237 fix(OpenStack): await loading limits to not break provisioning (Tibor Dudlák)
 
