@@ -419,12 +419,12 @@ class AWSProvider(Provider):
 
     def get_ip_addresses(self, prov_result):
         """Get IP address from a provisioning result."""
-        addresess = []
+        addresses = []
         if prov_result.get("PublicIpAddress"):
-            addresess.append(prov_result.get("PublicIpAddress"))
+            addresses.append(prov_result.get("PublicIpAddress"))
         if prov_result.get("PrivateIpAddress"):
-            addresess.append(prov_result.get("PrivateIpAddress"))
-        return addresess
+            addresses.append(prov_result.get("PrivateIpAddress"))
+        return addresses
 
     def prov_result_to_host_data(self, prov_result, req):
         """Transform provisioning result to needed host data."""
