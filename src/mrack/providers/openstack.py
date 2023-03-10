@@ -90,23 +90,26 @@ class OpenStackProvider(Provider):
             # https://docs.openstack.org/api-guide/compute/server_concepts.html
         }
 
-    async def _openstack_gather_responses(self, *functions):
+    async def _openstack_gather_responses(self, *calls):
         """Gather the async result of functions from parameters.
 
         Returns:
         * list of asyncio.gather results
         """
         error_attempts = 0
+        coros = [func(*args, **xargs) for (func, args, xargs) in calls]
         result = []
         while error_attempts < SERVER_ERROR_RETRY:
             try:
-                result = await asyncio.gather(*functions)
+                result = await asyncio.gather(*coros)
                 break
             except ServerError as exc:
                 logger.debug(f"{self.dsp_name} {exc}")
                 error_attempts += 1
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
+                    # create new coroutines on ServerError
+                    coros = [func(*args, **xargs) for (func, args, xargs) in calls]
                     continue  # Try again due to ServerError
         else:
             # now we are past to what we would like to wait fail now
@@ -158,11 +161,11 @@ class OpenStackProvider(Provider):
         object_start = datetime.now()
 
         _, _, self.limits, _, _ = await self._openstack_gather_responses(
-            self._load_flavors(),
-            self._load_images(image_names),
-            self.nova.limits.show(),
-            self._load_networks(),
-            self._load_ip_availabilities(),
+            [self._load_flavors, [], {}],
+            [self._load_images, [image_names], {}],
+            [self.nova.limits.show, [], {}],
+            [self._load_networks, [], {}],
+            [self._load_ip_availabilities, [], {}],
         )
 
         object_duration = datetime.now() - object_start
@@ -700,7 +703,9 @@ class OpenStackProvider(Provider):
         return res
 
     async def _load_limits(self):
-        limits_await = await self._openstack_gather_responses(self.nova.limits.show())
+        limits_await = await self._openstack_gather_responses(
+            [self.nova.limits.show, [], {}],
+        )
         self.limits = limits_await[0]  # gather returns list
 
         limits = self.limits["limits"]["absolute"]

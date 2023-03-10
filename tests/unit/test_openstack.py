@@ -11,15 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import asyncio
 import os
 from copy import deepcopy
 from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
+from simple_rest_client.exceptions import ServerError
 
 from mrack.context import global_context
-from mrack.errors import MrackError, ProviderNotExists, ValidationError
+from mrack.errors import (
+    MrackError,
+    ProviderNotExists,
+    ProvisioningError,
+    ValidationError,
+)
 from mrack.providers.openstack import OpenStackProvider
 
 from .mock_networks import (
@@ -594,3 +601,42 @@ class TestOpenStackProvider:
         await self.translate_network_types_test_core(
             x, "mrack_no_spread.conf", "no", 95
         )
+
+    @pytest.mark.asyncio
+    async def test_openstack_gather_responses(self):
+        error_flag = True
+
+        async def coro1():
+            await asyncio.sleep(0.1)
+            return "result1"
+
+        async def coro2():
+            nonlocal error_flag
+            await asyncio.sleep(0.2)
+            if error_flag:
+                error_flag = False
+                raise ServerError("Oops!", 503)
+            else:
+                return "result2"
+
+        async def coro3():
+            await asyncio.sleep(0.3)
+            raise ServerError("Oops!", 503)
+
+        provider = OpenStackProvider()
+
+        # Test successful outcome
+        result = await provider._openstack_gather_responses([coro1, [], {}])
+        assert result[0] == "result1"
+
+        # Test that we get successful outcome after getting a ServerError
+        error_flag = True
+        result = await provider._openstack_gather_responses(
+            [coro1, [], {}], [coro2, [], {}]
+        )
+        assert result[0] == "result1"
+        assert result[1] == "result2"
+
+        # Test that ProvisioningError is raised when we repeatedly get ServerError
+        with pytest.raises(ProvisioningError):
+            await provider._openstack_gather_responses([coro1, [], {}], [coro3, [], {}])
