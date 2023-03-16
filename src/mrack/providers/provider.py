@@ -376,11 +376,7 @@ class Provider:
         else:  # we do not check the ssh connection to VMs
             success_hosts = active_hosts
 
-        missing_reqs = [
-            req for req in reqs if req["name"] in [host.name for host in error_hosts]
-        ]
-
-        return (success_hosts, error_hosts, missing_reqs)
+        return (success_hosts, error_hosts, self._get_missing_reqs(reqs, error_hosts))
 
     async def provision_hosts(self, reqs):
         """Provision hosts based on list of host requirements.
@@ -412,6 +408,12 @@ class Provider:
             logger.info(f"{log_msg_start} {host}")
 
         return success_hosts
+
+    def _get_missing_reqs(self, reqs, error_hosts):
+        """Return missing requirements based on reqs and error hosts."""
+        return [
+            req for req in reqs if req["name"] in [host.name for host in error_hosts]
+        ]
 
     async def strategy_retry(self, reqs):
         """Provisioning strategy to try multiple times to provision a host."""
@@ -476,6 +478,8 @@ class Provider:
                 if await self.utilization() >= max_utilization or out_of_resources:
                     # delete all hosts when there is high utilization of provider
                     error_hosts += success_hosts
+                    missing_reqs = self._get_missing_reqs(reqs, error_hosts)
+                    success_hosts = []
 
                 await self.delete_hosts(error_hosts)
 
