@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.14.0
+Version:        1.14.1
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu Mar 16 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.14.1-1
+- a9c4e62 fix: mrack not re-provisioning hosts which were destroyed (Tibor Dudlák)
+- 17b45e4 fix: Replace coroutines with tasks to avoid RuntimeError (David Pascual)
+
 * Wed Mar 08 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.14.0-1
 - e319b73 refactor(AWS): change variable name typo in get_ip_addresses (Tibor Dudlák)
 - d95e65f fix(OpenStack): Add missing await for self._load_limits() method call (Tibor Dudlák)

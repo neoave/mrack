@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v1.14.1 (2023-03-16)
+### Fix
+* Mrack not re-provisioning hosts which were destroyed ([`a9c4e62`](https://github.com/neoave/mrack/commit/a9c4e629fa448461bc037c3c9f24c8950bf2b1bb))
+* Replace coroutines with tasks to avoid RuntimeError ([`17b45e4`](https://github.com/neoave/mrack/commit/17b45e4c5a6046bae315f885dd4934aba0ed8c8f))
+
 ## v1.14.0 (2023-03-08)
 ### Feature
 * **outputs:** Allow to overwrite ansible layout ([`d3da251`](https://github.com/neoave/mrack/commit/d3da25156f91313ea5020bace15f20b7b0b5ce3f))
