@@ -22,7 +22,7 @@ from random import random, sample
 from urllib.parse import parse_qs, urlparse
 
 from asyncopenstackclient import AuthPassword, GlanceClient
-from simple_rest_client.exceptions import NotFoundError, ServerError
+from simple_rest_client.exceptions import AuthError, NotFoundError, ServerError
 
 from mrack.context import global_context
 from mrack.errors import (
@@ -816,6 +816,11 @@ class OpenStackProvider(Provider):
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
                     continue  # Try again due to ServerError
+            except AuthError as exc:
+                raise ProvisioningError(
+                    f"{log_msg_start} Failed to create server: {exc}",
+                    req,
+                )
 
             fault = response["server"].get("fault", {})
 

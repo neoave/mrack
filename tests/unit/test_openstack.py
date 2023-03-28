@@ -18,7 +18,7 @@ from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
-from simple_rest_client.exceptions import ServerError
+from simple_rest_client.exceptions import AuthError, ServerError
 
 from mrack.context import global_context
 from mrack.errors import (
@@ -640,3 +640,78 @@ class TestOpenStackProvider:
         # Test that ProvisioningError is raised when we repeatedly get ServerError
         with pytest.raises(ProvisioningError):
             await provider._openstack_gather_responses([coro1, [], {}], [coro3, [], {}])
+
+    @pytest.mark.asyncio
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    @patch.object(
+        OpenStackProvider,
+        "_translate_flavor",
+        return_value={"name": "mocked-flavor", "id": "mocked-flavor-id"},
+    )
+    @patch.object(
+        OpenStackProvider,
+        "_translate_image",
+        return_value={"name": "mocked-image", "id": "mocked-image-id"},
+    )
+    @patch.object(
+        OpenStackProvider,
+        "_translate_networks",
+        return_value=[{"uuid": "mocked-network-uuid"}],
+    )
+    async def test_create_server(
+        self, mocked_sleep, mocked_flavor, mocked_image, mocked_networks
+    ):
+        req = host1()
+        succ_server_response = {"server": {"id": "some-server-id"}}
+        faulty_server_response = {
+            "server": {"fault": {"code": 500, "message": "Some fault"}}
+        }
+
+        provider = OpenStackProvider()
+        await provider.init()
+
+        # Test successful output.
+        self.mock_nova.servers.create = AsyncMock(return_value=succ_server_response)
+
+        server, server_req = await provider.create_server(req)
+        assert server == succ_server_response["server"]
+        assert server_req == req
+
+        # Test we get ProvisioningError when ServerError is repeatedly raised
+        self.mock_nova.servers.create = AsyncMock(
+            side_effect=ServerError("Mocked ServerError", 500)
+        )
+        with pytest.raises(ProvisioningError):
+            await provider.create_server(req)
+
+        # Test successful output after a first failed attempt with ServerError
+        self.mock_nova.servers.create = AsyncMock(
+            side_effect=[
+                ServerError("Mocked ServerError", 500),
+                succ_server_response,
+            ]
+        )
+
+        server, server_req = await provider.create_server(req)
+        assert server == succ_server_response["server"]
+        assert server_req == req
+
+        # Test that method raises a ProvisioningError exception when AuthError is raised
+        self.mock_nova.servers.create = AsyncMock(
+            side_effect=AuthError("Mocked AuthError", 403)
+        )
+        with pytest.raises(ProvisioningError):
+            await provider.create_server(req)
+
+        # Test we get ProvisioningError when we repeatedly get faulty 500 code
+        self.mock_nova.servers.create = AsyncMock(return_value=faulty_server_response)
+        with pytest.raises(ProvisioningError):
+            await provider.create_server(req)
+
+        # Test we get successful output after a first attempt with faulty 500 code
+        self.mock_nova.servers.create = AsyncMock(
+            side_effect=[faulty_server_response, succ_server_response]
+        )
+        server, server_req = await provider.create_server(req)
+        assert server == succ_server_response["server"]
+        assert server_req == req
