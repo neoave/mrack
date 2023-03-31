@@ -16,7 +16,7 @@
 
 import logging
 
-from mrack.outputs.utils import get_external_id
+from mrack.outputs.utils import get_external_id, merge_dict
 from mrack.utils import get_fqdn, get_os_type, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-mh.yaml"
@@ -61,21 +61,18 @@ class PytestMhOutput:
                     logger.error(f"Host {host['name']} not found in the database.")
                     continue
 
-                cfgdom["hosts"].append(
-                    {
-                        "hostname": get_fqdn(host["name"], domain.get("name", "")),
-                        "os": {
-                            "family": get_os_type(host),
-                        },
-                        "role": host["role"],
-                        "ssh": {
-                            "host": get_external_id(
-                                provisioned_host, host, self._config
-                            ),
-                        },
-                        **host.get("pytest_mh", {}),
-                    }
-                )
+                hostcfg = {
+                    "hostname": get_fqdn(host["name"], domain.get("name", "")),
+                    "os": {
+                        "family": get_os_type(host),
+                    },
+                    "role": host["role"],
+                    "ssh": {
+                        "host": get_external_id(provisioned_host, host, self._config),
+                    },
+                }
+
+                cfgdom["hosts"].append(merge_dict(hostcfg, host.get("pytest_mh", {})))
 
         return cfg
 
