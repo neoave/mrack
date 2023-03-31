@@ -39,6 +39,9 @@ def mock_metadata():
         role: ipa
         os: fedora-37
         pytest_mh:
+          ssh:
+            username: tuser
+            password: tuserpassword
           config:
             client:
               ipa_domain: ipa.test
@@ -77,6 +80,8 @@ class TestPytestMhOutput:
             role: ipa
             ssh:
               host: 192.168.0.1
+              username: tuser
+              password: tuserpassword
             config:
               client:
                 ipa_domain: ipa.test
