@@ -14,6 +14,7 @@
 
 """Utility functions for output modules."""
 
+import copy
 import socket
 from socket import error as socket_error
 
@@ -45,3 +46,20 @@ def get_external_id(host, meta_host, config):
     if resolve_ip:
         external_id = resolve_hostname(host.ip_addr) or host.ip_addr
     return external_id
+
+
+def merge_dict(d1, d2):
+    """
+    Merge two nested dictionaries together.
+
+    Nested dictionaries are not overwritten but combined.
+    """
+    dest = copy.deepcopy(d1)
+    for key, value in d2.items():
+        if isinstance(value, dict):
+            dest[key] = merge_dict(dest.get(key, {}), value)
+            continue
+
+        dest[key] = value
+
+    return dest

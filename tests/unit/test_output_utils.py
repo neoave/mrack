@@ -16,7 +16,9 @@
 
 from unittest.mock import patch
 
-from mrack.outputs.utils import get_external_id
+import pytest
+
+from mrack.outputs.utils import get_external_id, merge_dict
 
 
 @patch("mrack.outputs.utils.resolve_hostname")
@@ -51,3 +53,35 @@ def test_get_external_id(mock_resolve, provisioning_config, host1_aws, metahost1
     mock_resolve.return_value = None
     ext_id = get_external_id(host1_aws, metahost1, provisioning_config)
     assert ext_id == host1_aws.ip_addr
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ({1: "a", 2: "b"}, {3: "c"}, {1: "a", 2: "b", 3: "c"}),
+        ({1: "a"}, {2: "b", 3: "c"}, {1: "a", 2: "b", 3: "c"}),
+        (
+            {1: "a", 2: {11: "aa"}},
+            {2: {11: "bb"}, 3: "c"},
+            {1: "a", 2: {11: "bb"}, 3: "c"},
+        ),
+        (
+            {1: "a", 2: {11: "aa"}},
+            {2: {22: "bb"}, 3: "c"},
+            {1: "a", 2: {11: "aa", 22: "bb"}, 3: "c"},
+        ),
+        (
+            {1: "a", 2: {11: "aa", 22: {111: "aaa"}}},
+            {2: {22: "bb"}, 3: "c"},
+            {1: "a", 2: {11: "aa", 22: "bb"}, 3: "c"},
+        ),
+        (
+            {1: "a", 2: {11: "aa", 22: {111: "aaa"}}},
+            {2: {22: {222: "bbb"}}, 3: "c"},
+            {1: "a", 2: {11: "aa", 22: {111: "aaa", 222: "bbb"}}, 3: "c"},
+        ),
+    ],
+)
+def test_merge_dict(a, b, expected):
+    result = merge_dict(a, b)
+    assert result == expected
