@@ -61,6 +61,7 @@ specific provisioner configuration.
 
    self
    guides/index.rst
+   designs/index.rst
 
 
 Indices and tables
