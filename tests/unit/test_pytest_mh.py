@@ -47,6 +47,10 @@ def mock_metadata():
               ipa_domain: ipa.test
               krb5_keytab: /enrollment/ipa.keytab
               ldap_krb5_keytab: /enrollment/ipa.keytab
+      - name: dc.ad.test
+        group: ad
+        role: ad
+        os: windows-2016
     """
     )
 
@@ -55,6 +59,11 @@ class TestPytestMhOutput:
     def test_output(self, mock_metadata):
         config = provisioning_config()
         db = get_db_from_metadata(mock_metadata)
+
+        # Set username and password in the host object of Windows host,
+        # this should be reflected in the resulting configuration.
+        db.hosts["dc.ad.test"]._username = "Administrator"
+        db.hosts["dc.ad.test"]._password = "adpassword"
 
         mhcfg_output = PytestMhOutput(config, db, mock_metadata)
         mhcfg = mhcfg_output.create_mh_config()
@@ -87,7 +96,17 @@ class TestPytestMhOutput:
                 ipa_domain: ipa.test
                 krb5_keytab: /enrollment/ipa.keytab
                 ldap_krb5_keytab: /enrollment/ipa.keytab
+          - hostname: dc.ad.test
+            os:
+              family: windows
+            role: ad
+            ssh:
+              host: 192.168.0.1
+              username: Administrator
+              password: adpassword
         """
         )
+
+        print(mhcfg)
 
         assert mhcfg == expected

@@ -17,7 +17,7 @@
 import logging
 
 from mrack.outputs.utils import get_external_id, merge_dict
-from mrack.utils import get_fqdn, get_os_type, save_yaml
+from mrack.utils import get_fqdn, get_os_type, get_password, get_username, save_yaml
 
 DEFAULT_MHCFG_PATH = "pytest-mh.yaml"
 
@@ -71,6 +71,15 @@ class PytestMhOutput:
                         "host": get_external_id(provisioned_host, host, self._config),
                     },
                 }
+
+                if get_os_type(host) == "windows":
+                    username = get_username(provisioned_host, host, self._config)
+                    if username:
+                        hostcfg["ssh"]["username"] = username
+
+                    password = get_password(provisioned_host, host, self._config)
+                    if password:
+                        hostcfg["ssh"]["password"] = password
 
                 cfgdom["hosts"].append(merge_dict(hostcfg, host.get("pytest_mh", {})))
 
