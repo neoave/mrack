@@ -42,6 +42,10 @@ class ProvisioningConfig:
         """Get item from raw representation."""
         return self._raw[key]
 
+    def __setitem__(self, key, value):
+        """Set provisioning config item."""
+        self._raw[key] = value
+
     def get(self, key, default=None):
         """Get method as in dict for raw config."""
         return self._raw.get(key, default)

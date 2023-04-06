@@ -22,7 +22,12 @@ from datetime import datetime, timedelta
 from mrack.context import global_context
 from mrack.errors import ProvisioningError
 from mrack.host import STATUS_ACTIVE, STATUS_OTHER, Host
-from mrack.utils import get_username_pass_and_ssh_key, object2json, ssh_to_host
+from mrack.utils import (
+    get_ssh_options,
+    get_username_pass_and_ssh_key,
+    object2json,
+    ssh_to_host,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -128,12 +133,16 @@ class Provider:
         )
 
         while True:
+            ssh_options = get_ssh_options(
+                host, global_context.METADATA, global_context.PROV_CONFIG
+            )
             res = ssh_to_host(
                 host,
                 username=username,
                 password=password,
                 ssh_key=ssh_key,
                 command="echo mrack",
+                ssh_options=ssh_options,
             )
             duration = (datetime.now() - start_ssh).total_seconds()
 

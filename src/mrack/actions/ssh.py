@@ -20,7 +20,7 @@ from mrack.actions.action import Action
 from mrack.context import global_context
 from mrack.errors import ApplicationError
 from mrack.host import STATUS_ACTIVE
-from mrack.utils import get_username_pass_and_ssh_key
+from mrack.utils import get_ssh_options, get_username_pass_and_ssh_key
 from mrack.utils import ssh_to_host as utils_ssh_to_host
 
 try:
@@ -87,12 +87,16 @@ class SSH(Action):
         username, password, ssh_key = get_username_pass_and_ssh_key(
             host, global_context
         )
+        ssh_options = get_ssh_options(
+            host, global_context.METADATA, global_context.PROV_CONFIG
+        )
         return utils_ssh_to_host(
             host,
             username=username,
             password=password,
             ssh_key=ssh_key,
             interactive=True,
+            ssh_options=ssh_options,
         )
 
     def is_container_env(self, host):

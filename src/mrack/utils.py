@@ -33,6 +33,11 @@ from mrack.errors import ConfigError, ProvisioningError
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_SSH_OPTIONS = {
+    "StrictHostKeyChecking": "no",
+    "UserKnownHostsFile": "/dev/null",
+}
+
 
 def value_to_bool(value):
     """Convert Python variable value to boolean."""
@@ -350,6 +355,27 @@ def get_username_pass_and_ssh_key(host, context):
     return username, password, ssh_key
 
 
+def get_ssh_options(host, metadata, provisioning_config):
+    """Get dictionary of SSH options and their values from configuration."""
+    # try to get ssh dict
+    meta_host = get_host_from_metadata(metadata, host.name)
+    ssh = find_value_in_config_hierarchy(
+        provisioning_config, host.provider, host, meta_host, "ssh", None, None, {}
+    )
+
+    options = ssh.get("options", DEFAULT_SSH_OPTIONS)
+
+    return options
+
+
+def ssh_options_to_cli(options):
+    """Covert dictionary of SSH options into list of SSH CLI options."""
+    cmd = []
+    for option, value in options.items():
+        cmd.extend(["-o", f"'{option}={value}'"])
+    return cmd
+
+
 def ssh_to_host(
     host,
     username=None,
@@ -357,6 +383,7 @@ def ssh_to_host(
     ssh_key=None,
     command=None,
     interactive=False,
+    ssh_options={},
 ):
     """SSH to the selected host."""
     psw = host.password or password
@@ -374,8 +401,7 @@ def ssh_to_host(
         )
 
     cmd = ["ssh"]
-    cmd.extend(["-o", "'StrictHostKeyChecking=no'"])
-    cmd.extend(["-o", "'UserKnownHostsFile=/dev/null'"])
+    cmd.extend(ssh_options_to_cli(ssh_options))
 
     if psw:
         cmd.extend(["-o", "'PasswordAuthentication=yes'"])
