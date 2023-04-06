@@ -4,9 +4,13 @@ from mrack.utils import (
     get_fqdn,
     get_os_type,
     get_shortname,
+    get_ssh_options,
     get_username,
+    ssh_options_to_cli,
     value_to_bool,
 )
+
+from .mock_data import get_db_from_metadata
 
 
 class TestPytestMrackUtils:
@@ -104,3 +108,65 @@ class TestPytestMrackUtils:
     )
     def test_get_os_type(self, metahost, expected):
         assert get_os_type(metahost) == expected
+
+    def test_get_ssh_options(self, provisioning_config, metahost1):
+        """Test obtaining of SSH options."""
+        metadata = {
+            "domains": [
+                {
+                    "name": "example.com",
+                    "hosts": [
+                        metahost1,
+                    ],
+                }
+            ]
+        }
+
+        db = get_db_from_metadata(metadata)
+
+        assert "strategy" in provisioning_config["openstack"]
+
+        host = list(db.hosts.values())[0]
+
+        ssh_options = get_ssh_options(host, metadata, provisioning_config)
+        assert type(ssh_options) == dict
+
+        # Test that ssh options has expected default values when nothing is set
+        assert "StrictHostKeyChecking" in ssh_options
+        assert ssh_options["StrictHostKeyChecking"] == "no"
+        assert "UserKnownHostsFile" in ssh_options
+        assert ssh_options["UserKnownHostsFile"] == "/dev/null"
+        assert len(ssh_options) == 2
+
+        # Test that default ssh options can be nullified in provisioning config
+        provisioning_config["ssh"] = {"options": {}}
+        ssh_options = get_ssh_options(host, metadata, provisioning_config)
+        assert type(ssh_options) == dict
+        assert len(ssh_options) == 0
+
+        # Test that custom options are returned
+        options_spec = {"Foo": "Bar", "Baz": 0, "Third": "Value"}
+        provisioning_config["ssh"] = {"options": options_spec}
+        ssh_options = get_ssh_options(host, metadata, provisioning_config)
+        assert type(ssh_options) == dict
+        assert len(ssh_options) == 3
+        for key, value in options_spec.items():
+            assert key in ssh_options
+            assert ssh_options[key] == value
+
+    @pytest.mark.parametrize(
+        "options,expected",
+        [
+            # simple
+            ({"Foo": "Bar"}, ["-o", "'Foo=Bar'"]),
+            # integer + 2 values
+            ({"Foo": "Bar", "A": 0}, ["-o", "'Foo=Bar'", "-o", "'A=0'"]),
+            # handles boolean (this should be rare)
+            ({"Foo": False}, ["-o", "'Foo=False'"]),
+            # Value could be empty
+            ({"Foo": ""}, ["-o", "'Foo='"]),
+        ],
+    )
+    def test_ssh_options_to_cli(self, options, expected):
+        """Test conversion of SSH options to CLI params."""
+        assert ssh_options_to_cli(options) == expected

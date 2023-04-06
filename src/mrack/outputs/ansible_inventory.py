@@ -27,9 +27,11 @@ from mrack.utils import (
     get_password,
     get_shortname,
     get_ssh_key,
+    get_ssh_options,
     get_username,
     is_windows_host,
     save_yaml,
+    ssh_options_to_cli,
 )
 
 DEFAULT_INVENTORY_PATH = "mrack-inventory.yaml"
@@ -137,6 +139,7 @@ class AnsibleInventoryOutput:
         ansible_user = get_username(db_host, meta_host, self._config)
         password = get_password(db_host, meta_host, self._config)
         ssh_key = get_ssh_key(db_host, meta_host, self._config)
+        ssh_options = get_ssh_options(db_host, self._metadata, self._config)
         dom_name = meta_domain["name"]
 
         # Common attributes
@@ -165,6 +168,10 @@ class AnsibleInventoryOutput:
 
         if ssh_key:
             host_info["ansible_ssh_private_key_file"] = os.path.abspath(ssh_key)
+
+        if ssh_options:
+            ssh_common_args = " ".join(ssh_options_to_cli(ssh_options))
+            host_info["ansible_ssh_common_args"] = ssh_common_args
 
         if password:
             host_info["ansible_password"] = password

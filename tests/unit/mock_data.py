@@ -39,7 +39,7 @@ def create_metadata(ipaservers, ipaclients, ads):
 
     for i in range(ipaservers):
         host = {
-            "name": f"ipaserver{i}@{domain_name}",
+            "name": f"ipaserver{i}.{domain_name}",
             "os": fedora,
             "role": "ipaserver",
             "groups": ["ipaserver"],
@@ -48,7 +48,7 @@ def create_metadata(ipaservers, ipaclients, ads):
 
     for i in range(ipaclients):
         host = {
-            "name": f"ipaclient{i}@{domain_name}",
+            "name": f"ipaclient{i}.{domain_name}",
             "os": fedora,
             "role": "ipaclient",
             "groups": ["ipaclient"],
@@ -64,7 +64,7 @@ def create_metadata(ipaservers, ipaclients, ads):
 
     for i in range(ads):
         host = {
-            "name": f"ad{i}@{addomain_name}",
+            "name": f"ad{i}.{addomain_name}",
             "os": "windows",
             "role": "ad",
             "groups": ["win-2019"],

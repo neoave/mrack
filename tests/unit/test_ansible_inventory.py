@@ -160,7 +160,7 @@ class TestAnsibleInventory:
             "hosts" in inventory["all"]["children"]["client"]["children"]["ipaclient"]
         )
         assert (
-            "ipaclient0@example.test"
+            "ipaclient0.example.test"
             in inventory["all"]["children"]["client"]["children"]["ipaclient"]["hosts"]
         )
 
@@ -172,7 +172,7 @@ class TestAnsibleInventory:
             "hosts" in inventory["all"]["children"]["server"]["children"]["ipaserver"]
         )
         assert (
-            "ipaserver0@example.test"
+            "ipaserver0.example.test"
             in inventory["all"]["children"]["server"]["children"]["ipaserver"]["hosts"]
         )
 
@@ -546,3 +546,21 @@ class TestAnsibleInventory:
         assert "something_else" in d1_srv2
         assert d1_srv2["no_ca"] == "no"
         assert d1_srv2["something_else"] == "default_global"
+
+    def test_host_ssh_options(self, metadata, db):
+        prov_config = provisioning_config()
+        ans_inv = AnsibleInventoryOutput(prov_config, db, metadata)
+
+        # Test Default behavior
+        inventory = ans_inv.create_inventory()
+        srv1 = inventory["all"]["hosts"]["ipaserver0.example.test"]
+        assert "ansible_ssh_common_args" in srv1
+
+        expected = "-o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null'"
+        assert srv1["ansible_ssh_common_args"] == expected
+
+        # Test when there are not options
+        prov_config["ssh"] = {"options": {}}
+        inventory = ans_inv.create_inventory()
+        srv1 = inventory["all"]["hosts"]["ipaserver0.example.test"]
+        assert "ansible_ssh_common_args" not in srv1
