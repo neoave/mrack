@@ -97,9 +97,9 @@ class OpenStackProvider(Provider):
         * list of asyncio.gather results
         """
         error_attempts = 0
-        coros = [func(*args, **xargs) for (func, args, xargs) in calls]
         result = []
         while error_attempts < SERVER_ERROR_RETRY:
+            coros = [func(*args, **xargs) for (func, args, xargs) in calls]
             try:
                 result = await asyncio.gather(*coros)
                 break
@@ -108,8 +108,6 @@ class OpenStackProvider(Provider):
                 error_attempts += 1
                 if error_attempts <= SERVER_ERROR_RETRY:
                     await asyncio.sleep(SERVER_ERROR_SLEEP)
-                    # create new coroutines on ServerError
-                    coros = [func(*args, **xargs) for (func, args, xargs) in calls]
                     continue  # Try again due to ServerError
         else:
             # now we are past to what we would like to wait fail now
