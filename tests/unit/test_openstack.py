@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import asyncio
 import os
 from copy import deepcopy
 from unittest import mock
@@ -603,16 +602,15 @@ class TestOpenStackProvider:
         )
 
     @pytest.mark.asyncio
-    async def test_openstack_gather_responses(self):
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_openstack_gather_responses(self, mocked_sleep):
         error_flag = True
 
         async def coro1():
-            await asyncio.sleep(0.1)
             return "result1"
 
         async def coro2():
             nonlocal error_flag
-            await asyncio.sleep(0.2)
             if error_flag:
                 error_flag = False
                 raise ServerError("Oops!", 503)
@@ -620,7 +618,6 @@ class TestOpenStackProvider:
                 return "result2"
 
         async def coro3():
-            await asyncio.sleep(0.3)
             raise ServerError("Oops!", 503)
 
         provider = OpenStackProvider()
