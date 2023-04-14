@@ -712,3 +712,87 @@ class TestOpenStackProvider:
         server, server_req = await provider.create_server(req)
         assert server == succ_server_response["server"]
         assert server_req == req
+
+    @pytest.mark.asyncio
+    async def test_load_limits(self):
+        provider = OpenStackProvider()
+        await provider.init()
+
+        (
+            used_vcpus,
+            used_memory,
+            limit_vcpus,
+            limit_memory,
+        ) = await provider._load_limits()
+
+        limits = self.limits["limits"]["absolute"]
+        assert used_vcpus == limits["totalCoresUsed"]
+        assert used_memory == limits["totalRAMUsed"]
+        assert limit_vcpus == limits["maxTotalCores"]
+        assert limit_memory == limits["maxTotalRAMSize"]
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "used_vcpus, used_memory, limit_vcpus, limit_memory, expected_utilization",
+        [
+            (10, 2048, 100, 16384, 12.5),
+            (25, 4096, 100, 16384, 25.0),
+            (50, 6144, 100, 16384, 50.0),
+        ],
+    )
+    async def test_utilization(
+        self,
+        used_vcpus,
+        used_memory,
+        limit_vcpus,
+        limit_memory,
+        expected_utilization,
+    ):
+        provider = OpenStackProvider()
+
+        # Mock the return value of _load_limits method
+        with patch.object(
+            OpenStackProvider,
+            "_load_limits",
+            new_callable=AsyncMock,
+            return_value=(used_vcpus, used_memory, limit_vcpus, limit_memory),
+        ):
+            utilization_value = await provider.utilization()
+
+        assert utilization_value == expected_utilization
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "host_reqs, load_limits, expected_can_provision",
+        [
+            (
+                [{"vcpus": 2, "ram": 2048}, {"vcpus": 3, "ram": 4096}],
+                (10, 4096, 100, 16384),
+                True,
+            ),
+            (
+                [{"vcpus": 50, "ram": 8192}, {"vcpus": 60, "ram": 8192}],
+                (10, 4096, 100, 16384),
+                False,
+            ),
+        ],
+    )
+    async def test_can_provision(self, host_reqs, load_limits, expected_can_provision):
+        provider = OpenStackProvider()
+
+        def mock_get_host_requirements(req):
+            return req
+
+        with patch.object(
+            OpenStackProvider,
+            "get_host_requirements",
+            side_effect=mock_get_host_requirements,
+        ), patch.object(
+            OpenStackProvider,
+            "_load_limits",
+            new_callable=AsyncMock,
+            return_value=load_limits,
+        ):
+            can_provision = await provider.can_provision(host_reqs)
+
+        assert can_provision == expected_can_provision
