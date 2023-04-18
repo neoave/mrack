@@ -424,6 +424,10 @@ class Provider:
             req for req in reqs if req["name"] in [host.name for host in error_hosts]
         ]
 
+    def _get_max_utilization(self):
+        """Get max utilization value from context."""
+        return global_context.CONFIG.max_utilization
+
     async def strategy_retry(self, reqs):
         """Provisioning strategy to try multiple times to provision a host."""
         log_msg_start = self.dsp_name
@@ -432,7 +436,7 @@ class Provider:
         success_hosts = []
         error_hosts = []
         delta_sleep = global_context.CONFIG.delta_sleep
-        max_utilization = global_context.CONFIG.max_utilization
+        max_utilization = self._get_max_utilization()
 
         while missing_reqs:
             # number of attempts should be greater than max_retry
