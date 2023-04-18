@@ -2,6 +2,19 @@
 
 <!--next-version-placeholder-->
 
+## v1.15.0 (2023-04-18)
+### Feature
+* **outputs:** Preset username and password for windows host in pytest-mh ([`86393ab`](https://github.com/neoave/mrack/commit/86393abed8e90ca36e71894f60cedf20046bfdac))
+* **outputs:** Merge nested dictionary instead of overriding it ([`4c26b5f`](https://github.com/neoave/mrack/commit/4c26b5ff7934efc8895eb83b3b89fe01a4d64257))
+* **utils:** Add merge_dict ([`4dde2e5`](https://github.com/neoave/mrack/commit/4dde2e5fb54b352d53048c2e147f63c3cbc79932))
+* Configurable ssh options ([`a4e5075`](https://github.com/neoave/mrack/commit/a4e50752d2c804b196b1290903ce6e12030fc5d5))
+
+### Fix
+* Handle 403 AuthError (out of quota) in openstack provisioning ([`e29031b`](https://github.com/neoave/mrack/commit/e29031b6dca037a3a3563c3646ed1f5fcf88c9ac))
+
+### Documentation
+* SSH options design ([`88458e1`](https://github.com/neoave/mrack/commit/88458e12754054def3136a7d919f9d8061fd4300))
+
 ## v1.14.1 (2023-03-16)
 ### Fix
 * Mrack not re-provisioning hosts which were destroyed ([`a9c4e62`](https://github.com/neoave/mrack/commit/a9c4e629fa448461bc037c3c9f24c8950bf2b1bb))

@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.14.1
+Version:        1.15.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,20 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Apr 18 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.15.0-1
+- f9f0e33 test: Add missing strategy_retry test (Tibor Dudlák)
+- 121c5db refactor(provider): take max_utilization out to method to ease mocking (Tibor Dudlák)
+- dc74ced test: Add missing tests for fixed code from https://github.com/neoave/mrack/pull/245 (Tibor Dudlák)
+- 86393ab feat(outputs): preset username and password for windows host in pytest-mh (Tibor Dudlák)
+- 4c26b5f feat(outputs): merge nested dictionary instead of overriding it (Tibor Dudlák)
+- 4dde2e5 feat(utils): add merge_dict (Tibor Dudlák)
+- 5440be1 refactor: fixes _openstack_gather_responses test warnings and exec time (David Pascual)
+- e29031b fix: Handle 403 AuthError (out of quota) in openstack provisioning (David Pascual)
+- a4e5075 feat: configurable ssh options (Petr Vobornik)
+- e9d716e chore: fix docs dependencies in tox run (Petr Vobornik)
+- 6f1943b chore: add Markdown support to docs and add design section (Petr Vobornik)
+- 88458e1 docs: SSH options design (Petr Vobornik)
+
 * Thu Mar 16 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.14.1-1
 - a9c4e62 fix: mrack not re-provisioning hosts which were destroyed (Tibor Dudlák)
 - 17b45e4 fix: Replace coroutines with tasks to avoid RuntimeError (David Pascual)
