@@ -42,10 +42,14 @@ actions:
     - "python3 setup.py --version"
 
 jobs:
+  - job: copr_build
+    trigger: pull_request
+    release_suffix: "99.dev.{PACKIT_PROJECT_BRANCH}"
+    targets: [fedora-all, epel-8, epel-9]
+
   - job: tests
     trigger: pull_request
     targets: [fedora-all, epel-8, epel-9]
-    release_suffix: "99.dev.{PACKIT_PROJECT_BRANCH}"
 
   - job: copr_build
     trigger: commit
