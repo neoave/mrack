@@ -49,6 +49,7 @@ jobs:
 
   - job: tests
     trigger: pull_request
+    identifier: "upstream-smoke"
     targets: [fedora-all, epel-8, epel-9]
 
   - job: copr_build
@@ -72,3 +73,73 @@ jobs:
   - job: bodhi_update
     trigger: commit
     dist_git_branches: [fedora-branched, epel-8, epel-9] # rawhide updates are created automatically
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"  #tmp change
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-osp"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-osp"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-aws"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-aws"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-bkr-c9s-req1cpu"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-bkr-c9s-req1cpu"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-bkr-fedora-ppc64le"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-bkr-fedora-ppc64le"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-bkr-rhel-8-req-2048mem-2cpu"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-bkr-rhel-8-req-2048mem-2cpu"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-provisioning-bkr-rhel-9-req-4069mem"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "provisioning-bkr-rhel-9-req-4069mem"
+
+  - job: tests
+    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+    fmf_ref: "main"
+    use_internal_tf: True
+    identifier: "internal-all-providers-ssh"
+    trigger: pull_request
+    targets: [fedora-latest-stable]
+    env:
+      MRACK_TEST_CASE: "all-providers-ssh"
