@@ -496,16 +496,14 @@ class Provider:
 
                 await self.delete_hosts(error_hosts)
 
-                # multiply the sleep time to increase the cooldown period
-                # to get range from 15 to 30 minutes
-                # before another retry (using default delta_sleep=15)
-                res_check_timeout += (
-                    (delta_sleep - 1) * res_check_timeout * int(out_of_resources)
-                )  # -1 because we do addition to original value and multiply by 14
+                # increase the sleep time to extend the cooldown period
+                # when internal error happens
+                res_check_timeout += res_check_timeout * int(out_of_resources)
 
                 cooldown = random.choice(
                     range(res_check_timeout, 2 * res_check_timeout)
                 )
+
                 logger.info(
                     f"{log_msg_start} Retrying to provision these hosts in {cooldown}s"
                 )
