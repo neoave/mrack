@@ -54,7 +54,7 @@ class TestProvider:
         init_global_context()
 
     @pytest.mark.asyncio
-    @patch.object(Provider, "_get_max_utilization", return_value=90)
+    @patch.object(Provider, "_get_max_utilization", return_value=60)
     async def test_strategy_retry(self, get_max_utilization_mock):
         # Mock hosts with different results
         host1 = Mock(name="host1", error={})

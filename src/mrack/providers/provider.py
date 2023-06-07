@@ -463,6 +463,7 @@ class Provider:
             s_hosts, error_hosts, missing_reqs = await self._provision_base(
                 missing_reqs, timeout=res_check_timeout
             )
+
             success_hosts.extend(s_hosts)
 
             # We need to cleanup the error hosts for the next retry run
@@ -474,22 +475,29 @@ class Provider:
                 count = len(error_hosts)
                 err = f"{count} hosts were not provisioned properly, deleting."
                 logger.info(f"{log_msg_start} {err}")
-                out_of_resources = False
+                server_error = False
                 for host in error_hosts:
                     logger.error(f"{log_msg_start} Error: {str(host.error)}")
                     # if host.error is a dictionary and code is 500 = SERVER ERROR
                     if (
                         isinstance(host.error, dict)
                         and host.error.get("code", None) == 500
+                        and not server_error  # add condition here to not repeat message
                     ):
                         logger.info(
-                            f"{log_msg_start} Provider is out of resources, "
+                            f"{log_msg_start} Provider returned server error (500), "
                             "increasing cooldown time before another retry"
                         )
-                        out_of_resources = True
+                        server_error = True
 
-                if await self.utilization() >= max_utilization or out_of_resources:
+                error_hosts_share = (
+                    len(error_hosts) / len(success_hosts + error_hosts) * 100
+                )
+                high_utilization = await self.utilization() >= max_utilization
+
+                if high_utilization or (error_hosts_share > max_utilization):
                     # delete all hosts when there is high utilization of provider
+                    # or error hosts share is exceeding the same utilization threshold
                     error_hosts += success_hosts
                     missing_reqs = self._get_missing_reqs(reqs, error_hosts)
                     success_hosts = []
@@ -498,7 +506,7 @@ class Provider:
 
                 # increase the sleep time to extend the cooldown period
                 # when internal error happens
-                res_check_timeout += res_check_timeout * int(out_of_resources)
+                res_check_timeout += res_check_timeout * int(server_error)
 
                 cooldown = random.choice(
                     range(res_check_timeout, 2 * res_check_timeout)
