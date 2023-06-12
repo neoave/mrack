@@ -466,6 +466,11 @@ class Provider:
 
             success_hosts.extend(s_hosts)
 
+            if s_hosts:
+                logger.info(f"{log_msg_start} {len(s_hosts)} host(s) provisioned.")
+                succ = f"{len(success_hosts)}/{len(reqs)} host(s) provisioned properly."
+                logger.info(f"{log_msg_start} Provisioning progress: {succ}")
+
             # We need to cleanup the error hosts for the next retry run
             # in case of last attempt which is `self.max_retry`
             # we skip this part at it done in provision_hosts() method while
@@ -473,7 +478,7 @@ class Provider:
 
             if error_hosts and attempts <= self.max_retry:
                 count = len(error_hosts)
-                err = f"{count} hosts were not provisioned properly, deleting."
+                err = f"{count} host(s) NOT provisioned properly, deleting."
                 logger.info(f"{log_msg_start} {err}")
                 server_error = False
                 for host in error_hosts:
