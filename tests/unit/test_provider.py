@@ -195,6 +195,61 @@ class TestProvider:
                 assert mock_sleep.mock.call_count == 0
                 assert mock_delete_hosts.mock.call_count == 0
 
+        async def subtest_reprovision_missing_one_by_one_error():
+            """Test reprovisioning when provisioning fails."""
+            dummy_reqs = [
+                {"name": "host1", "vcpus": 2, "memory": 4096},
+                {"name": "host2", "vcpus": 2, "memory": 4096},
+                {"name": "host3", "vcpus": 2, "memory": 4096},
+            ]
+            missing_dummy_reqs = [
+                {"name": "host3", "vcpus": 2, "memory": 4096},
+            ]
+
+            call_counts = [0]  # Initialize a list to store the call counts
+
+            def provision_side_effect(*args, **kwargs):
+                call_counts[0] += 1  # Increment the call count
+                side_effects = {
+                    1: ([host1], [host2, host3], dummy_reqs),
+                    2: ([host1, host2], [host3], missing_dummy_reqs),
+                    3: ([host3], [], []),
+                }
+
+                # return value based on call count simulate reprovision
+                # to pass for only one host at the time
+                return side_effects[call_counts[0]]
+
+            with patch.object(
+                provider,
+                "_provision_base",
+                new_callable=AsyncMock,
+                side_effect=provision_side_effect,
+            ), patch.object(
+                provider, "utilization", new_callable=AsyncMock, return_value=50
+            ), patch.object(
+                provider, "delete_hosts", new_callable=AsyncMock
+            ) as mock_delete_hosts, patch(
+                "asyncio.sleep", new_callable=AsyncMock
+            ) as mock_sleep:
+                (
+                    success_hosts,
+                    error_hosts,
+                    missing_reqs,
+                ) = await provider.strategy_retry(dummy_reqs)
+
+                assert len(success_hosts) == 3
+                assert len(error_hosts) == 0
+                assert len(missing_reqs) == 0
+                assert mock_sleep.mock.call_count == 2
+                assert mock_delete_hosts.mock.call_count == 2
+                # Assert that delete_hosts is called
+                # to delete all the hosts first for 3 hosts then for one
+                assert [
+                    len(c[0][0]) for c in mock_delete_hosts.mock.call_args_list
+                ] == [3, 1]
+
         await subtest_500_error()
         await subtest_high_utilization()
         await subtest_success()
+        await subtest_reprovision_missing_one_by_one_error()
