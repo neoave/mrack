@@ -2,6 +2,11 @@
 
 <!--next-version-placeholder-->
 
+## v1.15.1 (2023-06-13)
+### Fix
+* Do not reprovision all hosts when server error is detected ([`fd111f5`](https://github.com/neoave/mrack/commit/fd111f56daa271ccc7824ec0805d007ca4c78f8d))
+* Use lower cooldown time to not be too slow in re-provisioning ([`6e499f6`](https://github.com/neoave/mrack/commit/6e499f6cb50a3523db199cd37b877558b9896342))
+
 ## v1.15.0 (2023-04-18)
 ### Feature
 * **outputs:** Preset username and password for windows host in pytest-mh ([`86393ab`](https://github.com/neoave/mrack/commit/86393abed8e90ca36e71894f60cedf20046bfdac))

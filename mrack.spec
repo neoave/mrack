@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.15.0
+Version:        1.15.1
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -182,6 +182,15 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Jun 13 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.15.1-1
+- 608c763 chore(Packit): Use yaml magic to run same internal tests for PRs and commits to main (Tibor Dudlák)
+- 8062a20 refactor: more verbose output when (re)provisioning (Tibor Dudlák)
+- 19b52f8 test(OpenStack): Add reprovision with dynamic result tests (Tibor Dudlák)
+- fd111f5 fix: Do not reprovision all hosts when server error is detected (Tibor Dudlák)
+- 6e499f6 fix: Use lower cooldown time to not be too slow in re-provisioning (Tibor Dudlák)
+- e03793c chore(Packit): Add internalt tests per pull request (Tibor Dudlák)
+- 44023eb chore(Packit): add missing build job(s) to Packit config (Tibor Dudlák)
+
 * Tue Apr 18 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.15.0-1
 - f9f0e33 test: Add missing strategy_retry test (Tibor Dudlák)
 - 121c5db refactor(provider): take max_utilization out to method to ease mocking (Tibor Dudlák)
