@@ -7,5 +7,6 @@ Guides
 
    credentials.rst
    mrack_lib.rst
+   beaker_hostRequires.rst
    ssh_check.rst
    strategy.rst
