@@ -14,6 +14,7 @@
 
 """OpenStack transformer module."""
 import logging
+import os
 
 from mrack.errors import ProvisioningConfigError
 from mrack.providers.provider import STRATEGY_ABORT
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 CONFIG_KEY = "openstack"
 DEFAULT_ATTEMPTS = 5
+DEFAULT_CLOUD_PROFILE = "openstack"
 
 
 class OpenStackTransformer(Transformer):
@@ -40,11 +42,17 @@ class OpenStackTransformer(Transformer):
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
         self.dsp_name = "OpenStack"
+
+        os_cloud = os.environ.get("OS_CLOUD")
+        if not os_cloud:
+            os_cloud = self.config.get("profile", DEFAULT_CLOUD_PROFILE)
+
         await self._provider.init(
             image_names=self.config["images"].values(),
             networks=self.config["networks"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
+            cloud_profile=os_cloud,
             keypair=self.config["keypair"],
             pubkey=self.config["pubkey"],
         )

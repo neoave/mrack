@@ -150,7 +150,7 @@ openstack:  # OpenStack provider specific values
     # OpenStack security/auth config
     credentials_file: clouds.yaml
     # credentials profile to use from file
-    profile: devstack
+    profile: openstack
 
     # Enable Config drive to fetch metadata from a mounted volume instead of Metadata Service
     # enable_config_drive: True

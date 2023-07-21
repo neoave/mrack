@@ -22,7 +22,10 @@ from random import random, sample
 from urllib.parse import parse_qs, urlparse
 
 import aiofiles  # type: ignore
+import os_client_config
+from aiohttp import ContentTypeError
 from asyncopenstackclient import AuthPassword, GlanceClient
+from keystoneauth1.exceptions.auth_plugins import MissingRequiredOptions, OptionError
 from simple_rest_client.exceptions import AuthError, NotFoundError, ServerError
 
 from mrack.context import global_context
@@ -118,6 +121,84 @@ class OpenStackProvider(Provider):
 
         return result
 
+    async def _create_session(self):
+        """
+        Create session object using credentials.
+
+        Credentials are retrieved from either enviromental variables or
+        clouds.yaml file.
+        Both username+password and application credentials formats
+        are accepted.
+
+        Returns: Session object.
+        """
+        try:
+            # Create session from environment variables
+            return AuthPassword()
+        except TypeError:
+            # Fallback to create session from clouds.yaml file
+            try:
+                config = os_client_config.OpenStackConfig()
+
+                # Get the cloud specified in provisioning-config
+                # If that fails try to pick the cloud specified in OS_CLOUD envvar
+                # or get the only cloud (if there is only one)
+                try:
+                    cloud = config.get_one_cloud(self.cloud_profile)
+                    logger.debug(f"{self.dsp_name} Using profile: {self.cloud_profile}")
+                except os_client_config.exceptions.OpenStackConfigException:
+                    cloud = config.get_one_cloud()
+
+                auth_info = cloud.config["auth"]
+                logger.debug(f"{self.dsp_name} auth_url: {auth_info['auth_url']}")
+
+                if "username" in auth_info and "password" in auth_info:
+                    logger.debug(f"{self.dsp_name} username: {auth_info['username']}")
+                    return AuthPassword(
+                        auth_url=auth_info["auth_url"],
+                        username=auth_info["username"],
+                        password=auth_info["password"],
+                        project_name=auth_info["project_name"],
+                        user_domain_name=auth_info["user_domain_name"],
+                    )
+                elif (
+                    "application_credential_id" in auth_info
+                    and "application_credential_secret" in auth_info
+                ):
+                    logger.debug(
+                        f"{self.dsp_name} application_credential_id: "
+                        + f"{auth_info['application_credential_id']}"
+                    )
+                    return AuthPassword(
+                        auth_url=auth_info["auth_url"],
+                        application_credential_id=auth_info[
+                            "application_credential_id"
+                        ],
+                        application_credential_secret=auth_info[
+                            "application_credential_secret"
+                        ],
+                    )
+                else:
+                    err_msg = (
+                        "Invalid clouds.yaml configuration. " + "Authentication failed."
+                    )
+                    raise NotAuthenticatedError(err_msg)
+            except (
+                os_client_config.exceptions.OpenStackConfigException,
+                AttributeError,
+                TypeError,
+                OptionError,
+                MissingRequiredOptions,
+            ) as terr:
+                logger.debug(f"{self.dsp_name} Error during authentication: {terr}")
+                err_msg = (
+                    "OpenStack credentials not provided or not properly configured. "
+                    + "Authentication failed."
+                    + "\nIf you have more than one cloud configured, make sure"
+                    + " to set OS_CLOUD envvar."
+                )
+                raise NotAuthenticatedError(err_msg) from terr
+
     async def _import_public_key(self):
         """Import public key to OpenStack if it does not exist."""
         try:
@@ -141,6 +222,7 @@ class OpenStackProvider(Provider):
         networks=None,
         strategy=STRATEGY_ABORT,
         max_retry=1,
+        cloud_profile="",
         keypair="",
         pubkey="",
     ):
@@ -153,31 +235,39 @@ class OpenStackProvider(Provider):
         * images which were defined in `images` option
         * account limits (max and current usage of vCPUs, memory, ...)
         """
-        # session expects that credentials will be set via env variables
         logger.info(f"{self.dsp_name} Initializing provider")
         self.strategy = strategy
         self.max_retry = max_retry
-        try:
-            self.session = AuthPassword()
-        except TypeError as terr:
-            err = (
-                "OpenStack credentials not provided. Load OpenStack RC file with valid "
-                "credentials and try again. E.g.: $ source PROJECT-openrc.sh"
-            )
-            raise NotAuthenticatedError(err) from terr
+        self.cloud_profile = cloud_profile
         self.keypair = keypair
         self.pubkey = pubkey
+
+        # Session expects that credentials will be set via env variables
+        # or clouds.yaml file. For the latter, cloud profile should be specified
+        # in provisioning-config openstack.profile key or in envvar OS_CLOUD.
+        self.session = await self._create_session()
 
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
         self.neutron = NeutronClient(session=self.session)
 
         login_start = datetime.now()
-        await asyncio.gather(
-            self.nova.init_api(self.api_timeout),
-            self.glance.init_api(self.api_timeout),
-            self.neutron.init_api(self.api_timeout),
-        )
+        try:
+            await asyncio.gather(
+                self.nova.init_api(self.api_timeout),
+                self.glance.init_api(self.api_timeout),
+                self.neutron.init_api(self.api_timeout),
+            )
+        except KeyError as e:
+            err_msg = "Authentication to Openstack with provided credentials failed"
+            raise NotAuthenticatedError(err_msg) from e
+        except ContentTypeError as e:
+            err_msg = (
+                "Authentication to Openstack with provided credentials failed"
+                + "\nTIP: Make sure the parameter 'auth_url' from your credentials"
+                + " ends with '/v3'"
+            )
+            raise NotAuthenticatedError(err_msg) from e
         login_end = datetime.now()
         logger.info(f"{self.dsp_name} Login duration {login_end - login_start}")
 
