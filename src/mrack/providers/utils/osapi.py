@@ -25,12 +25,14 @@ class ExtraNovaClient(NovaClient):
     * limits.show
     * quota.show
     * usage.show
+    * keypairs.show
+    * keypairs.create
     """
 
     def __init__(self, session=None, api_url=None):
         """Add new objects."""
         super().__init__(session, api_url)
-        self.resources.extend(["limits", "quota", "usage"])
+        self.resources.extend(["limits", "quota", "usage", "keypairs"])
 
     async def init_api(self, timeout=60):
         """Initialize API.
@@ -44,9 +46,13 @@ class ExtraNovaClient(NovaClient):
             "method": "GET",
             "url": "os-simple-tenant-usage/{}",
         }
+        self.api.keypairs.actions["show"] = {"method": "GET", "url": "os-keypairs/{}"}
+        self.api.keypairs.actions["create"] = {"method": "POST", "url": "os-keypairs"}
         self.api.limits.add_action("show")
         self.api.quota.add_action("show")
         self.api.usage.add_action("show")
+        self.api.keypairs.add_action("show")
+        self.api.keypairs.add_action("create")
 
 
 class NeutronClient(Client):

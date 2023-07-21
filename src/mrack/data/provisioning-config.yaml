@@ -141,6 +141,9 @@ openstack:  # OpenStack provider specific values
 
     default_network: IPv4
 
+    # Public key path
+    pubkey: config/id_rsa.pub
+
     # OpenStack vm config
     keypair: jenkins
 

@@ -17,7 +17,7 @@ from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
-from simple_rest_client.exceptions import AuthError, ServerError
+from simple_rest_client.exceptions import AuthError, ServerError, NotFoundError
 
 from mrack.context import global_context
 from mrack.errors import (
@@ -135,6 +135,25 @@ def AsyncMock(*args, **kwargs):
     return mock_coro
 
 
+class AsyncContextManagerMock:
+    def __init__(self, return_value):
+        self.return_value = return_value
+
+    async def __aenter__(self):
+        return self.return_value
+
+    async def __aexit__(self, *args, **kwargs):
+        pass
+
+
+class AsyncFileReadMock:
+    def __init__(self, return_value):
+        self.return_value = return_value
+
+    async def read(self):
+        return self.return_value
+
+
 class TestOpenStackProvider:
     def setup_method(self):
         self.limits = get_data("limits.json")
@@ -151,6 +170,7 @@ class TestOpenStackProvider:
         self.mock_nova.init_api = AsyncMock(return_value=True)
         self.mock_nova.limits.show = AsyncMock(return_value=self.limits)
         self.mock_nova.flavors.list = AsyncMock(return_value=self.flavors)
+        self.mock_nova.keypairs.show = AsyncMock()
 
         self.mock_nova_class = Mock(return_value=self.mock_nova)
         self.nova_patcher = patch(
@@ -796,3 +816,30 @@ class TestOpenStackProvider:
             can_provision = await provider.can_provision(host_reqs)
 
         assert can_provision == expected_can_provision
+
+    @patch(
+        "aiofiles.open",
+        return_value=AsyncContextManagerMock(AsyncFileReadMock("mock_public_key")),
+    )
+    @pytest.mark.asyncio
+    async def test_import_public_key(self, mock_aiofiles_open):
+        self.mock_nova.keypairs.show = AsyncMock(
+            side_effect=NotFoundError("Error", 400)
+        )
+        self.mock_nova.keypairs.create = AsyncMock(
+            return_value={
+                "keypair": {"name": "test_keypair", "fingerprint": "mock_fingerprint"}
+            }
+        )
+
+        provider = OpenStackProvider()
+        provider.keypair = "test_keypair"
+        provider.pubkey = "fake/path/to/public/key"
+        provider.nova = self.mock_nova
+
+        await provider._import_public_key()
+
+        self.mock_nova.keypairs.show.mock.assert_called_once_with("test_keypair")
+        self.mock_nova.keypairs.create.mock.assert_called_once_with(
+            keypair={"name": "test_keypair", "public_key": "mock_public_key"}
+        )

@@ -5,3 +5,4 @@ click>=7.0.0
 pyyaml>=5.0.0
 asyncopenstackclient>=0.8.1
 testcloud>=0.5.0
+aiofiles>=23.1.0
