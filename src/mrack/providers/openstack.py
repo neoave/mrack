@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from random import random, sample
 from urllib.parse import parse_qs, urlparse
 
+import aiofiles  # type: ignore
 from asyncopenstackclient import AuthPassword, GlanceClient
 from simple_rest_client.exceptions import AuthError, NotFoundError, ServerError
 
@@ -117,8 +118,31 @@ class OpenStackProvider(Provider):
 
         return result
 
+    async def _import_public_key(self):
+        """Import public key to OpenStack if it does not exist."""
+        try:
+            await self.nova.keypairs.show(self.keypair)
+            logger.debug(f"Keypair {self.keypair} already exists.")
+        except NotFoundError:
+            async with aiofiles.open(self.pubkey, mode="r") as public_key_file:
+                public_key = await public_key_file.read()
+
+            keypair_obj = {"name": self.keypair, "public_key": public_key}
+            resp = await self.nova.keypairs.create(keypair=keypair_obj)
+            resp_obj = resp["keypair"]
+            logger.info(
+                f"Keypair {resp_obj.get('name')} imported with fingerprint: "
+                + f"{resp_obj.get('fingerprint')}"
+            )
+
     async def init(
-        self, image_names=None, networks=None, strategy=STRATEGY_ABORT, max_retry=1
+        self,
+        image_names=None,
+        networks=None,
+        strategy=STRATEGY_ABORT,
+        max_retry=1,
+        keypair="",
+        pubkey="",
     ):
         """Initialize provider with data from OpenStack.
 
@@ -141,6 +165,8 @@ class OpenStackProvider(Provider):
                 "credentials and try again. E.g.: $ source PROJECT-openrc.sh"
             )
             raise NotAuthenticatedError(err) from terr
+        self.keypair = keypair
+        self.pubkey = pubkey
 
         self.nova = ExtraNovaClient(session=self.session)
         self.glance = GlanceClient(session=self.session)
@@ -154,6 +180,8 @@ class OpenStackProvider(Provider):
         )
         login_end = datetime.now()
         logger.info(f"{self.dsp_name} Login duration {login_end - login_start}")
+
+        await self._import_public_key()
 
         self.network_pools = networks
         object_start = datetime.now()

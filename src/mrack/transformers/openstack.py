@@ -29,7 +29,13 @@ class OpenStackTransformer(Transformer):
     """OpenStack transformer."""
 
     _config_key = CONFIG_KEY
-    _required_config_attrs = ["flavors", "networks", "images", "keypair"]  # List[str]
+    _required_config_attrs = [
+        "flavors",
+        "networks",
+        "images",
+        "keypair",
+        "pubkey",
+    ]  # List[str]
 
     async def init_provider(self):
         """Initialize associate provider and transformer display name."""
@@ -39,6 +45,8 @@ class OpenStackTransformer(Transformer):
             networks=self.config["networks"],
             strategy=self.config.get("strategy", STRATEGY_ABORT),
             max_retry=self.config.get("max_retry", DEFAULT_ATTEMPTS),
+            keypair=self.config["keypair"],
+            pubkey=self.config["pubkey"],
         )
 
     def _get_network_type(self, host):
