@@ -17,7 +17,7 @@ from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
-from simple_rest_client.exceptions import AuthError, ServerError, NotFoundError
+from simple_rest_client.exceptions import AuthError, NotFoundError, ServerError
 
 from mrack.context import global_context
 from mrack.errors import (
@@ -843,3 +843,50 @@ class TestOpenStackProvider:
         self.mock_nova.keypairs.create.mock.assert_called_once_with(
             keypair={"name": "test_keypair", "public_key": "mock_public_key"}
         )
+
+    @patch("os_client_config.OpenStackConfig")
+    @pytest.mark.asyncio
+    async def test_create_session_from_envvars(self, mock_os_client_config):
+        self.mock_auth.return_value = "session"
+
+        provider = OpenStackProvider()
+        session = await provider._create_session()
+
+        assert session == self.mock_auth.return_value
+
+    @pytest.mark.parametrize(
+        "auth_info",
+        [
+            {
+                "auth_url": "url",
+                "username": "user",
+                "password": "pass",
+                "project_name": "project",
+                "user_domain_name": "domain",
+            },
+            {
+                "auth_url": "url",
+                "application_credential_id": "app_cred_id",
+                "application_credential_secret": "app_cred_secret",
+            },
+        ],
+    )
+    @patch("os_client_config.OpenStackConfig")
+    @pytest.mark.asyncio
+    async def test_create_session_from_clouds_yaml(
+        self, mock_os_client_config, auth_info
+    ):
+        self.mock_auth.return_value = "session"
+        self.mock_auth.side_effect = [TypeError(), self.mock_auth.return_value]
+
+        mock_cloud = mock.MagicMock()
+        mock_cloud.config = {"auth": auth_info}
+        mock_config = mock.MagicMock()
+        mock_config.get_one_cloud.return_value = mock_cloud
+        mock_os_client_config.return_value = mock_config
+
+        provider = OpenStackProvider()
+        provider.cloud_profile = "test_cloud"
+        session = await provider._create_session()
+
+        assert session == self.mock_auth.return_value
