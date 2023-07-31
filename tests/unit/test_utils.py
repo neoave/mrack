@@ -129,7 +129,7 @@ class TestPytestMrackUtils:
         host = list(db.hosts.values())[0]
 
         ssh_options = get_ssh_options(host, metadata, provisioning_config)
-        assert type(ssh_options) == dict
+        assert isinstance(ssh_options, dict)
 
         # Test that ssh options has expected default values when nothing is set
         assert "StrictHostKeyChecking" in ssh_options
@@ -141,14 +141,14 @@ class TestPytestMrackUtils:
         # Test that default ssh options can be nullified in provisioning config
         provisioning_config["ssh"] = {"options": {}}
         ssh_options = get_ssh_options(host, metadata, provisioning_config)
-        assert type(ssh_options) == dict
+        assert isinstance(ssh_options, dict)
         assert len(ssh_options) == 0
 
         # Test that custom options are returned
         options_spec = {"Foo": "Bar", "Baz": 0, "Third": "Value"}
         provisioning_config["ssh"] = {"options": options_spec}
         ssh_options = get_ssh_options(host, metadata, provisioning_config)
-        assert type(ssh_options) == dict
+        assert isinstance(ssh_options, dict)
         assert len(ssh_options) == 3
         for key, value in options_spec.items():
             assert key in ssh_options
