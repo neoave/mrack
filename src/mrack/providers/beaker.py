@@ -142,7 +142,8 @@ class BeakerProvider(Provider):
             if not req.get("meta_distro") and req_dstr not in self.distros:
                 raise ValidationError(
                     f"{self.dsp_name} provider does not support "
-                    f"'{req_dstr}' distro in provisioning config"
+                    f"'{req_dstr}' distro in provisioning config",
+                    self.dsp_name,
                 )
         return
 
