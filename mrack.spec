@@ -74,6 +74,8 @@ Requires:       beaker-client
 %package -n     python3-%{name}-openstack
 Summary:        Openstack provider plugin for mrack
 Requires:       python3-%{name}lib = %{version}-%{release}
+Recommends:       python3-aiofiles
+Recommends:       python3-os-client-config
 Recommends:     python3-AsyncOpenStackClient
 
 %{?python_provide:%python_provide python3-%{name}-openstack}
