@@ -59,7 +59,7 @@ jobs:
       - name: Get the new version using python-semantic-release
         run: |
           pip3 install python-semantic-release==8.0.8
-          echo "NEW_VERSION="`semantic-release print-version --noop` >> ${GITHUB_ENV}
+          echo "NEW_VERSION="`semantic-release version --print` >> ${GITHUB_ENV}
       - name: Update the mrack.spec changelog with initiator and basic message
         run: |
           # get the history of commits and generate changelog from it
