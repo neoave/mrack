@@ -184,6 +184,15 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Sep 19 2023 David Pascual Hernandez <davherna@redhat.com> - -1
+- f7bda89 chore:  Bump python-semantic-release to latest version (David Pascual)
+- d6b7298 feat: Add new dependecies to mrack.spec file (David Pascual)
+- 7bbda34 feat(OpenStack): Add clouds.yaml as an authentication method (David Pascual)
+- a5b32e3 feat(OpenStack): Import publick key on provision (David Pascual)
+- 1a29d86 test: fix pylint issues and use isinstance (Tibor Dudlák)
+- db74ae0 fix(Beaker): Exception has been thrown as raise missed argument (Tibor Dudlák)
+- de027fa docs(Beaker): Add hostRequires documentation section to guides (David Pascual)
+
 * Tue Jun 13 2023 Tibor Dudlák <tdudlak@redhat.com> - 1.15.1-1
 - 608c763 chore(Packit): Use yaml magic to run same internal tests for PRs and commits to main (Tibor Dudlák)
 - 8062a20 refactor: more verbose output when (re)provisioning (Tibor Dudlák)
