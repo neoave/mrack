@@ -15,14 +15,10 @@ pythonpath = [
 
 [tool.semantic_release]
 version_source = "commit"
-commit_subject = "chore: Release version {version}"
-commit_message = "Releasing mrack version {version}"
-version_variable = [
+commit_message = "chore: Release version {version}\n\nReleasing new mrack version"
+version_variables = [
     "src/mrack/version.py:VERSION",
     "docs/conf.py:release",
-]
-version_pattern = [
-    "mrack.spec:Version:\\s+{version}",
 ]
 branch = "main"
 commit = true
