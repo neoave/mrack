@@ -58,7 +58,7 @@ jobs:
           fetch-depth: 0
       - name: Get the new version using python-semantic-release
         run: |
-          pip3 install python-semantic-release==7.33.1
+          pip3 install python-semantic-release==7.34.4
           echo "NEW_VERSION="`semantic-release print-version --noop` >> ${GITHUB_ENV}
       - name: Update the mrack.spec changelog with initiator and basic message
         run: |
@@ -78,7 +78,7 @@ jobs:
       - name: Add specfile to commit
         run: git add mrack.spec
       - name: Python Semantic Release
-        uses: relekang/python-semantic-release@v7.33.1
+        uses: relekang/python-semantic-release@v7.34.4
         with:
           github_token: ${{ secrets.TIBORIS_GH_TOKEN }}
           pypi_token: ${{ secrets.PYPI_TOKEN }}
