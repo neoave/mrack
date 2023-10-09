@@ -2,9 +2,23 @@
 
 
 
-## v1.16.0 (2023-09-19)
+## v1.16.0 (2023-10-09)
 
 ### Chore
+
+* chore(ci): Fix release workflow build step checking out wrong commit
+
+actions/checkout checks out the latest commit at the time of the workflow trigger,
+hence any commit done during the workflow is not included.
+Fixing this to checkout the actual latest (release) commit.
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`e8e20f1`](https://github.com/neoave/mrack/commit/e8e20f119f988eedd851495c54ff5c04ae60cc52))
+
+* chore: Bump asyncopenstackclient dependency version
+
+This will allow to use the feature that enables application
+credentials authentication.
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`97a7cd0`](https://github.com/neoave/mrack/commit/97a7cd0518682a90d0655853333294290fea76ac))
 
 * chore(release): Add PyPI action &amp; extract copr step
 
