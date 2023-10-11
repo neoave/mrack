@@ -60,7 +60,7 @@ jobs:
           fetch-depth: 0
       - name: Get the new version using python-semantic-release
         run: |
-          pip3 install python-semantic-release==8.0.8
+          pip3 install python-semantic-release==8.1.1
           echo "NEW_VERSION="`semantic-release version --print` >> ${GITHUB_ENV}
       - name: Update the mrack.spec changelog with initiator and basic message
         run: |
@@ -85,7 +85,7 @@ jobs:
       - name: Add specfile to commit
         run: git add mrack.spec
       - name: Python Semantic Release
-        uses: relekang/python-semantic-release@v8.0.8
+        uses: python-semantic-release/python-semantic-release@v8.1.1
         with:
           github_token: ${{ secrets.TIBORIS_GH_TOKEN }}
       - name: Set NEW_VERSION as output
