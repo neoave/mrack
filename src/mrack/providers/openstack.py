@@ -121,6 +121,10 @@ class OpenStackProvider(Provider):
 
         return result
 
+    async def _curate_auth_url(self, auth_url):
+        """Append OpenStack API version if not present."""
+        return auth_url if auth_url.endswith("/v3") else auth_url + "/v3"
+
     async def _create_session(self):
         """
         Create session object using credentials.
@@ -150,12 +154,14 @@ class OpenStackProvider(Provider):
                     cloud = config.get_one_cloud()
 
                 auth_info = cloud.config["auth"]
-                logger.debug(f"{self.dsp_name} auth_url: {auth_info['auth_url']}")
+
+                curated_auth_url = self._curate_auth_url(auth_info["auth_url"])
+                logger.debug(f"{self.dsp_name} auth_url: {curated_auth_url}")
 
                 if "username" in auth_info and "password" in auth_info:
                     logger.debug(f"{self.dsp_name} username: {auth_info['username']}")
                     return AuthPassword(
-                        auth_url=auth_info["auth_url"],
+                        auth_url=curated_auth_url,
                         username=auth_info["username"],
                         password=auth_info["password"],
                         project_name=auth_info["project_name"],
@@ -170,7 +176,7 @@ class OpenStackProvider(Provider):
                         + f"{auth_info['application_credential_id']}"
                     )
                     return AuthPassword(
-                        auth_url=auth_info["auth_url"],
+                        auth_url=curated_auth_url,
                         application_credential_id=auth_info[
                             "application_credential_id"
                         ],
