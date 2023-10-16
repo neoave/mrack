@@ -890,3 +890,16 @@ class TestOpenStackProvider:
         session = await provider._create_session()
 
         assert session == self.mock_auth.return_value
+
+    @pytest.mark.parametrize(
+        "input_auth_url, expected_auth_url",
+        [
+            ("http://example.com/openstack", "http://example.com/openstack/v3"),
+            ("http://example.com/openstack/v3", "http://example.com/openstack/v3"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_curate_auth_url(self, input_auth_url, expected_auth_url):
+        provider = OpenStackProvider()
+        result_auth_url = await provider._curate_auth_url(input_auth_url)
+        assert result_auth_url == expected_auth_url
