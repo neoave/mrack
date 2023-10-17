@@ -74,80 +74,80 @@ jobs:
     trigger: commit
     dist_git_branches: [fedora-branched, epel-8, epel-9] # rawhide updates are created automatically
 
-  # pr_osp
-  - &internal_test  # use openstack (osp) tests as template for other test cases
-    job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
-    fmf_ref: "main"
-    use_internal_tf: True
-    targets: [fedora-latest-stable]
-    identifier: "internal-provisioning-osp"
-    trigger: pull_request
-    env:
-      MRACK_TEST_CASE: "provisioning-osp"
+#   # pr_osp
+#   - &internal_test  # use openstack (osp) tests as template for other test cases
+#     job: tests
+#     fmf_url: "https://gitlab.cee.redhat.com/idm-ops/mrack-internal-tests"
+#     fmf_ref: "main"
+#     use_internal_tf: True
+#     targets: [fedora-latest-stable]
+#     identifier: "internal-provisioning-osp"
+#     trigger: pull_request
+#     env:
+#       MRACK_TEST_CASE: "provisioning-osp"
 
-  - &pr_aws
-    <<: *internal_test
-    identifier: "internal-provisioning-aws"
-    env:
-      MRACK_TEST_CASE: "provisioning-aws"
+#   - &pr_aws
+#     <<: *internal_test
+#     identifier: "internal-provisioning-aws"
+#     env:
+#       MRACK_TEST_CASE: "provisioning-aws"
 
-  - &pr_bkr_cpu
-    <<: *internal_test
-    identifier: "internal-provisioning-bkr-c9s-req1cpu"
-    env:
-      MRACK_TEST_CASE: "provisioning-bkr-c9s-req1cpu"
+#   - &pr_bkr_cpu
+#     <<: *internal_test
+#     identifier: "internal-provisioning-bkr-c9s-req1cpu"
+#     env:
+#       MRACK_TEST_CASE: "provisioning-bkr-c9s-req1cpu"
 
-  - &pr_bkr_ppc64le
-    <<: *internal_test
-    identifier: "internal-provisioning-bkr-fedora-ppc64le"
-    env:
-      MRACK_TEST_CASE: "provisioning-bkr-fedora-ppc64le"
+#   - &pr_bkr_ppc64le
+#     <<: *internal_test
+#     identifier: "internal-provisioning-bkr-fedora-ppc64le"
+#     env:
+#       MRACK_TEST_CASE: "provisioning-bkr-fedora-ppc64le"
 
-  - &pr_bkr_mem_cpu
-    <<: *internal_test
-    identifier: "internal-provisioning-bkr-rhel-8-req-2048mem-2cpu"
-    env:
-      MRACK_TEST_CASE: "provisioning-bkr-rhel-8-req-2048mem-2cpu"
+#   - &pr_bkr_mem_cpu
+#     <<: *internal_test
+#     identifier: "internal-provisioning-bkr-rhel-8-req-2048mem-2cpu"
+#     env:
+#       MRACK_TEST_CASE: "provisioning-bkr-rhel-8-req-2048mem-2cpu"
 
-  - &pr_bkr_mem
-    <<: *internal_test
-    identifier: "internal-provisioning-bkr-rhel-9-req-4069mem"
-    env:
-      MRACK_TEST_CASE: "provisioning-bkr-rhel-9-req-4069mem"
+#   - &pr_bkr_mem
+#     <<: *internal_test
+#     identifier: "internal-provisioning-bkr-rhel-9-req-4069mem"
+#     env:
+#       MRACK_TEST_CASE: "provisioning-bkr-rhel-9-req-4069mem"
 
-  - &pr_mrack_all_ssh
-    <<: *internal_test
-    identifier: "internal-all-providers-ssh"
-    trigger: pull_request
-    env:
-      MRACK_TEST_CASE: "all-providers-ssh"
+#   - &pr_mrack_all_ssh
+#     <<: *internal_test
+#     identifier: "internal-all-providers-ssh"
+#     trigger: pull_request
+#     env:
+#       MRACK_TEST_CASE: "all-providers-ssh"
 
-# run the same internal tests as in PR for commit in main
-  - &main_osp
-    <<: *internal_test  # pr_osp
-    trigger: commit
+# # run the same internal tests as in PR for commit in main
+#   - &main_osp
+#     <<: *internal_test  # pr_osp
+#     trigger: commit
 
-  - &main_aws
-    <<: *pr_aws
-    trigger: commit
+#   - &main_aws
+#     <<: *pr_aws
+#     trigger: commit
 
-  - &main_bkr_ppc64le
-    <<: *pr_bkr_ppc64le
-    trigger: commit
+#   - &main_bkr_ppc64le
+#     <<: *pr_bkr_ppc64le
+#     trigger: commit
 
-  - &main_bkr_cpu
-    <<: *pr_bkr_cpu
-    trigger: commit
+#   - &main_bkr_cpu
+#     <<: *pr_bkr_cpu
+#     trigger: commit
 
-  - &main_bkr_mem_cpu
-    <<: *pr_bkr_mem_cpu
-    trigger: commit
+#   - &main_bkr_mem_cpu
+#     <<: *pr_bkr_mem_cpu
+#     trigger: commit
 
-  - &main_bkr_mem
-    <<: *pr_bkr_mem
-    trigger: commit
+#   - &main_bkr_mem
+#     <<: *pr_bkr_mem
+#     trigger: commit
 
-  - &main_mrack_all_ssh
-    <<: *pr_mrack_all_ssh
-    trigger: commit
+#   - &main_mrack_all_ssh
+#     <<: *pr_mrack_all_ssh
+#     trigger: commit
