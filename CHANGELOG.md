@@ -2,6 +2,43 @@
 
 
 
+## v1.17.0 (2023-10-23)
+
+### Chore
+
+* chore(ci): Temporarely remove packit tests
+
+Until secret injection issue into test farm is solved
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`5251d90`](https://github.com/neoave/mrack/commit/5251d9014b65b4106a98495321ab4c2ad3de9874))
+
+* chore(release): Update semantic release action name and version
+
+Updating action to new name and latest version.
+This should not affect behaviour.
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`97a5355`](https://github.com/neoave/mrack/commit/97a5355daf112b447847a2f9dded377389593222))
+
+* chore(release): Upload distribution package to release assets
+
+To fix fedora release, broken in https://github.com/neoave/mrack/pull/272
+
+Fixes https://github.com/neoave/mrack/issues/273
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`6d6cdc6`](https://github.com/neoave/mrack/commit/6d6cdc64c4410f99ba1bea4482ead1264b75247c))
+
+### Feature
+
+* feat(openstack): Append API version to auth_url in credentials
+
+This will save a manual step for the users when setting up clouds.yaml file,
+as auth_url field is usually generated without specifying the version.
+
+Version specification is needed by asyncopenstackclient libray
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`3a59761`](https://github.com/neoave/mrack/commit/3a597615b9e28e1304ca2af3d1914db549f9f04c))
+
+
 ## v1.16.0 (2023-10-09)
 
 ### Chore

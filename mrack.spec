@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.16.0
+Version:        1.17.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -184,6 +184,12 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Mon Oct 23 2023 David Pascual Hernandez <davherna@redhat.com> - 1.17.0-1
+- 5251d90 chore(ci): Temporarely remove packit tests (David Pascual)
+- 3a59761 feat(openstack): Append API version to auth_url in credentials (David Pascual)
+- 97a5355 chore(release): Update semantic release action name and version (David Pascual)
+- 6d6cdc6 chore(release): Upload distribution package to release assets (David Pascual)
+
 * Mon Oct 09 2023 David Pascual Hernandez <davherna@redhat.com> - 1.16.0-1
 - e8e20f1 chore(ci): Fix release workflow build step checking out wrong commit (David Pascual)
 - 97a7cd0 chore: Bump asyncopenstackclient dependency version (David Pascual)
