@@ -121,7 +121,7 @@ class OpenStackProvider(Provider):
 
         return result
 
-    async def _curate_auth_url(self, auth_url):
+    def _curate_auth_url(self, auth_url):
         """Append OpenStack API version if not present."""
         return auth_url if auth_url.endswith("/v3") else auth_url + "/v3"
 
