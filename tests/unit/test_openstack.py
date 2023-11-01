@@ -898,8 +898,7 @@ class TestOpenStackProvider:
             ("http://example.com/openstack/v3", "http://example.com/openstack/v3"),
         ],
     )
-    @pytest.mark.asyncio
-    async def test_curate_auth_url(self, input_auth_url, expected_auth_url):
+    def test_curate_auth_url(self, input_auth_url, expected_auth_url):
         provider = OpenStackProvider()
-        result_auth_url = await provider._curate_auth_url(input_auth_url)
+        result_auth_url = provider._curate_auth_url(input_auth_url)
         assert result_auth_url == expected_auth_url
