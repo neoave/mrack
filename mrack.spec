@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.17.0
+Version:        1.17.1
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -184,6 +184,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Fri Nov 03 2023 David Pascual Hernandez <davherna@redhat.com> - 1.17.1-1
+- 583193a fix: curate_auth func changed to non-async (Kaleemullah Siddiqui)
+
 * Mon Oct 23 2023 David Pascual Hernandez <davherna@redhat.com> - 1.17.0-1
 - 5251d90 chore(ci): Temporarely remove packit tests (David Pascual)
 - 3a59761 feat(openstack): Append API version to auth_url in credentials (David Pascual)

@@ -2,6 +2,20 @@
 
 
 
+## v1.17.1 (2023-11-03)
+
+### Fix
+
+* fix: curate_auth func changed to non-async
+
+await call for _curate_auth_url missing in session
+creation which caused regression.
+function _curate_auth_url changed to non-async,
+tests updated to reflect the same
+
+Signed-off-by: Kaleemullah Siddiqui &lt;ksiddiqu@redhat.com&gt; ([`583193a`](https://github.com/neoave/mrack/commit/583193a10db04e22d5340975e9a04fe6c3272531))
+
+
 ## v1.17.0 (2023-10-23)
 
 ### Chore
