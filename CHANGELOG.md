@@ -2,6 +2,17 @@
 
 
 
+## v1.18.0 (2023-11-27)
+
+### Feature
+
+* feat: Add async_timeout dependency
+
+This dependency was observed missing when installing mrack as a dependency in another python project
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`c158474`](https://github.com/neoave/mrack/commit/c158474018ba5d9d5c3b29bc85f6629668081655))
+
+
 ## v1.17.1 (2023-11-03)
 
 ### Fix
