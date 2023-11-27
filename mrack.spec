@@ -77,6 +77,7 @@ Requires:       python3-%{name}lib = %{version}-%{release}
 Recommends:       python3-aiofiles
 Recommends:       python3-os-client-config
 Recommends:     python3-AsyncOpenStackClient
+Recommends:     python3-async-timeout
 
 %{?python_provide:%python_provide python3-%{name}-openstack}
 
