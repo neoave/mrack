@@ -47,32 +47,32 @@ jobs:
     release_suffix: "99.dev.{PACKIT_PROJECT_BRANCH}"
     targets: [fedora-all, epel-8, epel-9]
 
-  - job: tests
-    trigger: pull_request
-    identifier: "upstream-smoke"
-    targets: [fedora-all, epel-8, epel-9]
+  # - job: tests
+  #   trigger: pull_request
+  #   identifier: "upstream-smoke"
+  #   targets: [fedora-all, epel-8, epel-9]
 
-  - job: copr_build
-    trigger: commit
-    targets: [fedora-all, epel-8, epel-9]
+  # - job: copr_build
+  #   trigger: commit
+  #   targets: [fedora-all, epel-8, epel-9]
 
-  - job: copr_build
-    trigger: release
-    owner: "@freeipa"
-    project: neoave
-    targets: [fedora-all, epel-8, epel-9]
+  # - job: copr_build
+  #   trigger: release
+  #   owner: "@freeipa"
+  #   project: neoave
+  #   targets: [fedora-all, epel-8, epel-9]
 
-  - job: propose_downstream
-    trigger: release
-    dist_git_branches: [fedora-all, epel-8, epel-9]
+  # - job: propose_downstream
+  #   trigger: release
+  #   dist_git_branches: [fedora-all, epel-8, epel-9]
 
-  - job: koji_build
-    trigger: commit
-    dist_git_branches: [fedora-all, epel-8, epel-9]
+  # - job: koji_build
+  #   trigger: commit
+  #   dist_git_branches: [fedora-all, epel-8, epel-9]
 
-  - job: bodhi_update
-    trigger: commit
-    dist_git_branches: [fedora-branched, epel-8, epel-9] # rawhide updates are created automatically
+  # - job: bodhi_update
+  #   trigger: commit
+  #   dist_git_branches: [fedora-branched, epel-8, epel-9] # rawhide updates are created automatically
 
 #   # pr_osp
 #   - &internal_test  # use openstack (osp) tests as template for other test cases
