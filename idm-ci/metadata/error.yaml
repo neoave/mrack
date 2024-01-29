@@ -1,0 +1,27 @@
+---
+domains:
+  - name: mydomain.test
+    type: ipa
+    hosts:
+      - name: server.mydomain.test
+        role: master
+        group: ipaserver
+        os: rhel-8.4
+phases:
+  - name: init
+    steps:
+      - playbook: init/testrunner-dir.yaml
+  - name: provision
+    steps:
+      - command: echo "skip prov"
+  - name: prep
+    steps:
+      - command: echo "skip prep"
+  - name: test
+    steps:
+      - command: |
+          echo "intentional fail (error)"
+          exit 1
+  - name: teardown
+    steps:
+      - command: echo "skip teardown"
