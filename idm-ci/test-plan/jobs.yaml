@@ -1,0 +1,13 @@
+---
+jobs:
+  - name: error
+    metadata: idm-ci/metadata/error.yaml
+    changes: []
+
+  - name: junit-failure
+    metadata: idm-ci/metadata/junit-failure.yaml
+    changes: []
+
+  - name: junit-success
+    metadata: idm-ci/metadata/junit-success.yaml
+    changes: []

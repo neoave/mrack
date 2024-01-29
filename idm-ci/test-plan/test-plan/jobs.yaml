@@ -1,0 +1,20 @@
+jobs:
+  - name: error
+    metadata: metadata/error.yaml
+    changes: []
+
+  - name: junit-combined.yaml
+    metadata: metadata/junit-combined.yaml
+    changes: []
+
+  - name: junit-error
+    metadata: metadata/junit-error.yaml
+    changes: []
+
+  - name: junit-failure
+    metadata: metadata/junit-failure.yaml
+    changes: []
+
+  - name: junit-success
+    metadata: metadata/junit-success.yaml
+    changes: []

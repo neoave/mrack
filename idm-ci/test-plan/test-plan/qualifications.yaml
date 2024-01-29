@@ -1,0 +1,20 @@
+project:
+  key: idmci-test
+  name: IdM-CI-Data
+os: main
+test_projects:
+  - name: idmci-test-data
+    repo: https://gitlab.cee.redhat.com/davherna/idmci-test-data/
+    branch: main
+qualifications:
+  - name: gh-testing-main
+    stages:
+      - name: basic
+        jobs:
+          - junit-success
+    triggers:
+      - github_pr:
+          target_branch: main
+          copr_chroot: "fedora-38-x86_64"
+          gh_repo: "dav-pascual/mrack"
+          allowlist: https://dummy.com/raw/allowlist.yaml

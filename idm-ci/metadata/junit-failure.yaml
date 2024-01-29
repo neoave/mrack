@@ -1,0 +1,28 @@
+---
+domains:
+  - name: mydomain.test
+    type: ipa
+    hosts:
+      - name: server.mydomain.test
+        role: master
+        group: ipaserver
+        os: rhel-8.4
+phases:
+  - name: init
+    steps:
+      - playbook: init/testrunner-dir.yaml
+  - name: provision
+    steps:
+      - command: echo "skip prov"
+  - name: prep
+    steps:
+      - command: echo "skip prep"
+  - name: test
+    steps:
+      - command: |
+          wget https://gist.githubusercontent.com/dav-pascual/210e913ebd1caee5443278c07061c15a/raw/0d2513da887cbe7cd5ccfad584a2a9caef6c637d/junit-failure.xml
+          mv junit-failure.xml failure-junit.xml
+          exit 1
+  - name: teardown
+    steps:
+      - command: echo "skip teardown"

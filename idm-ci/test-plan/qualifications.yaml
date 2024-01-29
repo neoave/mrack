@@ -1,0 +1,22 @@
+---
+project:
+  key: idmci-test
+  name: IdM-CI-Data
+os: main
+test_projects:
+  - name: davherna-mrack
+    repo: https://github.com/dav-pascual/mrack
+    branch: main
+qualifications:
+  - name: gh-testing-main
+    stages:
+      - name: basic
+        jobs:
+          - junit-success
+          - junit-failure
+    triggers:
+      - github_pr:
+          target_branch: main
+          copr_chroot: "fedora-38-x86_64"
+          gh_repo: "dav-pascual/mrack"
+          allowlist: https://dummy.com/raw/allowlist.yaml
