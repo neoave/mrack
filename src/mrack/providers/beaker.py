@@ -277,9 +277,12 @@ class BeakerProvider(Provider):
     def _get_recipe_info(self, beaker_id, log_msg_start):
         """Get info about the recipe for beaker job id."""
         bkr_job_xml = self.hub.taskactions.to_xml(beaker_id).encode("utf8")
-
+        logs_dict = {}
         resources = []
         for recipe in eTree.fromstring(bkr_job_xml).iter("recipe"):
+            for logs in recipe.iter("logs"):
+                for log in logs.iter("log"):
+                    logs_dict[log.get("name")] = log.get("href")
             resources.append(
                 {
                     "system": recipe.get("system"),
@@ -287,6 +290,7 @@ class BeakerProvider(Provider):
                     "result": recipe.get("result"),
                     "rid": recipe.get("id"),
                     "id": recipe.get("job_id"),
+                    "logs": logs_dict,
                 }
             )
 
