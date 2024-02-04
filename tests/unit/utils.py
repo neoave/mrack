@@ -11,7 +11,10 @@ def test_dir_path():
 def get_data(name, data_dir="data"):
     path = os.path.join(test_dir_path(), data_dir, name)
     with open(os.path.expanduser(path), "r", encoding="utf-8") as file_data:
-        data = json.load(file_data)
+        if name.endswith("json"):
+            data = json.load(file_data)
+        else:
+            data = file_data.read()
     return data
 
 
