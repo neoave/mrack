@@ -54,7 +54,7 @@ class TestBeakerProvider:
         assert bkr_res["status"] == "Completed"
         assert bkr_res["result"] == "Pass"
         assert bkr_res["rid"] == "15482633"
-        assert bkr_res["id"] == "8874545"
+        assert bkr_res["id"] == "J:8874545"
         assert bkr_res["logs"] == {
             "console.log": "https://test.example.com/logs/console.log",
             "anaconda.log": "https://test.example.com/logs/anaconda.log",

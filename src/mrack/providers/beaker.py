@@ -289,7 +289,8 @@ class BeakerProvider(Provider):
                     "status": recipe.get("status"),
                     "result": recipe.get("result"),
                     "rid": recipe.get("id"),
-                    "id": recipe.get("job_id"),
+                    "id": ("J:" if recipe.get("job_id").isdigit() else "")
+                    + recipe.get("job_id"),
                     "logs": logs_dict,
                 }
             )
