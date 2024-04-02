@@ -18,6 +18,6 @@ qualifications:
     triggers:
       - github_pr:
           target_branch: main
-          copr_chroot: "fedora-38-x86_64"
+          copr_chroot: "fedora-40-x86_64"
           gh_repo: "dav-pascual/mrack"
           allowlist: https://raw.githubusercontent.com/dav-pascual/mrack/main/idm-ci/allowlist.yaml
