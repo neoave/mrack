@@ -20,4 +20,4 @@ qualifications:
           target_branch: main
           copr_chroot: "fedora-38-x86_64"
           gh_repo: "dav-pascual/mrack"
-          allowlist: https://raw.githubusercontent.com/dav-pascual/mrack/idmci-pr-checkout/idm-ci/allowlist.yaml
+          allowlist: https://raw.githubusercontent.com/dav-pascual/mrack/main/idm-ci/allowlist.yaml
