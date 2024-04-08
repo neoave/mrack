@@ -390,6 +390,8 @@ class BeakerProvider(Provider):
         # the provider uses hostname from metadata of the VM which has failed
         # to validate the requirements for the provider
         log_msg_start = f"{self.dsp_name} [{host_name}]"
+        if host_id.isdigit():
+            host_id = "J:" + host_id
         if not host_id.startswith("J:"):
             logger.warning(
                 f"{log_msg_start} Job for host '{host_id}' does not exist yet"
