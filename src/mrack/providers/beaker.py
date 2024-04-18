@@ -204,7 +204,11 @@ class BeakerProvider(Provider):
         recipe.addReservesys(duration=str(self.reserve_duration))
 
         for task in specs["tasks"]:
-            recipe.addTask(task=task["name"], role=task["role"])
+            recipe.addTask(
+                task=task["name"],
+                role=task["role"],
+                taskParams=task.get("params"),
+            )
 
         # Create RecipeSet and add our Recipe to it.
         recipe_set = BeakerRecipeSet(**specs)
