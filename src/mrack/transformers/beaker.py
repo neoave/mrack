@@ -181,7 +181,13 @@ class BeakerTransformer(Transformer):
                 "tasks",
                 host["os"],
                 default=[  # we use dummy task because beaker require a task in recipe
-                    {"name": "/distribution/dummy", "role": "STANDALONE"}
+                    {
+                        "name": "/distribution/dummy",
+                        "role": "STANDALONE",
+                        "params": [
+                            "RSTRNT_DISABLED=10_avc_check",
+                        ],
+                    }
                 ],
             ),
             "ks_append": self._construct_ks_append_script(

@@ -16,7 +16,15 @@ class TestBeakerTransformer:
     cat_release = "cat /etc/redhat-release"
     wget = "wget redhat.com"
     default_whiteboard = "This job has been created using mrack."
-    default_tasks = [{"name": "/distribution/dummy", "role": "STANDALONE"}]
+    default_tasks = [
+        {
+            "name": "/distribution/dummy",
+            "role": "STANDALONE",
+            "params": [
+                "RSTRNT_DISABLED=10_avc_check",
+            ],
+        }
+    ]
     default_retention_tag = "audit"
     default_product = "[internal]"
 
