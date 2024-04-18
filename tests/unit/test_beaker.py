@@ -19,14 +19,20 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from mrack.providers import providers
 from mrack.providers.beaker import BeakerProvider
 
+from .mock_data import MockedBeakerTransformer, provisioning_config
 from .utils import get_content, get_file_path
+
+
+@pytest.fixture
+def mock_beaker_conf(monkeypatch):
+    monkeypatch.setenv("BEAKER_CONF", get_file_path("client.conf"))
 
 
 class TestBeakerProvider:
     def setup_method(self):
-
         self.mock_hub = Mock()
         self.result_xml = get_content("result.xml")
         self.mock_hub.taskactions.to_xml = Mock(return_value=self.result_xml)
@@ -45,8 +51,7 @@ class TestBeakerProvider:
         mock.patch.stopall()
 
     @pytest.mark.asyncio
-    async def test_get_repo_info(self, monkeypatch):
-        monkeypatch.setenv("BEAKER_CONF", get_file_path("client.conf"))
+    async def test_get_repo_info(self, mock_beaker_conf):
         provider = BeakerProvider()
         await provider.init(self.distros, self.timeout, self.reserve_duration)
         bkr_res = provider._get_recipe_info(self.beaker_id, self.log_msg_start)
@@ -59,3 +64,30 @@ class TestBeakerProvider:
             "console.log": "https://test.example.com/logs/console.log",
             "anaconda.log": "https://test.example.com/logs/anaconda.log",
         }
+
+    @pytest.mark.asyncio
+    async def test_beaker_job_creation(self, mock_beaker_conf):
+        # Given initialized beaker provider and transformer with real beaker
+        # calls mocked
+        providers.register("beaker", BeakerProvider)
+        provider = providers.get("beaker")
+        await provider.init(self.distros, self.timeout, self.reserve_duration)
+        bkr_transformer = MockedBeakerTransformer()
+
+        await bkr_transformer.init(provisioning_config(), {})
+        bkr_transformer.add_host(
+            {
+                "name": "host.example.test",
+                "group": "client",
+                "os": "Fedora-31%",
+            }
+        )
+
+        # When having a host requirement and creating a Beaker job
+        req = bkr_transformer.create_host_requirements()[0]
+        job = provider._req_to_bkr_job(req)
+
+        # Then the job contains param to supress 10_avc_check restraint plugin
+        # so that provisioning won't fail on AVC denials
+        xml = job.toxml()
+        assert '<param name="RSTRNT_DISABLED" value="10_avc_check"/>' in xml
