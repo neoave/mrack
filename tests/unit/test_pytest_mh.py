@@ -56,7 +56,7 @@ def mock_metadata():
 
 
 class TestPytestMhOutput:
-    def test_output(self, mock_metadata):
+    def test_output(self, mock_metadata, mock_gethostbyaddr):
         config = provisioning_config()
         db = get_db_from_metadata(mock_metadata)
 

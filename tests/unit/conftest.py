@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import socket
 from unittest.mock import MagicMock, PropertyMock
 
 import pytest
@@ -185,3 +186,20 @@ def host1_osp(metahost1):
 @pytest.fixture
 def host_win_aws(metahost_win):
     return meta_to_host(metahost_win, "aws", "3", "192.168.0.129")
+
+
+@pytest.fixture
+def mock_gethostbyaddr(monkeypatch):
+    """
+    Mock gethostbyaddr function from socket module.
+
+    It returns only IP address as if the DNS resolution would fail - which it does
+    for test data anyway.
+
+    This is to speed up the tests
+    """
+
+    def gethostbyaddr(ip_address):
+        return [ip_address, [], []]
+
+    monkeypatch.setattr(socket, "gethostbyaddr", gethostbyaddr)

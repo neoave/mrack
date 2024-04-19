@@ -100,7 +100,7 @@ class TestAnsibleInventory:
             False,
         ],
     )
-    def test_layouts(self, layout, db, metadata):
+    def test_layouts(self, layout, db, metadata, mock_gethostbyaddr):
         config = provisioning_config(layout)
         ans_inv = AnsibleInventoryOutput(config, db, metadata)
         inventory = ans_inv.create_inventory()
@@ -123,7 +123,7 @@ class TestAnsibleInventory:
             (True, False),
         ],
     )
-    def test_invalid_layouts(self, layout, db, metadata):
+    def test_invalid_layouts(self, layout, db, metadata, mock_gethostbyaddr):
         config = provisioning_config(layout)
         ans_inv = AnsibleInventoryOutput(config, db, metadata)
 
@@ -131,7 +131,7 @@ class TestAnsibleInventory:
             ans_inv.create_inventory()
         assert "dictionary" in str(excinfo.value)
 
-    def test_layout_nested_groups(self, db, metadata):
+    def test_layout_nested_groups(self, db, metadata, mock_gethostbyaddr):
         layout = {
             "all": {
                 "children": {
@@ -144,10 +144,6 @@ class TestAnsibleInventory:
         config = provisioning_config(layout)
         ans_inv = AnsibleInventoryOutput(config, db, metadata)
         inventory = ans_inv.create_inventory()
-
-        import yaml
-
-        print(yaml.dump(inventory))
 
         assert "all" in inventory
         assert "children" in inventory["all"]
@@ -176,7 +172,7 @@ class TestAnsibleInventory:
             in inventory["all"]["children"]["server"]["children"]["ipaserver"]["hosts"]
         )
 
-    def test_layout_overwrite(self, db, metadata):
+    def test_layout_overwrite(self, db, metadata, mock_gethostbyaddr):
         metadata["config"] = {
             "ansible": {
                 "layout": {
@@ -198,7 +194,7 @@ class TestAnsibleInventory:
         assert "windows" not in inventory["all"]["children"]
         assert "mylayout" in inventory["all"]["children"]
 
-    def test_meta_extra(self, db_meta_extra, metadata):
+    def test_meta_extra(self, db_meta_extra, metadata, mock_gethostbyaddr):
         config = provisioning_config()
         ans_inv = AnsibleInventoryOutput(config, db_meta_extra, metadata)
         inventory = ans_inv.create_inventory()
@@ -211,7 +207,7 @@ class TestAnsibleInventory:
         ), "Host must have 'meta_compose_url' field"
         assert "meta_compose_id" in first_host, "Host must have 'meta_compose_id' field"
 
-    def test_not_meta_extra(self, db, metadata):
+    def test_not_meta_extra(self, db, metadata, mock_gethostbyaddr):
         """
         Because some images (such as Windows images) don't have extra meta data fields
         like meta_compose_id and meta_compose_url, inventory shouldn't output them
@@ -232,7 +228,7 @@ class TestAnsibleInventory:
             "meta_compose_id" not in first_host
         ), "Host must NOT have 'meta_compose_id' field"
 
-    def test_arbitrary_meta_attrs(self):
+    def test_arbitrary_meta_attrs(self, mock_gethostbyaddr):
         """
         Test that inventory has meta_$something attribute if user defined it in job
         metadata file. Also test that they override the default meta attrs, e.g.,
@@ -259,7 +255,7 @@ class TestAnsibleInventory:
         assert srv2["meta_readonly_dc"] == "no"
         assert srv2["meta_os"] == "fedora-32"
 
-    def test_arbitrary_attrs(self):
+    def test_arbitrary_attrs(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in host part
         of job metadata file gets into host attributes in generated ansible
@@ -296,7 +292,7 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
 
-    def test_domain_arbitrary_attrs(self):
+    def test_domain_arbitrary_attrs(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in domain
         section of job metadata file gets into host attributes in generated ansible
@@ -327,7 +323,7 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "no"
         assert srv2["something_else"] == "not_funny"
 
-    def test_domain_arbitrary_attrs_override(self):
+    def test_domain_arbitrary_attrs_override(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in domain
         section of job metadata file gets into host attributes in generated ansible
@@ -368,7 +364,7 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
 
-    def test_global_arbitrary_attrs(self):
+    def test_global_arbitrary_attrs(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in global
         section of job metadata file gets into host attributes in generated ansible
@@ -399,7 +395,7 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "no"
         assert srv2["something_else"] == "not_funny"
 
-    def test_global_arbitrary_attrs_domain_override(self):
+    def test_global_arbitrary_attrs_domain_override(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in global
         section of job metadata file gets into host attributes in generated ansible
@@ -434,7 +430,7 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "not_funny"
 
-    def test_global_arbitrary_attrs_host_override(self):
+    def test_global_arbitrary_attrs_host_override(self, mock_gethostbyaddr):
         """
         Test that values defined in `ansible_inventory` dictionary in global
         section of job metadata file gets into host attributes in generated ansible
@@ -481,7 +477,9 @@ class TestAnsibleInventory:
         assert srv2["no_ca"] == "whatever"
         assert srv2["something_else"] == "host_value"
 
-    def test_global_arbitrary_attrs_host_override_multiple_domains(self):
+    def test_global_arbitrary_attrs_host_override_multiple_domains(
+        self, mock_gethostbyaddr
+    ):
         """
         Test that values defined in `ansible_inventory` dictionary in global
         section of job metadata file gets into host attributes in generated ansible
@@ -547,7 +545,7 @@ class TestAnsibleInventory:
         assert d1_srv2["no_ca"] == "no"
         assert d1_srv2["something_else"] == "default_global"
 
-    def test_host_ssh_options(self, metadata, db):
+    def test_host_ssh_options(self, metadata, db, mock_gethostbyaddr):
         prov_config = provisioning_config()
         ans_inv = AnsibleInventoryOutput(prov_config, db, metadata)
 
