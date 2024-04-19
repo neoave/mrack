@@ -1,5 +1,6 @@
 import os
 import shutil
+import socket
 import tempfile
 from pathlib import Path
 
@@ -45,3 +46,20 @@ def cleandir():
     yield
     os.chdir(old_cwd)
     shutil.rmtree(newpath)
+
+
+@pytest.fixture
+def mock_gethostbyaddr(monkeypatch):
+    """
+    Mock gethostbyaddr function from socket module.
+
+    It returns only IP address as if the DNS resolution would fail - which it does
+    for test data anyway.
+
+    This is to speed up the tests
+    """
+
+    def gethostbyaddr(ip_address):
+        return [ip_address, [], []]
+
+    monkeypatch.setattr(socket, "gethostbyaddr", gethostbyaddr)

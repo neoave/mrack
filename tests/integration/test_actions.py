@@ -26,7 +26,12 @@ def global_context_init(provisioning_config_file, mrack_config_file=None, db_fil
 class TestStaticProvider:
     @pytest.mark.asyncio
     async def test_up_action(
-        self, provisioning_config, metadata, database, setup_providers
+        self,
+        provisioning_config,
+        metadata,
+        database,
+        setup_providers,
+        mock_gethostbyaddr,
     ):
         up_action = UpAction(
             config=provisioning_config,
@@ -88,6 +93,7 @@ class TestStaticProvider:
         cleandir,
         config,
         files,
+        mock_gethostbyaddr,
     ):
         workdir = os.getcwd()
 
