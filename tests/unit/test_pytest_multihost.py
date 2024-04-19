@@ -4,7 +4,7 @@ from .mock_data import get_db_from_metadata, metadata_extra, provisioning_config
 
 
 class TestPytestMultihostOutput:
-    def test_arbitrary_attrs(self):
+    def test_arbitrary_attrs(self, mock_gethostbyaddr):
         """
         Test that values defined in `pytest_multihost` dictionary in host part
         of job metadata file gets into host attributes in generated pytest-multihost
@@ -40,7 +40,7 @@ class TestPytestMultihostOutput:
         assert srv2["no_ca"] == "yes"
         assert srv2["something_else"] == "for_fun"
 
-    def test_config_section_deleted(self):
+    def test_config_section_deleted(self, mock_gethostbyaddr):
         """
         Test that config section from metadata is not included in mhc.yaml.
         """
