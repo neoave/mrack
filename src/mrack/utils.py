@@ -165,6 +165,13 @@ def add_dict_to_node(node, input_dict):
     # Recursively create xml from dict
     if isinstance(input_dict, dict):
         for key, value in input_dict.items():
+            if isinstance(value, list):
+                child_node = node.appendChild(xml_doc().createElement(key))
+                for child_value in value:
+                    for k, v in child_value.items():
+                        child_node.appendChild(
+                            add_dict_to_node(xml_doc().createElement(k), v)
+                        )
             if key.startswith("_"):
                 node.setAttribute(key[1:], str(value))
             else:
