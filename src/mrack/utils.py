@@ -172,10 +172,13 @@ def add_dict_to_node(node, input_dict):
                         child_node.appendChild(
                             add_dict_to_node(xml_doc().createElement(k), v)
                         )
-            if key.startswith("_"):
-                node.setAttribute(key[1:], str(value))
             else:
-                node.appendChild(add_dict_to_node(xml_doc().createElement(key), value))
+                if key.startswith("_"):
+                    node.setAttribute(key[1:], str(value))
+                else:
+                    node.appendChild(
+                        add_dict_to_node(xml_doc().createElement(key), value)
+                    )
 
     return node
 
