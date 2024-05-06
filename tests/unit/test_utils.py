@@ -1,6 +1,9 @@
+from xml.dom.minidom import Document as xml_doc
+
 import pytest
 
 from mrack.utils import (
+    add_dict_to_node,
     get_fqdn,
     get_os_type,
     get_shortname,
@@ -170,3 +173,37 @@ class TestPytestMrackUtils:
     def test_ssh_options_to_cli(self, options, expected):
         """Test conversion of SSH options to CLI params."""
         assert ssh_options_to_cli(options) == expected
+
+    @pytest.mark.parametrize(
+        "req_node, dct, expected",
+        [
+            (
+                xml_doc().createElement("not"),
+                {
+                    "key_value": {
+                        "_key": "NETBOOT_METHOD",
+                        "_op": "like",
+                        "_value": "grub2",
+                    }
+                },
+                '<not><key_value key="NETBOOT_METHOD" op="like" value="grub2"/></not>',
+            ),
+            (
+                xml_doc().createElement("and"),
+                {
+                    "not": [
+                        {
+                            "key_value": {
+                                "_key": "BOOTDISK",
+                                "_op": "==",
+                                "_value": "dum",
+                            }
+                        },
+                    ]
+                },
+                '<and><not><key_value key="BOOTDISK" op="==" value="dum"/></not></and>',
+            ),
+        ],
+    )
+    def test_add_dict_to_node(self, req_node, dct, expected):
+        assert add_dict_to_node(req_node, dct).toxml() == expected
