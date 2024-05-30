@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.18.0
+Version:        1.19.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,17 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu May 30 2024 David Pascual Hernandez <davherna@redhat.com> - 1.19.0-1
+- 6f81e37 test: speed-up tests by mocking gethostbyaddr (Petr Vobornik)
+- 587a9c7 fix(beaker): supress 10_avc_check restraint plugin (Petr Vobornik)
+- 2c0c2bb test: Add add_dict_to_node test (Petr Vobornik)
+- f4324bf feat: handle list value for add_dict_to_node function (Petr Vobornik)
+- f1e7590 fix: make delete_host function more robust (Petr Vobornik)
+- 784d24b chore: bump black in pre-commit (David Pascual)
+- f6f9131 chore(deps): bump black from 22.3.0 to 24.3.0 (David Pascual)
+- a7db867 test: Add test for _get_recipe_info function (Petr Vobornik)
+- aa25ff3 feat: Provide beaker log links (Petr Vobornik)
+
 * Mon Nov 27 2023 David Pascual Hernandez <davherna@redhat.com> - 1.18.0-1
 - c158474 feat: Add async_timeout dependency (David Pascual)
 
