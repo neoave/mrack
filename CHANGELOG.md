@@ -2,6 +2,70 @@
 
 
 
+## v1.19.0 (2024-05-30)
+
+### Chore
+
+* chore: bump black in pre-commit
+
+Additionally formating version.py from running make format
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`784d24b`](https://github.com/neoave/mrack/commit/784d24bb2ae2919bd6d3ba922967d6e2616c2769))
+
+* chore(deps): bump black from 22.3.0 to 24.3.0
+
+Bumps [black](https://github.com/psf/black) from 22.3.0 to 24.3.0.
+- [Release notes](https://github.com/psf/black/releases)
+- [Changelog](https://github.com/psf/black/blob/main/CHANGES.md)
+- [Commits](https://github.com/psf/black/compare/22.3.0...24.3.0)
+
+---
+updated-dependencies:
+- dependency-name: black
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] &lt;support@github.com&gt; ([`f6f9131`](https://github.com/neoave/mrack/commit/f6f9131ac9e3509c01c85adaee29ccc24f776b7f))
+
+### Feature
+
+* feat: handle list value for add_dict_to_node function ([`f4324bf`](https://github.com/neoave/mrack/commit/f4324bf3291e37bf18ccbc2d229630513baf779c))
+
+* feat: Provide beaker log links
+
+Client like tmt may need to fetch the logs and store log contents ([`aa25ff3`](https://github.com/neoave/mrack/commit/aa25ff362022d86520e4a3196636a043f352b990))
+
+### Fix
+
+* fix(beaker): supress 10_avc_check restraint plugin
+
+It has happpened that this plugin sometimes ran after the dummy task, it reported fail
+that there was some AVC (probabaly from other thing) which then failed the job and thus
+mrack treated this as a provisioning failure.
+
+This patch instructs restraint to not run this plugin and thus avoid this situation.
+
+Signed-off-by: Petr Vobornik &lt;pvoborni@redhat.com&gt; ([`587a9c7`](https://github.com/neoave/mrack/commit/587a9c740035aff501d7c35af5e73de4c04e20c8))
+
+* fix: make delete_host function more robust ([`f1e7590`](https://github.com/neoave/mrack/commit/f1e7590c0680849e81d67d40cbc9105a2fd40b2e))
+
+### Test
+
+* test: speed-up tests by mocking gethostbyaddr
+
+Tests that are using mrack outputs are slowed down by
+socker.gethostbyaddr for adhoc IP addresses. This resolution mostly
+fails and the test is slow (multiple seconds timeout for single IP).
+
+With this, all python tests are executed within 1.5s.
+
+Signed-off-by: Petr Vobornik &lt;pvoborni@redhat.com&gt; ([`6f81e37`](https://github.com/neoave/mrack/commit/6f81e377c56370d62664685a42d5f44e445c522c))
+
+* test: Add add_dict_to_node test ([`2c0c2bb`](https://github.com/neoave/mrack/commit/2c0c2bb88f70bed25c432805b43026a4b6bf4b3f))
+
+* test: Add test for _get_recipe_info function ([`a7db867`](https://github.com/neoave/mrack/commit/a7db867ff0fd53b5b6805efb08597b685b65ab24))
+
+
 ## v1.18.0 (2023-11-27)
 
 ### Feature
