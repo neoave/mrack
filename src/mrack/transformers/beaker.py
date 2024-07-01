@@ -86,17 +86,35 @@ class BeakerTransformer(Transformer):
 
     def _construct_ks_append_script(self, ks_append, pubkeys=None):
         """Create ks_appdend from requirements."""
+        res_ks_list = []
         if not ks_append and not pubkeys:
             return []
 
-        res_ks_append = ["%post"]
+        if isinstance(ks_append, dict):
+            res_ks_pre = ks_append.get("pre-install")
+            res_ks = ks_append.get("script")
+            res_ks_post = ks_append.get("post-install")
+            if res_ks_pre:
+                if res_ks_pre.startswith("%pre"):
+                    res_ks_list += [res_ks_pre]
+                else:
+                    res_ks_list += ["%pre"] + [res_ks_pre] + ["%end"]
+            if res_ks:
+                res_ks_list += [res_ks]
+            if res_ks_post:
+                if res_ks_post.startswith("%post"):
+                    res_ks_list += [res_ks_post]
+                else:
+                    res_ks_list += ["%post"] + [res_ks_post] + ["%end"]
+        else:
+            res_ks_list = ["%post"]
+            res_ks_list += ks_append
+            res_ks_list.append("%end")
+
         if pubkeys:
-            ks_append += self._allow_ssh_keys(pubkeys)
+            res_ks_list += ["%post"] + self._allow_ssh_keys(pubkeys) + ["%end"]
 
-        res_ks_append += ks_append
-
-        res_ks_append.append("%end")
-        return ["\n".join(res_ks_append)]
+        return ["\n".join(res_ks_list)]
 
     def _allow_ssh_keys(self, pubkeys):
         """Create ssh key content to be injected to xml."""
