@@ -27,6 +27,20 @@ class TestBeakerTransformer:
     ]
     default_retention_tag = "audit"
     default_product = "[internal]"
+    maximal_ksappend = """
+    %pre\npre_dummy\n%end\nscript_dummy\n%post\npost_dummy\n%end
+    %post
+    mkdir -p /root/.ssh
+    cat >>/root/.ssh/authorized_keys << "__EOF__"
+    # keys added by mrack:
+    key_one
+    key_two
+    # end section of keys added by mrack
+    __EOF__
+    restorecon -R /root/.ssh
+    chmod go-w /root /root/.ssh /root/.ssh/authorized_keys
+    %end
+    """
 
     fedora = {
         "name": f"fedora.{domain_name}",
@@ -36,6 +50,12 @@ class TestBeakerTransformer:
         "restraint_id": 1,
         "beaker": {
             "ks_meta": "FEDORA_HOST_KS_META",
+            "ks_append": {
+                "pre-install": "%pre\npre_dummy\n%end",
+                "script": "script_dummy",
+                "post-install": "%post\npost_dummy\n%end",
+            },
+            "pubkeys": ["key_one", "key_two"],
             "tasks": [
                 {
                     "name": "/distribution/check-install",
@@ -164,7 +184,7 @@ class TestBeakerTransformer:
                     "distro": "Fedora-36%",
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
-                    "ks_append": default_ks_append,
+                    "ks_append": maximal_ksappend,
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
                     "tasks": [
