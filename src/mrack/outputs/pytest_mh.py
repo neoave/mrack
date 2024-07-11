@@ -67,7 +67,8 @@ class PytestMhOutput:
                         "family": get_os_type(host),
                     },
                     "role": host["role"],
-                    "ssh": {
+                    "conn": {
+                        "type": "ssh",
                         "host": get_external_id(provisioned_host, host, self._config),
                     },
                 }
@@ -75,11 +76,11 @@ class PytestMhOutput:
                 if get_os_type(host) == "windows":
                     username = get_username(provisioned_host, host, self._config)
                     if username:
-                        hostcfg["ssh"]["username"] = username
+                        hostcfg["conn"]["username"] = username
 
                     password = get_password(provisioned_host, host, self._config)
                     if password:
-                        hostcfg["ssh"]["password"] = password
+                        hostcfg["conn"]["password"] = password
 
                 cfgdom["hosts"].append(merge_dict(hostcfg, host.get("pytest_mh", {})))
 
