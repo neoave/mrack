@@ -39,7 +39,8 @@ def mock_metadata():
         role: ipa
         os: fedora-37
         pytest_mh:
-          ssh:
+          conn:
+            type: ssh
             username: tuser
             password: tuserpassword
           config:
@@ -77,7 +78,8 @@ class TestPytestMhOutput:
             os:
               family: linux
             role: client
-            ssh:
+            conn:
+              type: ssh
               host: 192.168.0.1
             artifacts:
             - /etc/sssd/*
@@ -87,7 +89,8 @@ class TestPytestMhOutput:
             os:
               family: linux
             role: ipa
-            ssh:
+            conn:
+              type: ssh
               host: 192.168.0.1
               username: tuser
               password: tuserpassword
@@ -100,7 +103,8 @@ class TestPytestMhOutput:
             os:
               family: windows
             role: ad
-            ssh:
+            conn:
+              type: ssh
               host: 192.168.0.1
               username: Administrator
               password: adpassword
