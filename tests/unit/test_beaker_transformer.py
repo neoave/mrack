@@ -5,6 +5,7 @@ from mrack.providers.beaker import PROVISIONER_KEY as BEAKER
 from mrack.providers.beaker import BeakerProvider
 
 from .mock_data import MockedBeakerTransformer, provisioning_config
+from .utils import get_file_path
 
 
 class TestBeakerTransformer:
@@ -19,7 +20,28 @@ class TestBeakerTransformer:
     default_tasks = [{"name": "/distribution/dummy", "role": "STANDALONE"}]
     default_retention_tag = "audit"
     default_product = "[internal]"
-
+    key_one = get_file_path("key_one")
+    key_two = get_file_path("key_two")
+    raw_maximal_ksappend = (
+        [
+            "%pre\npre_dummy\n%end\nscript_dummy\n%post\npost_dummy\n%end",
+        ]
+        + [
+            '%post\nmkdir -p /root/.ssh\ncat >>/root/.ssh/authorized_keys << "__EOF__"',
+        ]
+        + [
+            "# keys added by mrack:\nssh-rsa key_one_content\nssh-rsa key_two_content",
+        ]
+        + [
+            "# end section of keys added by mrack\n__EOF__\nrestorecon -R /root/.ssh",
+        ]
+        + [
+            "chmod go-w /root /root/.ssh /root/.ssh/authorized_keys\n%end",
+        ]
+    )
+    maximal_ksappend = [
+        "\n".join(raw_maximal_ksappend),
+    ]
     fedora = {
         "name": f"fedora.{domain_name}",
         "role": "client",
@@ -28,6 +50,12 @@ class TestBeakerTransformer:
         "restraint_id": 1,
         "beaker": {
             "ks_meta": "FEDORA_HOST_KS_META",
+            "ks_append": {
+                "pre-install": "%pre\npre_dummy\n%end",
+                "script": "script_dummy",
+                "post-install": "%post\npost_dummy\n%end",
+            },
+            "pubkeys": [key_one, key_two],
             "tasks": [
                 {
                     "name": "/distribution/check-install",
@@ -156,7 +184,7 @@ class TestBeakerTransformer:
                     "distro": "Fedora-36%",
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
-                    "ks_append": default_ks_append,
+                    "ks_append": maximal_ksappend,
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
                     "tasks": [
