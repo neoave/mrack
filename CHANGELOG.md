@@ -2,6 +2,22 @@
 
 
 
+## v1.20.0 (2024-07-16)
+
+### Chore
+
+* chore: Update deprecated actions
+
+Due to warnings shown in https://github.com/neoave/mrack/actions/runs/9302766806
+It updates actions to new version with Node 20
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`236393c`](https://github.com/neoave/mrack/commit/236393ccd2f16e13fec230b62232fb4bd2fc08ea))
+
+### Feature
+
+* feat: Add support for translanting %pre and main body part of kickstart ([`feeae04`](https://github.com/neoave/mrack/commit/feeae04835574655aff2397dd78a5e1522c5156b))
+
+
 ## v1.19.0 (2024-05-30)
 
 ### Chore
