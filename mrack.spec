@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.19.0
+Version:        1.20.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Jul 16 2024 David Pascual Hernandez <davherna@redhat.com> - 1.20.0-1
+- feeae04 feat: Add support for translanting %pre and main body part of kickstart (David Pascual)
+- 236393c chore: Update deprecated actions (David Pascual)
+
 * Thu May 30 2024 David Pascual Hernandez <davherna@redhat.com> - 1.19.0-1
 - 6f81e37 test: speed-up tests by mocking gethostbyaddr (Petr Vobornik)
 - 587a9c7 fix(beaker): supress 10_avc_check restraint plugin (Petr Vobornik)
