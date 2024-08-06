@@ -2,6 +2,13 @@
 
 
 
+## v1.21.0 (2024-08-06)
+
+### Feature
+
+* feat: update pytest-mh output to work with latest version ([`b3e0f7d`](https://github.com/neoave/mrack/commit/b3e0f7df1ebbb0748d267172ef315aa22ae3903a))
+
+
 ## v1.20.0 (2024-07-16)
 
 ### Chore
