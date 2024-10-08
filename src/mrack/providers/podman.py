@@ -50,6 +50,7 @@ class PodmanProvider(Provider):
         self,
         container_images,
         default_network,
+        network_options,
         ssh_key,
         container_options,
         extra_commands,
@@ -63,6 +64,7 @@ class PodmanProvider(Provider):
         self.max_retry = max_retry
         self.images = container_images
         self.default_network = default_network
+        self.network_options = network_options
         self.ssh_key = ssh_key
         self.podman_options = container_options
         self.extra_commands = extra_commands
@@ -93,7 +95,11 @@ class PodmanProvider(Provider):
             awaitables = []
             for network in network_list:
                 if not await self.podman.network_exists(network):
-                    awaitables.append(self.podman.network_create(network))
+                    awaitables.append(
+                        self.podman.network_create(
+                            network, options=self.network_options
+                        )
+                    )
 
             network_results = await asyncio.gather(*awaitables)
             success = all(network_results)
@@ -173,7 +179,8 @@ class PodmanProvider(Provider):
 
         while datetime.now() < timeout_time:
             try:
-                server = await self.podman.inspect(cont_id)[0]
+                servers = await self.podman.inspect(cont_id)
+                server = servers[0]
             except ProvisioningError as err:
                 logger.error(f"{log_msg_start} {object2json(err)}")
                 raise ServerNotFoundError(cont_id) from err
@@ -222,6 +229,22 @@ class PodmanProvider(Provider):
         server.update({"mrack_req": req})
 
         return server, req
+
+    async def _wait_for_ssh(self, host, timeout, port):
+        log_msg_start = f"{self.dsp_name} [{host}]"
+        start_ssh = datetime.now()
+        while True:
+            res = await self.podman.exec_command(
+                host._host_id, "systemctl -q is-active sshd"
+            )
+            logger.info(f"{log_msg_start} ran is-active for ssh, result '{res}'")
+            if not res:
+                await asyncio.sleep(10)
+                if datetime.now() - start_ssh >= timedelta(seconds=(timeout * 60)):
+                    break
+            else:
+                break
+        return res, host
 
     async def delete_host(self, host_id, host_name):
         """Delete provisioned host."""

@@ -121,7 +121,7 @@ class Podman:
         _stdout, _stderr, inspect = await self._run_podman(args, raise_on_err=False)
         return inspect.returncode == 0
 
-    async def network_create(self, network):
+    async def network_create(self, network, options=None):
         """Create a podman network if it does not exist."""
         if await self.network_exists(network):
             logger.debug(f"{self.dsp_name} Network '{network}' is present")
@@ -129,6 +129,8 @@ class Podman:
 
         logger.info(f"{self.dsp_name} Creating podman network '{network}'")
         args = ["network", "create", network]
+        if options:
+            args.extend(options)
         _stdout, _stderr, process = await self._run_podman(args, raise_on_err=False)
 
         return process.returncode == 0
