@@ -12,6 +12,10 @@ podman:
     # this will be used as prefix for the network name
     default_network: mrack
 
+    # Options to customize network creation
+    network_options:
+        - "--ipv6"
+
     # advanced podman options to be passed to every execution of podman run eg:
     # NOTE: when 'key' in podman_options has list assigned as value
     #       the option specidfied by the 'key' is added multiple times
@@ -21,7 +25,7 @@ podman:
         "--cap-add":
             - "ALL"
         # Allowed syscall list seccomp JSON file to be used as a seccomp filter
-        "--security-opt": "seccomp=src/mrack/data/seccomp.json"
+        "--security-opt": "seccomp=/etc/mrack/seccomp.json"
         # Mount a temporary filesystems (tmpfs) into a container
         "--tmpfs":
             - "/tmp"
@@ -30,8 +34,6 @@ podman:
         # Use /sys/fs/cgroup in container as read only volume
         "-v":
             - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
-        # Adding ipv6 support to network
-        "--network": "enable_ipv6=true"
 
 virt:
     images:

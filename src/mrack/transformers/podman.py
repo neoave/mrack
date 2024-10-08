@@ -38,8 +38,9 @@ class PodmanTransformer(Transformer):
 
         await self._provider.init(
             container_images=self.config["images"].values(),
-            ssh_key=self.config["pubkey"],
             default_network=self.config["default_network"],
+            network_options=self.config.get("network_options", []),
+            ssh_key=self.config["pubkey"],
             container_options=self.config["podman_options"],
             extra_commands=self.config.get("extra_commands", []),
             strategy=self.config.get("strategy", STRATEGY_ABORT),
