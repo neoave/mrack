@@ -311,6 +311,9 @@ class PodmanProvider(Provider):
         result["status"] = status
         result["os"] = prov_result.get("mrack_req").get("os")
         result["group"] = prov_result.get("mrack_req").get("group")
+        meta_extra = {}
+        meta_extra["ansible_host"] = result["id"]
+        result["meta_extra"] = meta_extra
 
         return result
 
