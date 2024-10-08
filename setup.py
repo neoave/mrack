@@ -35,6 +35,7 @@ with open("src/mrack/version.py", "r", encoding="utf-8") as fd:
 
 MRACK_CONF = "mrack.conf"
 PROV_CONF = "provisioning-config.yaml"
+SECCOMP_JSON = "seccomp.json"
 
 setup(
     name="mrack",
@@ -52,7 +53,9 @@ setup(
     install_requires=reqs,
     scripts=["scripts/mrack"],
     package_data={
-        "mrack": [f"data/{datafile}" for datafile in [MRACK_CONF, PROV_CONF]]
+        "mrack": [
+            f"data/{datafile}" for datafile in [MRACK_CONF, PROV_CONF, SECCOMP_JSON]
+        ]
     },
     extras_require={
         "krb-owner": ["gssapi"],
