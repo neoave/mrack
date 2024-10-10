@@ -58,6 +58,8 @@ class TestBeakerTransformer:
         "restraint_id": 1,
         "beaker": {
             "ks_meta": "FEDORA_HOST_KS_META",
+            "kernel_options": "FEDORA_KERNEL_OPTIONS",
+            "kernel_options_post": "FEDORA_KERNEL_OPTIONS_POST",
             "ks_append": {
                 "pre-install": "%pre\npre_dummy\n%end",
                 "script": "script_dummy",
@@ -193,6 +195,8 @@ class TestBeakerTransformer:
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
                     "ks_append": maximal_ksappend,
+                    "kernel_options": "FEDORA_KERNEL_OPTIONS",
+                    "kernel_options_post": "FEDORA_KERNEL_OPTIONS_POST",
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
                     "tasks": [
@@ -289,6 +293,8 @@ class TestBeakerTransformer:
             "variant",
             "ks_meta",
             "ks_append",
+            "kernel_options",
+            "kernel_options_post",
             "whiteboard",
             "priority",
             "tasks",
