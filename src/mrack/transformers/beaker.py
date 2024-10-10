@@ -84,6 +84,44 @@ class BeakerTransformer(Transformer):
         )
         return res
 
+    def _get_kernel_options(self, host):
+        """
+        Get `kernel_options` value from host or config or default if not defined.
+
+        The priority is following:
+            - host
+            - provisioning-config.yaml
+            - default from provisioning config
+            - empty if not defined in provisioning config
+
+        """
+        res = self._find_value(
+            host.get(CONFIG_KEY, {}),
+            "kernel_options",
+            "kernel_options",
+            host["os"],
+        )
+        return res
+
+    def _get_kernel_options_post(self, host):
+        """
+        Get `kernel_options_post` value from host or config or default if not defined.
+
+        The priority is following:
+            - host
+            - provisioning-config.yaml
+            - default from provisioning config
+            - empty if not defined in provisioning config
+
+        """
+        res = self._find_value(
+            host.get(CONFIG_KEY, {}),
+            "kernel_options_post",
+            "kernel_options_post",
+            host["os"],
+        )
+        return res
+
     def _construct_ks_append_script(self, ks_append, pubkeys=None):
         """Create ks_appdend from requirements."""
         res_ks_list = []
@@ -167,6 +205,8 @@ class BeakerTransformer(Transformer):
             "arch": host.get("arch", "x86_64"),
             "variant": variant,
             "ks_meta": self._get_ks_meta(host),
+            "kernel_options": self._get_kernel_options(host),
+            "kernel_options_post": self._get_kernel_options_post(host),
             "retention_tag": self._find_value(
                 host.get(CONFIG_KEY, {}),
                 "retention_tag",
