@@ -2,6 +2,53 @@
 
 
 
+## v1.22.0 (2024-10-17)
+
+### Chore
+
+* chore: setup: package seccomp filter
+
+Add seccomp.json to setup mrack package so it is included on pkg install.
+
+Signed-off-by: Alexander Bokovoy &lt;abokovoy@redhat.com&gt; ([`4d0b63c`](https://github.com/neoave/mrack/commit/4d0b63c5e15a0cd90fb7f44b2a1d340704618bd9))
+
+### Documentation
+
+* docs: Update seccomp configuration example
+
+seccomp.json example from FreeIPA Azure CI tests. It works well for both
+docker and podman, both root and rootless.
+
+Signed-off-by: Alexander Bokovoy &lt;abokovoy@redhat.com&gt; ([`9b2d980`](https://github.com/neoave/mrack/commit/9b2d98093aaad4a8fdb7f2391aa94a6281590162))
+
+### Feature
+
+* feat: podman: handle custom network configuration
+
+Allow to add custom network configuration to the network bridge
+activated via podman provider.
+
+Signed-off-by: Alexander Bokovoy &lt;abokovoy@redhat.com&gt; ([`f3deca1`](https://github.com/neoave/mrack/commit/f3deca12138c1470cf2b399d00baf81875aa1ef2))
+
+### Fix
+
+* fix: podman: set podman connection information for ansible
+
+Ansible connection.podman.podman connection module uses ansible_host as
+a container ID to connect to. Use container ID instead of IP address
+which cannot be reached in rootless setup anyway.
+
+It makes `ansible -c podman -i metadata-inventory.yaml` usable in
+rootless podman setup because one cannot connect over IP addresses to
+the containers as the networking bridge is not visible from the host.
+
+Signed-off-by: Alexander Bokovoy &lt;abokovoy@redhat.com&gt; ([`768bba5`](https://github.com/neoave/mrack/commit/768bba5e4a098ad513a1123400aea03a90156e7d))
+
+### Style
+
+* style: Reformat by black ([`f43d20f`](https://github.com/neoave/mrack/commit/f43d20f486352cd21fada90d301173c98cf5dca5))
+
+
 ## v1.21.0 (2024-08-06)
 
 ### Feature
