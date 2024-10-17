@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.21.0
+Version:        1.22.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,13 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu Oct 17 2024 David Pascual Hernandez <davherna@redhat.com> - 1.22.0-1
+- f43d20f style: Reformat by black (David Pascual)
+- 768bba5 fix: podman: set podman connection information for ansible (David Pascual)
+- 4d0b63c chore: setup: package seccomp filter (David Pascual)
+- 9b2d980 docs: Update seccomp configuration example (David Pascual)
+- f3deca1 feat: podman: handle custom network configuration (David Pascual)
+
 * Tue Aug 06 2024 Kaleemullah Siddiqui  <kaleem.amu@gmail.com> - 1.21.0-1
 - b3e0f7d feat: update pytest-mh output to work with latest version (Kaleemullah Siddiqui)
 
