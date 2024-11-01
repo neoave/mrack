@@ -204,6 +204,7 @@ class BeakerTransformer(Transformer):
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": variant,
+            "job_owner": host.get(CONFIG_KEY, {}).get("beaker_job_owner"),
             "ks_meta": self._get_ks_meta(host),
             "kernel_options": self._get_kernel_options(host),
             "kernel_options_post": self._get_kernel_options_post(host),

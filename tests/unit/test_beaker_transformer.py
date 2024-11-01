@@ -60,6 +60,7 @@ class TestBeakerTransformer:
             "ks_meta": "FEDORA_HOST_KS_META",
             "kernel_options": "FEDORA_KERNEL_OPTIONS",
             "kernel_options_post": "FEDORA_KERNEL_OPTIONS_POST",
+            "job_owner": "FEDORA",
             "ks_append": {
                 "pre-install": "%pre\npre_dummy\n%end",
                 "script": "script_dummy",
@@ -194,6 +195,7 @@ class TestBeakerTransformer:
                     "distro": "Fedora-36%",
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
+                    "job_owner": "FEDORA",
                     "ks_append": maximal_ksappend,
                     "kernel_options": "FEDORA_KERNEL_OPTIONS",
                     "kernel_options_post": "FEDORA_KERNEL_OPTIONS_POST",
