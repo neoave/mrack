@@ -2,6 +2,15 @@
 
 
 
+## v1.23.0 (2024-11-05)
+
+### Feature
+
+* feat: Add support for translanting job-owner of kickstart ([`64a84db`](https://github.com/neoave/mrack/commit/64a84db64bd825ec2551b164734eaa354265f6cb))
+
+* feat: Add translantion for kernel_options and kernel_options_post ([`868523c`](https://github.com/neoave/mrack/commit/868523c9f75005b92e5300d4b877c32d9cfe80f6))
+
+
 ## v1.22.0 (2024-10-17)
 
 ### Chore

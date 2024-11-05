@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.22.0
+Version:        1.23.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Nov 05 2024 David Pascual Hernandez <davherna@redhat.com> - 1.23.0-1
+- 64a84db feat: Add support for translanting job-owner of kickstart (David Pascual)
+- 868523c feat: Add translantion for kernel_options and kernel_options_post (David Pascual)
+
 * Thu Oct 17 2024 David Pascual Hernandez <davherna@redhat.com> - 1.22.0-1
 - f43d20f style: Reformat by black (David Pascual)
 - 768bba5 fix: podman: set podman connection information for ansible (David Pascual)
