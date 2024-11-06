@@ -152,9 +152,7 @@ class BeakerTransformer(Transformer):
         if pubkeys:
             res_ks_list += ["%post"] + self._allow_ssh_keys(pubkeys) + ["%end"]
 
-        return [
-            "\n".join(res_ks_list),
-        ]
+        return ["\n".join(res_ks_list)] if res_ks_list else []
 
     def _allow_ssh_keys(self, pubkeys):
         """Create ssh key content to be injected to xml."""
