@@ -198,7 +198,7 @@ class BeakerTransformer(Transformer):
             "name": host["name"],
             "distro": distro,
             "os": host["os"],
-            "group": host["group"],
+            "job_group": host["group"],
             "meta_distro": "distro" in host,
             "arch": host.get("arch", "x86_64"),
             "variant": variant,
