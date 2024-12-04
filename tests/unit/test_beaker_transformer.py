@@ -196,6 +196,7 @@ class TestBeakerTransformer:
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
                     "job_owner": "FEDORA",
+                    "job_group": "client",
                     "ks_append": maximal_ksappend,
                     "kernel_options": "FEDORA_KERNEL_OPTIONS",
                     "kernel_options_post": "FEDORA_KERNEL_OPTIONS_POST",
@@ -214,6 +215,7 @@ class TestBeakerTransformer:
                     "distro": "Fedora-36%",
                     "variant": "Server",
                     "ks_meta": "FEDORA_HOST_KS_META",
+                    "job_group": "server",
                     "ks_append": default_ks_append,
                     "whiteboard": default_whiteboard,
                     "priority": default_prio,
@@ -227,6 +229,7 @@ class TestBeakerTransformer:
                 {
                     "distro": "CentOS-Stream-9%",
                     "variant": "BaseOS",
+                    "job_group": "ipaserver",
                     "ks_meta": "PROV_CONF_CENTOS_KS_META",
                     "ks_append": ["%post\ncat /etc/redhat-release\n%end"],
                     "whiteboard": default_whiteboard,
@@ -241,6 +244,7 @@ class TestBeakerTransformer:
                 {
                     "distro": "CentOS-Stream-9%",
                     "variant": "BaseOS",
+                    "job_group": "ipaclient",
                     "ks_meta": "PROV_CONF_CENTOS_KS_META",
                     "ks_append": ["%post\ncat /etc/redhat-release\n%end"],
                     "whiteboard": default_whiteboard,
@@ -257,6 +261,7 @@ class TestBeakerTransformer:
                 {
                     "distro": "win-2022",
                     "variant": "BaseOS",
+                    "job_group": "ad_root",
                     "ks_meta": "PROV_CONF_DEFAULT",
                     "ks_append": default_ks_append,
                     "whiteboard": "BEAKER DOES NOT SUPPORT WINDOWS THIS JOB MUST FAIL",
@@ -271,6 +276,7 @@ class TestBeakerTransformer:
                 {
                     "distro": "RHEL-8.6%",
                     "variant": "BaseOS",
+                    "job_group": "ipaserver",
                     "ks_meta": "PROV_CONF_RHEL86_KS_META",
                     "ks_append": [
                         "%post\ncat /etc/redhat-release\nwget redhat.com\n%end"
