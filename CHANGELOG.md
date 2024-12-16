@@ -2,6 +2,15 @@
 
 
 
+## v1.23.1 (2024-12-16)
+
+### Fix
+
+* fix: Translate job-group properly ([`0cabc75`](https://github.com/neoave/mrack/commit/0cabc75ff768bebb4287391b263fcefefb613f31))
+
+* fix: Return empty list when there is no content in res_ks_list ([`70e07c1`](https://github.com/neoave/mrack/commit/70e07c191e9f148cb774a1aa5dfc35dc79c5106d))
+
+
 ## v1.23.0 (2024-11-05)
 
 ### Feature
