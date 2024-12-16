@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.23.0
+Version:        1.23.1
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Mon Dec 16 2024 David Pascual Hernandez <davherna@redhat.com> - 1.23.1-1
+- 0cabc75 fix: Translate job-group properly (David Pascual)
+- 70e07c1 fix: Return empty list when there is no content in res_ks_list (David Pascual)
+
 * Tue Nov 05 2024 David Pascual Hernandez <davherna@redhat.com> - 1.23.0-1
 - 64a84db feat: Add support for translanting job-owner of kickstart (David Pascual)
 - 868523c feat: Add translantion for kernel_options and kernel_options_post (David Pascual)
