@@ -139,3 +139,42 @@ And the result would be following XML:
       </and>
       <system_type value="Machine"/>
     </hostRequires>
+
+Here is an example of Beaker provisioning using hostRequires without and/or:
+
+.. code:: yaml
+
+    domains:
+    - hosts:
+      #########
+      # Provisioning c9s
+      #########
+      - group: client
+        name: bkr-c9s-latest.eagle.test
+        os: c9s
+        provider: beaker
+        beaker:  # use some beaker specific requirements
+          hostRequires:
+            cpu_count:
+              _value: 1
+              _op: "="
+      name: eagle.test
+      type: linux
+
+
+This requirement is then translated to XML for the Beaker job, along with other specifics:
+
+.. code:: xml
+
+    <distroRequires>
+      <and>
+        <distro_name op="like" value="CentOS-Stream-9%"/>
+        <distro_variant op="=" value="BaseOS"/>  // from provisioning config
+        <distro_arch op="=" value="x86_64"/>  // default
+        <distro_tag op="=" value="RC-0.1"/>  // from provisioning config
+      </and>
+    </distroRequires>
+    <hostRequires>  // translated `hostRequires` key
+      <cpu_count value="1" op="="/>  // translated `cpu_count`, `_value` and `_op` keys
+      <system_type value="Machine"/>
+    </hostRequires>
