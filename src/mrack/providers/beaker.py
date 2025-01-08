@@ -174,12 +174,19 @@ class BeakerProvider(Provider):
         recipe.addDistroRequires(arch_node)
 
         host_requires = specs.get("hostRequires")
-        if host_requires:  # suppose to be dict like {"or": [dict()], "and": [dict()]}
+        if host_requires:
             for operand, operand_value in host_requires.items():
                 if operand.startswith("_"):
                     recipe.node.getElementsByTagName("hostRequires")[0].setAttribute(
                         operand[1:],
                         operand_value,
+                    )
+                    continue
+                if operand not in ["and", "or"]:
+                    req_node = xml_doc().createElement(operand)
+                    req_node = add_dict_to_node(req_node, operand_value)
+                    recipe.node.getElementsByTagName("hostRequires")[0].appendChild(
+                        req_node
                     )
                     continue
                 # known operands are ["and", "or"]
