@@ -2,6 +2,13 @@
 
 
 
+## v1.23.2 (2025-01-09)
+
+### Fix
+
+* fix: Translate host_requires properly ([`600203c`](https://github.com/neoave/mrack/commit/600203caf9037d3d86796408d3094a14bf85288a))
+
+
 ## v1.23.1 (2024-12-16)
 
 ### Fix

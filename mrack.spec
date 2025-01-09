@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.23.1
+Version:        1.23.2
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu Jan 09 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.2-1
+- 600203c fix: Translate host_requires properly (David Pascual)
+
 * Mon Dec 16 2024 David Pascual Hernandez <davherna@redhat.com> - 1.23.1-1
 - 0cabc75 fix: Translate job-group properly (David Pascual)
 - 70e07c1 fix: Return empty list when there is no content in res_ks_list (David Pascual)
