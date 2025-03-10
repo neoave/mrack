@@ -159,6 +159,28 @@ class BeakerProvider(Provider):
         """Check percentage utilization of given provider."""
         return 0
 
+    def _translate_constraint(self, host_requires, host_recipe):
+        """Transform host requires dict to xml."""
+        for operand, operand_value in host_requires.items():
+            if operand.startswith("_"):
+                host_recipe.setAttribute(
+                    operand[1:],
+                    operand_value,
+                )
+                continue
+            if operand not in ["and", "or"]:
+                req_node = xml_doc().createElement(operand)
+                req_node = add_dict_to_node(req_node, operand_value)
+                host_recipe.appendChild(req_node)
+                continue
+            # known operands are ["and", "or"]
+            req_node = xml_doc().createElement(operand)
+            for dct in operand_value:
+                if dct.get("or") or dct.get("and"):
+                    self._translate_constraint(dct, req_node)
+                req_node = add_dict_to_node(req_node, dct)
+            host_recipe.appendChild(req_node)
+
     def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
         """Transform requirement to beaker job xml."""
         specs = deepcopy(req)  # work with own copy, do not modify the input
@@ -175,28 +197,8 @@ class BeakerProvider(Provider):
 
         host_requires = specs.get("hostRequires")
         if host_requires:
-            for operand, operand_value in host_requires.items():
-                if operand.startswith("_"):
-                    recipe.node.getElementsByTagName("hostRequires")[0].setAttribute(
-                        operand[1:],
-                        operand_value,
-                    )
-                    continue
-                if operand not in ["and", "or"]:
-                    req_node = xml_doc().createElement(operand)
-                    req_node = add_dict_to_node(req_node, operand_value)
-                    recipe.node.getElementsByTagName("hostRequires")[0].appendChild(
-                        req_node
-                    )
-                    continue
-                # known operands are ["and", "or"]
-                req_node = xml_doc().createElement(operand)
-                for dct in operand_value:
-                    req_node = add_dict_to_node(req_node, dct)
-
-                recipe.node.getElementsByTagName("hostRequires")[0].appendChild(
-                    req_node
-                )
+            host_recipe = recipe.node.getElementsByTagName("hostRequires")[0]
+            self._translate_constraint(host_requires, host_recipe)
 
         # Specify the custom xml distro_tag node with values from provisioning config
         distro_tags = specs.get("distro_tags")
