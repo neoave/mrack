@@ -54,6 +54,12 @@ class BeakerTransformer(Transformer):
         if "beaker_variant" in host:
             variant = host["beaker_variant"]
         elif distro_variants:
+            for variant in distro_variants.keys():
+                if re.match(variant.replace("%", ".*"), required_distro):
+                    required_distro = variant
+                    break
+                else:
+                    continue
             variant = distro_variants.get(
                 required_distro, distro_variants.get("default")
             )
