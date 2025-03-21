@@ -2,6 +2,25 @@
 
 
 
+## v1.23.3 (2025-03-21)
+
+### Documentation
+
+* docs: Update maintainer email
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`c02cc90`](https://github.com/neoave/mrack/commit/c02cc90a8f01957a9b570fa339aecfab52d64554))
+
+### Fix
+
+* fix: Translate nested or/and constraint properly
+
+Fixes https://github.com/neoave/mrack/issues/310 ([`4da221c`](https://github.com/neoave/mrack/commit/4da221c1e19e4331f6a650e19f89e0bd3d0f0627))
+
+* fix: Make distro_variants working as patterns
+
+Fixes https://github.com/neoave/mrack/issues/309 ([`60275ee`](https://github.com/neoave/mrack/commit/60275ee735fe21c64053fd73da99a1f82350cc4d))
+
+
 ## v1.23.2 (2025-01-09)
 
 ### Fix
