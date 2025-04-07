@@ -114,26 +114,7 @@ class BeakerProvider(Provider):
         self.distros = distros
         self.timeout = timeout
         self.reserve_duration = reserve_duration
-        login_start = datetime.now()
-        default_config = os.path.expanduser(
-            os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
-        )  # get the beaker config for initialization of hub
-        self.conf.load_from_file(default_config)
-        try:
-            self.hub = HubProxy(logger=logger, conf=self.conf)
-        except MissingCredentialsError as kinit_err:
-            raise NotAuthenticatedError(
-                f"{self.dsp_name} needs Kerberos ticket to authenticate to BeakerHub. "
-                "Run 'kinit $USER' command to obtain Kerberos credentials."
-            ) from kinit_err
-        except GSSError as hub_err:
-            raise NotAuthenticatedError(
-                f"{self.dsp_name} Unable to Create session: {hub_err}"
-            ) from hub_err
-
-        login_end = datetime.now()
-        login_duration = login_end - login_start
-        logger.info(f"{self.dsp_name} Init duration {login_duration}")
+        self.hub = None
 
     async def validate_hosts(self, reqs):
         """Validate that host requirements are well specified."""
@@ -229,6 +210,29 @@ class BeakerProvider(Provider):
 
         return job
 
+    def login_beaker(self):
+        """Login to the beaker hub."""
+        login_start = datetime.now()
+        default_config = os.path.expanduser(
+            os.environ.get("BEAKER_CONF", "/etc/beaker/client.conf")  # TODO use provc
+        )  # get the beaker config for initialization of hub
+        self.conf.load_from_file(default_config)
+        try:
+            self.hub = HubProxy(logger=logger, conf=self.conf)
+        except MissingCredentialsError as kinit_err:
+            raise NotAuthenticatedError(
+                f"{self.dsp_name} needs Kerberos ticket to authenticate to BeakerHub. "
+                "Run 'kinit $USER' command to obtain Kerberos credentials."
+            ) from kinit_err
+        except GSSError as hub_err:
+            raise NotAuthenticatedError(
+                f"{self.dsp_name} Unable to Create session: {hub_err}"
+            ) from hub_err
+
+        login_end = datetime.now()
+        login_duration = login_end - login_start
+        logger.info(f"{self.dsp_name} Init duration {login_duration}")
+
     async def create_server(self, req):
         """Issue creation of a server.
 
@@ -248,6 +252,8 @@ class BeakerProvider(Provider):
         logger.info(f"{self.dsp_name} [{req.get('name')}] Creating server")
 
         job = self._req_to_bkr_job(req)  # Generate the job
+        if not self.hub:
+            self.login_beaker()
         try:
             job_id = self.hub.jobs.upload(job.toxml())  # schedule beaker job
         except Fault as bkr_fault:
@@ -289,6 +295,8 @@ class BeakerProvider(Provider):
 
     def _get_recipe_info(self, beaker_id, log_msg_start):
         """Get info about the recipe for beaker job id."""
+        if not self.hub:
+            self.login_beaker()
         bkr_job_xml = self.hub.taskactions.to_xml(beaker_id).encode("utf8")
         logs_dict = {}
         resources = []
@@ -321,6 +329,8 @@ class BeakerProvider(Provider):
         bkr_res = {}
         prev_status = ""
         job_url = ""
+        if not self.hub:
+            self.login_beaker()
         hub_url = self.hub._hub_url  # pylint: disable=protected-access
 
         # let us use timeout variable which is in minutes to define
@@ -410,6 +420,9 @@ class BeakerProvider(Provider):
                 f"{log_msg_start} Job for host '{host_id}' does not exist yet"
             )
             return True
+
+        if not self.hub:
+            self.login_beaker()
 
         logger.info(
             f"{log_msg_start} Deleting host by cancelling Job "
