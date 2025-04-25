@@ -185,6 +185,13 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Fri Apr 25 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.3-1
+- cee2f5b fix : Not try to login beaker hub unless needed (David Pascual)
+- 75eb8ea chore: Release version 1.23.3 (github-actions)
+- 4da221c fix: Translate nested or/and constraint properly (David Pascual)
+- 60275ee fix: Make distro_variants working as patterns (David Pascual)
+- c02cc90 docs: Update maintainer email (David Pascual)
+
 * Fri Mar 21 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.3-1
 - 4da221c fix: Translate nested or/and constraint properly (David Pascual)
 - 60275ee fix: Make distro_variants working as patterns (David Pascual)
