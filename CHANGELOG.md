@@ -2,7 +2,7 @@
 
 
 
-## v1.23.3 (2025-03-21)
+## v1.23.3 (2025-04-25)
 
 ### Documentation
 
@@ -19,6 +19,13 @@ Fixes https://github.com/neoave/mrack/issues/310 ([`4da221c`](https://github.com
 * fix: Make distro_variants working as patterns
 
 Fixes https://github.com/neoave/mrack/issues/309 ([`60275ee`](https://github.com/neoave/mrack/commit/60275ee735fe21c64053fd73da99a1f82350cc4d))
+
+### Unknown
+
+* fix : Not try to login beaker hub unless needed
+
+mrack should not try to login beaker hub unless need talk to remote API.
+Blocks tmt tests: https://github.com/teemtee/tmt/pull/3623#issuecomment-2782901674 ([`cee2f5b`](https://github.com/neoave/mrack/commit/cee2f5b72fe217fb1ede94237623efaf77c182a4))
 
 
 ## v1.23.2 (2025-01-09)
