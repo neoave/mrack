@@ -26,57 +26,63 @@ from mrack.transformers.transformer import Transformer
 
 NAME = 0
 CLASS = 1
-installed_transformers: Set[Tuple[str, Type[Transformer]]] = set()
-IMPORT_ERR_TEMPLATE = "Transformer '%s' not installed, skipping registration"
+
 logger = logging.getLogger(__name__)
 
-try:
-    from mrack.transformers.aws import CONFIG_KEY as AWS_KEY
-    from mrack.transformers.aws import AWSTransformer
 
-    installed_transformers.add((AWS_KEY, AWSTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+def discover_transformers() -> Set[Tuple[str, Type[Transformer]]]:
+    """Discover installed transformers."""
+    installed_transformers: Set[Tuple[str, Type[Transformer]]] = set()
+    IMPORT_ERR_TEMPLATE = "Transformer '%s' not installed, skipping registration"
 
-try:
-    from mrack.transformers.beaker import CONFIG_KEY as BEAKER_KEY
-    from mrack.transformers.beaker import BeakerTransformer
+    try:
+        from mrack.transformers.aws import CONFIG_KEY as AWS_KEY
+        from mrack.transformers.aws import AWSTransformer
 
-    installed_transformers.add((BEAKER_KEY, BeakerTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+        installed_transformers.add((AWS_KEY, AWSTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
 
-try:
-    from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
-    from mrack.transformers.openstack import OpenStackTransformer
+    try:
+        from mrack.transformers.beaker import CONFIG_KEY as BEAKER_KEY
+        from mrack.transformers.beaker import BeakerTransformer
 
-    installed_transformers.add((OPENSTACK_KEY, OpenStackTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+        installed_transformers.add((BEAKER_KEY, BeakerTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
 
-try:
-    from mrack.transformers.podman import CONFIG_KEY as PODMAN_KEY
-    from mrack.transformers.podman import PodmanTransformer
+    try:
+        from mrack.transformers.openstack import CONFIG_KEY as OPENSTACK_KEY
+        from mrack.transformers.openstack import OpenStackTransformer
 
-    installed_transformers.add((PODMAN_KEY, PodmanTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+        installed_transformers.add((OPENSTACK_KEY, OpenStackTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
 
-try:
-    from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
-    from mrack.transformers.static import StaticTransformer
+    try:
+        from mrack.transformers.podman import CONFIG_KEY as PODMAN_KEY
+        from mrack.transformers.podman import PodmanTransformer
 
-    installed_transformers.add((STATIC_KEY, StaticTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+        installed_transformers.add((PODMAN_KEY, PodmanTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
 
-try:
-    from mrack.transformers.virt import CONFIG_KEY as VIRT_KEY
-    from mrack.transformers.virt import VirtTransformer
+    try:
+        from mrack.transformers.static import CONFIG_KEY as STATIC_KEY
+        from mrack.transformers.static import StaticTransformer
 
-    installed_transformers.add((VIRT_KEY, VirtTransformer))
-except ModuleNotFoundError as import_err:
-    logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+        installed_transformers.add((STATIC_KEY, StaticTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+
+    try:
+        from mrack.transformers.virt import CONFIG_KEY as VIRT_KEY
+        from mrack.transformers.virt import VirtTransformer
+
+        installed_transformers.add((VIRT_KEY, VirtTransformer))
+    except ModuleNotFoundError as import_err:
+        logger.debug(IMPORT_ERR_TEMPLATE, import_err.name)
+    return installed_transformers
 
 
 class Registry:
@@ -110,11 +116,14 @@ class Registry:
         """Get all registered transformer names."""
         return self._transformer_cls.keys()
 
+    def discover(self):
+        """Discover and add installed transformers."""
+        installed_transformers = discover_transformers()
+        for installed_transformer in installed_transformers:
+            self.register(
+                installed_transformer[NAME],
+                installed_transformer[CLASS],
+            )
+
 
 transformers = Registry()
-
-for installed_transformer in installed_transformers:
-    transformers.register(
-        installed_transformer[NAME],
-        installed_transformer[CLASS],
-    )
