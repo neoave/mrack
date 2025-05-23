@@ -198,6 +198,7 @@ class BeakerProvider(Provider):
                 task=task["name"],
                 role=task["role"],
                 taskParams=task.get("params"),
+                fetch_url=task.get("fetch_url"),
             )
 
         # Create RecipeSet and add our Recipe to it.
