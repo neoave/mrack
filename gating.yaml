@@ -1,8 +1,8 @@
 --- !Policy
 product_versions:
   - fedora-*
-  - epel-8
   - epel-9
+  - epel-10
 decision_contexts:
   - bodhi_update_push_stable
 subject_type: koji_build
