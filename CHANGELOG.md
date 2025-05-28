@@ -2,6 +2,27 @@
 
 
 
+## v1.23.4 (2025-05-28)
+
+### Chore
+
+* chore: Enable epel-10 builds in Packit
+
+Replace epel-8/9 with epel-all which points to all current releases,
+including epel-10
+
+Addresses https://bugzilla.redhat.com/show_bug.cgi?id=2367449
+
+Signed-off-by: David Pascual &lt;davherna@redhat.com&gt; ([`75d8c3b`](https://github.com/neoave/mrack/commit/75d8c3beb5f47ad66f9b8535183c1f23f5099756))
+
+### Fix
+
+* fix: Support pass fetch_url to task
+
+Block tmt&#39;s bootc installation on beaker feature:
+https://github.com/teemtee/tmt/pull/3728 ([`4a98123`](https://github.com/neoave/mrack/commit/4a98123dbcfdbf699ed26cceac1cf3b39f36c4b9))
+
+
 ## v1.23.3 (2025-04-25)
 
 ### Documentation
