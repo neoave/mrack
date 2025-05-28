@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.23.3
+Version:        1.23.4
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Wed May 28 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.4-1
+- 75d8c3b chore: Enable epel-10 builds in Packit (David Pascual)
+- 4a98123 fix: Support pass fetch_url to task (David Pascual)
+
 * Fri Apr 25 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.3-1
 - cee2f5b fix : Not try to login beaker hub unless needed (David Pascual)
 - 75eb8ea chore: Release version 1.23.3 (github-actions)
