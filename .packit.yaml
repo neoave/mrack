@@ -45,34 +45,34 @@ jobs:
   - job: copr_build
     trigger: pull_request
     release_suffix: "99.dev.{PACKIT_PROJECT_BRANCH}"
-    targets: [fedora-all, epel-all]
+    targets: [fedora-all, epel-9, epel-10]
 
   - job: tests
     trigger: pull_request
     identifier: "upstream-smoke"
-    targets: [fedora-all, epel-8, epel-9]
+    targets: [fedora-all, epel-9, epel-10]
 
   - job: copr_build
     trigger: commit
-    targets: [fedora-all, epel-all]
+    targets: [fedora-all, epel-9, epel-10]
 
   - job: copr_build
     trigger: release
     owner: "@freeipa"
     project: neoave
-    targets: [fedora-all, epel-all]
+    targets: [fedora-all, epel-9, epel-10]
 
   - job: propose_downstream
     trigger: release
-    dist_git_branches: [fedora-all, epel-all]
+    dist_git_branches: [fedora-all, epel-9, epel-10]
 
   - job: koji_build
     trigger: commit
-    dist_git_branches: [fedora-all, epel-all]
+    dist_git_branches: [fedora-all, epel-9, epel-10]
 
   - job: bodhi_update
     trigger: commit
-    dist_git_branches: [fedora-branched, epel-all] # rawhide updates are created automatically
+    dist_git_branches: [fedora-branched, epel-9, epel-10] # rawhide updates are created automatically
 
 #   # pr_osp
 #   - &internal_test  # use openstack (osp) tests as template for other test cases
