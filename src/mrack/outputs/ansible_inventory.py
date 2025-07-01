@@ -193,6 +193,8 @@ class AnsibleInventoryOutput:
                     "ansible_connection": "winrm",
                     "ansible_winrm_server_cert_validation": "ignore",
                     "meta_domain_level": meta_host.get("domain_level", "top"),
+                    "ansible_winrm_read_timeout_sec": 600,
+                    "ansible_winrm_operation_timeout_sec": 300,
                 }
             )
 
