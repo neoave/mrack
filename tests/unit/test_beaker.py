@@ -16,6 +16,7 @@
 
 from unittest import mock
 from unittest.mock import Mock, patch
+from xml.dom.minidom import Document as xml_doc
 
 import pytest
 
@@ -91,3 +92,178 @@ class TestBeakerProvider:
         # so that provisioning won't fail on AVC denials
         xml = job.toxml()
         assert '<param name="RSTRNT_DISABLED" value="10_avc_check"/>' in xml
+
+    def test_translate_constraint_basic_operands(self, mock_beaker_conf):
+        """Test _translate_constraint with basic operands (no and/or)."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with basic operands (not 'and' or 'or')
+        host_requires = {
+            "memory": {"_op": ">=", "_value": "4096"},
+            "key_value": {"_key": "NETBOOT_METHOD", "_op": "like", "_value": "grub2"},
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify the XML structure
+        xml_output = host_recipe.toxml()
+        assert '<memory op="&gt;=" value="4096"/>' in xml_output
+        assert '<key_value key="NETBOOT_METHOD" op="like" value="grub2"/>' in xml_output
+
+    def test_translate_constraint_and_operand(self, mock_beaker_conf):
+        """Test _translate_constraint with 'and' operand."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with 'and' operand containing basic constraints
+        host_requires = {
+            "and": [
+                {"memory": {"_op": ">=", "_value": "4096"}},
+                {"key_value": {"_key": "PROCESSOR_CORES", "_op": ">=", "_value": "4"}},
+            ]
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify the XML structure contains the 'and' node with nested constraints
+        xml_output = host_recipe.toxml()
+        assert "<and>" in xml_output
+        assert "</and>" in xml_output
+        assert '<memory op="&gt;=" value="4096"/>' in xml_output
+        assert '<key_value key="PROCESSOR_CORES" op="&gt;=" value="4"/>' in xml_output
+
+    def test_translate_constraint_or_operand(self, mock_beaker_conf):
+        """Test _translate_constraint with 'or' operand."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with 'or' operand containing basic constraints
+        host_requires = {
+            "or": [
+                {"memory": {"_op": ">=", "_value": "8192"}},
+                {"memory": {"_op": ">=", "_value": "4096"}},
+            ]
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify the XML structure contains the 'or' node with nested constraints
+        xml_output = host_recipe.toxml()
+        assert "<or>" in xml_output
+        assert "</or>" in xml_output
+        # Should contain both memory constraints
+        assert xml_output.count('<memory op="&gt;=" value="8192"/>') == 1
+        assert xml_output.count('<memory op="&gt;=" value="4096"/>') == 1
+
+    def test_translate_constraint_nested_and_or(self, mock_beaker_conf):
+        """Test _translate_constraint with nested 'and'/'or' operands."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with nested 'and' and 'or' operands
+        host_requires = {
+            "and": [
+                {"memory": {"_op": ">=", "_value": "4096"}},
+                {
+                    "or": [
+                        {
+                            "key_value": {
+                                "_key": "PROCESSOR_CORES",
+                                "_op": ">=",
+                                "_value": "4",
+                            }
+                        },
+                        {
+                            "key_value": {
+                                "_key": "PROCESSOR_CORES",
+                                "_op": ">=",
+                                "_value": "8",
+                            }
+                        },
+                    ]
+                },
+            ]
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify the XML structure contains nested 'and' and 'or' nodes
+        xml_output = host_recipe.toxml()
+        assert "<and>" in xml_output
+        assert "<or>" in xml_output
+        assert "</or>" in xml_output
+        assert "</and>" in xml_output
+        assert '<memory op="&gt;=" value="4096"/>' in xml_output
+        # Should contain both processor core constraints within the 'or'
+        assert xml_output.count('key="PROCESSOR_CORES"') == 2
+
+    def test_translate_constraint_mixed_operands(self, mock_beaker_conf):
+        """Test _translate_constraint with mixed basic and and/or operands."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with mixed operands (basic + and/or)
+        host_requires = {
+            "memory": {"_op": ">=", "_value": "4096"},
+            "and": [
+                {
+                    "key_value": {
+                        "_key": "NETBOOT_METHOD",
+                        "_op": "like",
+                        "_value": "grub2",
+                    }
+                },
+                {"key_value": {"_key": "PROCESSOR_CORES", "_op": ">=", "_value": "2"}},
+            ],
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify both basic and 'and' operands are handled correctly
+        xml_output = host_recipe.toxml()
+        assert '<memory op="&gt;=" value="4096"/>' in xml_output
+        assert "<and>" in xml_output
+        assert "</and>" in xml_output
+        assert 'key="NETBOOT_METHOD"' in xml_output
+        assert 'key="PROCESSOR_CORES"' in xml_output
+
+    def test_translate_constraint_with_attributes(self, mock_beaker_conf):
+        """Test _translate_constraint with underscore-prefixed attributes."""
+        provider = BeakerProvider()
+
+        # Create a mock host_recipe node
+        doc = xml_doc()
+        host_recipe = doc.createElement("hostRequires")
+
+        # Test with underscore-prefixed attributes that should become node attributes
+        host_requires = {
+            "_method": "system",
+            "_type": "primary",
+            "memory": {"_op": ">=", "_value": "4096"},
+        }
+
+        provider._translate_constraint(host_requires, host_recipe)
+
+        # Verify attributes are set on the host_recipe node
+        assert host_recipe.getAttribute("method") == "system"
+        assert host_recipe.getAttribute("type") == "primary"
+
+        # Verify the memory constraint is still added as a child element
+        xml_output = host_recipe.toxml()
+        assert '<memory op="&gt;=" value="4096"/>' in xml_output
