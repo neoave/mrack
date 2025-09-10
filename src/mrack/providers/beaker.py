@@ -159,7 +159,8 @@ class BeakerProvider(Provider):
             for dct in operand_value:
                 if dct.get("or") or dct.get("and"):
                     self._translate_constraint(dct, req_node)
-                req_node = add_dict_to_node(req_node, dct)
+                else:
+                    req_node = add_dict_to_node(req_node, dct)
             host_recipe.appendChild(req_node)
 
     def _req_to_bkr_job(self, req):  # pylint: disable=too-many-locals
