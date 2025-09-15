@@ -129,6 +129,7 @@ class TestBeakerTransformer:
                 cat_release,
                 wget,
             ],
+            "watchdog": {"panic": "ignore"},
         },
     }
 
@@ -207,6 +208,7 @@ class TestBeakerTransformer:
                     ],
                     "retention_tag": default_retention_tag,
                     "product": default_product,
+                    "watchdog": None,
                 },
             ),
             (
@@ -222,6 +224,7 @@ class TestBeakerTransformer:
                     "retention_tag": "active",
                     "product": "cpe:/a:redhat:jboss_operations_network:2.3",
                     "tasks": [{"name": "/distribution/sleep", "role": "STANDALONE"}],
+                    "watchdog": None,
                 },
             ),
             (
@@ -237,6 +240,7 @@ class TestBeakerTransformer:
                     "tasks": default_tasks,
                     "retention_tag": default_retention_tag,
                     "product": default_product,
+                    "watchdog": None,
                 },
             ),
             (
@@ -252,6 +256,7 @@ class TestBeakerTransformer:
                     "tasks": default_tasks,
                     "retention_tag": "scratch",
                     "product": "",
+                    "watchdog": None,
                 },
             ),
             # default variant should be there,
@@ -269,6 +274,7 @@ class TestBeakerTransformer:
                     "tasks": default_tasks,
                     "retention_tag": default_retention_tag,
                     "product": default_product,
+                    "watchdog": None,
                 },
             ),
             (
@@ -286,6 +292,7 @@ class TestBeakerTransformer:
                     "tasks": default_tasks,
                     "retention_tag": default_retention_tag,
                     "product": default_product,
+                    "watchdog": {"panic": "ignore"},
                 },
             ),
         ],
@@ -308,6 +315,7 @@ class TestBeakerTransformer:
             "tasks",
             "retention_tag",
             "product",
+            "watchdog",
         ]
         bkr_transformer = await self.create_transformer()
         req = bkr_transformer.create_host_requirement(meta_host)
@@ -337,3 +345,16 @@ class TestBeakerTransformer:
         req = bkr_transformer.create_host_requirement(meta_host)
         assert req.get("distro") == exp_distro
         assert req.get("variant") == exp_variant
+
+    @pytest.mark.asyncio
+    async def test_watchdog_configuration(self):
+        """Test watchdog configuration is properly handled"""
+        bkr_transformer = await self.create_transformer()
+
+        # Test with watchdog config
+        req_watchdog = bkr_transformer.create_host_requirement(self.rhel86)
+        assert req_watchdog.get("watchdog") == {"panic": "ignore"}
+
+        # Test with no watchdog config
+        req_none = bkr_transformer.create_host_requirement(self.fedora)
+        assert req_none.get("watchdog") is None

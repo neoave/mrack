@@ -194,6 +194,14 @@ class BeakerProvider(Provider):
         # Add ReserveSys element to reserve system after provisioning
         recipe.addReservesys(duration=str(self.reserve_duration))
 
+        # Add watchdog element if configured
+        watchdog_config = specs.get("watchdog")
+        if watchdog_config and isinstance(watchdog_config, dict):
+            watchdog_node = xml_doc().createElement("watchdog")
+            for key, value in watchdog_config.items():
+                watchdog_node.setAttribute(key, str(value))
+            recipe.node.appendChild(watchdog_node)
+
         for task in specs["tasks"]:
             recipe.addTask(
                 task=task["name"],
