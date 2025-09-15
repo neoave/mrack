@@ -281,6 +281,12 @@ class BeakerTransformer(Transformer):
                 distro,
                 default=[],
             ),
+            "watchdog": self._find_value(
+                host.get(CONFIG_KEY, {}),
+                "watchdog",
+                "watchdog",
+                host["os"],
+            ),
         }
 
         return specs
