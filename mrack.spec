@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.23.5
+Version:        1.24.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,11 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu Sep 25 2025 David Pascual Hernandez <davherna@redhat.com> - 1.24.0-1
+- 39e9d79 feat: Add support to pass watchdog panic="ignore" in Beaker recipe (David Pascual)
+- 801ef4b fix: Fix nested and/or issue (David Pascual)
+- fad14c2 test: Add _translate_constraint test (David Pascual)
+
 * Tue Sep 09 2025 David Pascual Hernandez <davherna@redhat.com> - 1.23.5-1
 - b46c7c4 chore: Bump python-semantic-release to fix release issue (David Pascual)
 - 033e1f7 chore(packit): Update epel spec for fedora propose upstream (David Pascual)
