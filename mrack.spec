@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.24.0
+Version:        1.25.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Oct 21 2025 David Pascual Hernandez <davherna@redhat.com> - 1.25.0-1
+- 8ed12e7 feat: Add support for Beaker group key (David Pascual)
+- 8e6ab07 fix: Revert commit 0cabc75 (David Pascual)
+
 * Thu Sep 25 2025 David Pascual Hernandez <davherna@redhat.com> - 1.24.0-1
 - 39e9d79 feat: Add support to pass watchdog panic="ignore" in Beaker recipe (David Pascual)
 - 801ef4b fix: Fix nested and/or issue (David Pascual)
