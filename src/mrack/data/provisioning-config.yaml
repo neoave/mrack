@@ -54,6 +54,8 @@ aws:  # aws provider config
     images:
         # list of ami images key is used in metadata ami image is used for provider e.g.
         fedora-32: ami-0f1d60751946b66c5  # Fedora-Cloud-Base-32-1.6.x86_64-hvm-eu-central-1-gp2-0
+        win-2019: ami-0123456789abcdef0 # find Windows AMI by image id
+        win-2022: ami-9876543210fedcs23
         rhel-8.5:  # find AMI by tag name and value
             tag:
                 name: my-tag
@@ -85,7 +87,23 @@ aws:  # aws provider config
 
     users:
         rhel-8.5: ec2-user  # per-provider default user name override
+        win-2019: Administrator
+        win-2022: Administrator
 
+    # EC2 UserData passed to instances at launch, per OS image
+    # Useful for Windows instances (e.g. enabling OpenSSH, setting admin password)
+    user_data:
+        win-2019: &win_user_data |
+            <powershell>
+            # Set Administrator password (matches ad_admin_password in mhcfg)
+            net user Administrator Secret123
+
+            # Enable and start OpenSSH server
+            Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+            Start-Service sshd
+            Set-Service -Name sshd -StartupType Automatic
+            </powershell>
+        win-2022: *win_user_data
 
 beaker:  # beaker provider specific values
     # feature to switch provisioning strategy from abort or retry on fail

@@ -397,6 +397,9 @@ class AWSProvider(Provider):
                 "MarketType": "spot",
             }
 
+        if specs.get("user_data"):
+            request["UserData"] = specs["user_data"]
+
         try:
             aws_res = self.ec2.create_instances(**request)
         except ClientError as creation_error:
