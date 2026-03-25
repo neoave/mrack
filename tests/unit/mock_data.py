@@ -3,7 +3,16 @@ import uuid
 from mrack.config import ProvisioningConfig
 from mrack.dbdrivers.file import FileDBDriver
 from mrack.host import STATUS_ACTIVE, Host
+from mrack.transformers.aws import AWSTransformer
 from mrack.transformers.beaker import BeakerTransformer
+
+
+class MockedAWSTransformer(AWSTransformer):
+    """Mock AWS transformer."""
+
+    async def init_provider(self):
+        """Override the init_provider to do nothing."""
+        self.dsp_name = "AWS"
 
 
 class MockedBeakerTransformer(BeakerTransformer):

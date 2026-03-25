@@ -110,6 +110,7 @@ class AWSTransformer(Transformer):
             "spot": self._find_value(host, "spot", None, None),
             "delete_volume_on_termination": del_vol,
             "subnet_ids": self._find_subnet_ids(host),
+            "user_data": self._find_value(host, "user_data", "user_data", host["os"]),
         }
 
         req = self.update_metadata_for_owner_lifetime(req)
