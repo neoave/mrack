@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.25.0
+Version:        1.26.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Thu Mar 26 2026  - 1.26.0-1
+- a702da2 fix: Pin setuptools<82 to restore pkg_resources for beaker-client (Rizwan Shaikh)
+- cf48126 feat: add EC2 UserData support for AWS provider (Rizwan Shaikh)
+
 * Tue Oct 21 2025 David Pascual Hernandez <davherna@redhat.com> - 1.25.0-1
 - 8ed12e7 feat: Add support for Beaker group key (David Pascual)
 - 8e6ab07 fix: Revert commit 0cabc75 (David Pascual)
