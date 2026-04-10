@@ -60,6 +60,8 @@ aws:  # aws provider config
             tag:
                 name: my-tag
                 value: my-special-image
+        win-2022-latest:  # find latest AMI via AWS SSM parameter
+            ssm: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
 
     flavors:
         # list of available flavours to ask from provider  for vm specs

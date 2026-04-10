@@ -76,6 +76,44 @@ def _aws_provisioning_config(user_data=None):
     )
 
 
+class TestAWSTransformerSSMImage:
+    """Test that SSM image definitions pass through the transformer correctly."""
+
+    @pytest.mark.asyncio
+    async def test_ssm_image_def_in_requirement(self):
+        """SSM image dict should be passed through as-is into the requirement."""
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+
+        ssm_path = (
+            "/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base"
+        )
+        ssm_image = {"ssm": ssm_path}
+        aws_cfg = {
+            "images": {
+                "win-2022": ssm_image,
+                "rhel-8.5": "ami-rhel-8-5",
+            },
+            "flavors": {"default": "t2.nano"},
+            "keypair": "mrack-keypair.pem",
+            "security_group": "sg-something",
+            "security_groups": ["sg-something"],
+            "credentials_file": "aws.key",
+            "profile": "default",
+            "spot": True,
+            "instance_tags": {"Name": "mrack-runner"},
+        }
+        config = ProvisioningConfig(
+            {"aws": aws_cfg, "users": {"win-2022": "Administrator"}}
+        )
+        hosts = [_host("ad", "ad", "ad", "win-2022")]
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": hosts}]}
+        await transformer.init(config, metadata)
+
+        req = transformer.create_host_requirement(hosts[0])
+        assert req["image"] == ssm_image
+
+
 class TestAWSTransformerUserData:
     """Test the AWS Transformer's user_data handling."""
 
