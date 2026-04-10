@@ -61,6 +61,13 @@ class AWSProvider(Provider):
         """Get provider name."""
         return self._name
 
+    @property
+    def ssm_client(self):
+        """Get SSM client, creating it on first use."""
+        if self._ssm_client is None:
+            self._ssm_client = boto3.client("ssm")
+        return self._ssm_client
+
     async def init(
         self,
         ssh_key,
@@ -88,6 +95,8 @@ class AWSProvider(Provider):
             ) from c_err
 
         self.amis = []
+        self._ssm_client = None
+        self.ssm_resolved = {}
         self.ssh_key = ssh_key
         self.instance_tags = instance_tags
         login_end = datetime.now()
@@ -113,6 +122,17 @@ class AWSProvider(Provider):
             or not isinstance(tag_def.get("name"), str)
             or not isinstance(tag_def.get("value"), str)
         ):
+            self.raise_image_def_error(image_def)
+
+        return True
+
+    def validate_ssm_image_def(self, image_def):
+        """Validate that SSM parameter definition for image is correct."""
+        if not isinstance(image_def, dict) or "ssm" not in image_def:
+            self.raise_image_def_error(image_def)
+
+        ssm_val = image_def.get("ssm")
+        if not isinstance(ssm_val, str):
             self.raise_image_def_error(image_def)
 
         return True
@@ -144,6 +164,15 @@ class AWSProvider(Provider):
                         and tag["Value"] == tag_def["value"]
                     ):
                         return ami
+        # by SSM parameter
+        elif isinstance(image_def, dict) and "ssm" in image_def:
+            self.validate_ssm_image_def(image_def)
+            ssm_path = image_def["ssm"]
+            resolved_id = self.ssm_resolved.get(ssm_path)
+            if resolved_id:
+                for ami in self.amis:
+                    if ami.image_id == resolved_id:
+                        return ami
         # by AMI ID
         elif isinstance(image_def, str):
             for ami in self.amis:
@@ -152,7 +181,7 @@ class AWSProvider(Provider):
         else:
             raise ValidationError(
                 f"{log_msg_start} Invalid image "
-                f"definition. Must be 'tags' definition or AMI ID"
+                f"definition. Must be 'tag', 'ssm', or AMI ID definition"
             )
         return None
 
@@ -173,6 +202,14 @@ class AWSProvider(Provider):
             tag_def = image_def.get("tag")
             name = tag_def["name"]
             filters.append({"Name": f"tag:{name}", "Values": [tag_def["value"]]})
+
+        # by SSM parameter
+        elif isinstance(image_def, dict) and "ssm" in image_def:
+            ssm_path = image_def["ssm"]
+            response = self.ssm_client.get_parameter(Name=ssm_path)
+            ami_id = response["Parameter"]["Value"]
+            self.ssm_resolved[ssm_path] = ami_id
+            filters.append({"Name": "image-id", "Values": [ami_id]})
 
         # by AMI ID
         elif isinstance(image_def, str):
