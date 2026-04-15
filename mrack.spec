@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.26.0
+Version:        1.27.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Wed Apr 15 2026 David Pascual Hernandez <davherna@redhat.com> - 1.27.0-1
+- e95edd7 feat: add SSM Parameter Store support for AWS AMI resolution (David Pascual)
+
 * Thu Mar 26 2026  - 1.26.0-1
 - a702da2 fix: Pin setuptools<82 to restore pkg_resources for beaker-client (Rizwan Shaikh)
 - cf48126 feat: add EC2 UserData support for AWS provider (Rizwan Shaikh)
