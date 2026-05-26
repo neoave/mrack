@@ -374,6 +374,7 @@ class AWSProvider(Provider):
         specs = deepcopy(req)  # work with own copy, do not modify the input
 
         del_vol = specs.get("delete_volume_on_termination", True)
+        disksize = specs.get("disksize")
 
         name = req.get("name")
         # creating unique name for instance (visible in aws ec2 WebUI)
@@ -394,6 +395,13 @@ class AWSProvider(Provider):
 
         logger.debug(f"{log_msg_start} Tagging instance with: {object2json(taglist)}")
 
+        ebs = {"DeleteOnTermination": del_vol}
+        if disksize is not None:
+            ebs["VolumeSize"] = disksize
+            logger.info(
+                f"{log_msg_start} Root EBS volume size: {ebs['VolumeSize']} GiB"
+            )
+
         request = {
             "ImageId": self.get_image(specs).image_id,
             "MinCount": 1,
@@ -404,9 +412,7 @@ class AWSProvider(Provider):
             "BlockDeviceMappings": [
                 {
                     "DeviceName": "/dev/sda1",
-                    "Ebs": {
-                        "DeleteOnTermination": del_vol,
-                    },
+                    "Ebs": ebs,
                 },
             ],
             "TagSpecifications": [{"ResourceType": "instance", "Tags": taglist}],

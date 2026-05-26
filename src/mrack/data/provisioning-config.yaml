@@ -63,9 +63,10 @@ aws:  # aws provider config
         win-2022-latest:  # find latest AMI via AWS SSM parameter
             ssm: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
 
-    flavors:
-        # list of available flavours to ask from provider  for vm specs
-        default: t2.nano  # e.g. this is 1vcpus 0.5GB ram
+    # Deprecated: prefer aws.groups for flavor/disksize (groups take precedence).
+    # aws.flavors remains supported for backwards compatibility.
+    # flavors:
+    #     default: t2.nano  # e.g. this is 1vcpus 0.5GB ram
 
     keypair: mrack  # this name points to uploaded and available in aws ec2 key configuration
     security_group: sg-0ad1bab3a850e70fc  # setup the system firewall using one of existing sec groups
@@ -84,6 +85,17 @@ aws:  # aws provider config
         mrack: "True"
         persistent: "False"
     delete_volume_on_termination: True # instance volume is deleted on termination, default: True
+    # Per-group instance type and root volume (takes precedence over options)
+    options:
+        flavor: t2.nano  # default instance type
+        disksize: 10  # default root EBS volume size in GiB
+    groups:
+        client:
+            flavor: t3.micro
+            disksize: 20
+        ipaserver:
+            flavor: t3.medium
+            disksize: 40
     spot: True  # request spot EC2 instances, default: False
     resolve_host: False  # resolve hostname from IP on output generation, default: True
 
