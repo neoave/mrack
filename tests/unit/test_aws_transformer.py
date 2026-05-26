@@ -199,6 +199,58 @@ class TestAWSTransformerUserData:
         assert win22_req.get("user_data") == WIN_2022_USER_DATA
 
     @pytest.mark.asyncio
+    async def test_disksize_from_group_options(self):
+        """Root volume size is resolved from aws.groups and aws.options."""
+        config = _aws_provisioning_config()
+        config["aws"]["options"] = {"disksize": 10}
+        config["aws"]["groups"] = {
+            "ipaclient": {"flavor": "t3.micro", "disksize": 20},
+            "ipaserver": {"flavor": "t3.medium", "disksize": 40},
+        }
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        hosts = [
+            _host("client", "client", "ipaclient", "rhel-8.5"),
+            _host("server", "master", "ipaserver", "rhel-8.5"),
+        ]
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": hosts}]}
+        await transformer.init(config, metadata)
+
+        client_req = transformer.create_host_requirement(hosts[0])
+        server_req = transformer.create_host_requirement(hosts[1])
+        assert client_req["disksize"] == 20
+        assert server_req["disksize"] == 40
+        assert client_req["flavor"] == "t3.micro"
+        assert server_req["flavor"] == "t3.medium"
+
+    @pytest.mark.asyncio
+    async def test_disksize_from_default_options(self):
+        """Root volume size falls back to aws.options when group is undefined."""
+        config = _aws_provisioning_config()
+        config["aws"]["options"] = {"disksize": 15}
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        host = _host("client", "client", "ipaclient", "rhel-8.5")
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": [host]}]}
+        await transformer.init(config, metadata)
+        req = transformer.create_host_requirement(host)
+        assert req["disksize"] == 15
+
+    @pytest.mark.asyncio
+    async def test_disksize_host_metadata_overrides_group(self):
+        """Host-level disksize in metadata overrides group defaults."""
+        config = _aws_provisioning_config()
+        config["aws"]["groups"] = {"ipaclient": {"disksize": 20}}
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        host = _host("client", "client", "ipaclient", "rhel-8.5")
+        host["disksize"] = 30
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": [host]}]}
+        await transformer.init(config, metadata)
+        req = transformer.create_host_requirement(host)
+        assert req["disksize"] == 30
+
+    @pytest.mark.asyncio
     async def test_other_fields_unaffected_by_user_data(self):
         """Test that adding user_data doesn't affect other requirement fields."""
         transformer = await self._create_transformer(

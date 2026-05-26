@@ -25,7 +25,6 @@ class AWSTransformer(Transformer):
 
     _config_key = CONFIG_KEY
     _required_config_attrs = [
-        "flavors",
         "images",
         "credentials_file",
         "keypair",
@@ -95,6 +94,20 @@ class AWSTransformer(Transformer):
         super().validate_host(host)
         self.validate_ownership_and_lifetime(host)
 
+    def _get_host_option(self, host, name):
+        """Resolve host option from metadata, aws.groups, or aws.options."""
+        default_options = self.config.get("options", {})
+        group_options = self.config.get("groups", {}).get(host["group"], {})
+        val = host.get(name) or group_options.get(name) or default_options.get(name)
+
+        if val is None and name == "flavor" and self.config.get("flavors"):
+            val = super()._get_flavor(host)
+
+        if name == "disksize" and val is not None:
+            val = int(val)
+
+        return val
+
     def create_host_requirement(self, host):
         """Create single input for AWS provisioner."""
         del_vol = self._find_value(
@@ -104,7 +117,6 @@ class AWSTransformer(Transformer):
             "name": host["name"],
             "os": host["os"],
             "group": host["group"],
-            "flavor": self._get_flavor(host),
             "image": self._get_image(host),
             "security_group_ids": self._get_security_groups(),
             "spot": self._find_value(host, "spot", None, None),
@@ -112,6 +124,12 @@ class AWSTransformer(Transformer):
             "subnet_ids": self._find_subnet_ids(host),
             "user_data": self._find_value(host, "user_data", "user_data", host["os"]),
         }
+
+        for option in [
+            "flavor",
+            "disksize",
+        ]:
+            req[option] = self._get_host_option(host, option)
 
         req = self.update_metadata_for_owner_lifetime(req)
         return req
