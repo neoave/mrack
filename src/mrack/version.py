@@ -1,3 +1,3 @@
 """mrack library version."""
 
-VERSION = "1.27.0"
+VERSION = "1.28.0"

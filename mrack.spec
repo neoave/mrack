@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.27.0
+Version:        1.28.0
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,9 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Tue Jun 23 2026  - 1.28.0-1
+- b36cd7a feat: configure root EBS volume size via disksize(aws) (Rizwan Shaikh)
+
 * Wed Apr 15 2026 David Pascual Hernandez <davherna@redhat.com> - 1.27.0-1
 - e95edd7 feat: add SSM Parameter Store support for AWS AMI resolution (David Pascual)
 
