@@ -14,7 +14,11 @@
 
 """Host object."""
 
+from typing import Dict, List, Optional
+
 from mrack.providers import providers
+from mrack.providers.provider import Provider
+from mrack.session import MrackSession
 from mrack.utils import object2json
 
 STATUS_PENDING = "pending"
@@ -35,11 +39,12 @@ STATUSES = [
 ]
 
 
-def host_from_json(host_data):
+def host_from_json(session, host_data):
     """Reverse method to Host.__json__() after json.loads()."""
     provider_name = host_data["provider"]
     provider = providers.get(provider_name)
     host = Host(
+        session,
         provider,
         host_data["host_id"],
         host_data["name"],
@@ -62,8 +67,23 @@ class Host:
     Normalized values from providers to offer consistent interface.
     """
 
+    _session: MrackSession
+    _provider: Provider
+    _host_id: str
+    _name: str
+    _operating_system: str
+    _group: str
+    _ip_addrs: List[str]
+    _status: str
+    _username: Optional[str]
+    _password: Optional[str]
+    _rawdata: Optional[Dict]
+    _error: Optional[Dict]
+    _meta_extra: Optional[Dict]
+
     def __init__(
         self,
+        session,
         provider,
         host_id,
         name,
@@ -78,6 +98,7 @@ class Host:
         meta_extra=None,
     ):
         """Initialize host object."""
+        self._session = session
         self._provider = provider
         self._host_id = host_id
         self._name = name
@@ -91,7 +112,7 @@ class Host:
         self._error = error_obj
         self._meta_extra = meta_extra
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation of host."""
         net_str = " ".join(self._ip_addrs)
 
@@ -109,7 +130,7 @@ class Host:
             )
         return out
 
-    def to_json(self):
+    def to_json(self) -> Dict:
         """Transform object into representation which is acceptable by `json.dump`."""
         return {
             "provider": self._provider.name,
@@ -127,47 +148,47 @@ class Host:
         }
 
     @property
-    def provider(self):
+    def provider(self) -> Provider:
         """Get host provisioning provider."""
         return self._provider
 
     @property
-    def operating_system(self):
+    def operating_system(self) -> str:
         """Get host operating system."""
         return self._operating_system
 
     @property
-    def group(self):
+    def group(self) -> str:
         """Get host group."""
         return self._group
 
     @property
-    def host_id(self):
+    def host_id(self) -> str:
         """Get provider host id."""
         return self._host_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Get host name."""
         return self._name
 
     @property
-    def ip_addrs(self):
+    def ip_addrs(self) -> List[str]:
         """Get host IP addresses."""
         return self._ip_addrs
 
     @property
-    def ip_addr(self):
+    def ip_addr(self) -> str:
         """Get first host IP address."""
         return self._ip_addrs[0] if self._ip_addrs else ""
 
     @property
-    def status(self):
+    def status(self) -> str:
         """Get host status."""
         return self._status
 
     @property
-    def error(self):
+    def error(self) -> Optional[Dict]:
         """Get host error object."""
         return self._error
 
@@ -177,21 +198,21 @@ class Host:
         self._error = value
 
     @property
-    def username(self):
+    def username(self) -> Optional[str]:
         """Get username for connecting to host."""
         return self._username
 
     @property
-    def password(self):
+    def password(self) -> Optional[str]:
         """Get password for connecting to host."""
         return self._password
 
     @property
-    def meta_extra(self):
+    def meta_extra(self) -> Optional[Dict]:
         """Get host extra meta information."""
         return self._meta_extra
 
-    async def delete(self):
+    async def delete(self) -> bool:
         """Issue host deletion via associated provider."""
         await self.provider.delete_host(self.host_id, self.name)
         self._status = STATUS_DELETED
