@@ -98,7 +98,7 @@ class AWSTransformer(Transformer):
         """Resolve host option from metadata, aws.groups by size/group, or options."""
         groups = self.config.get("groups", {})
         default_options = self.config.get("options", {})
-        size_options = groups.get(host["size"], {}) if host.get("size") else {}
+        size_options = groups.get(host.get("size"), {})
         group_options = groups.get(host["group"], {})
         val = (
             host.get(name)
