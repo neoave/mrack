@@ -95,10 +95,17 @@ class AWSTransformer(Transformer):
         self.validate_ownership_and_lifetime(host)
 
     def _get_host_option(self, host, name):
-        """Resolve host option from metadata, aws.groups, or aws.options."""
+        """Resolve host option from metadata, aws.groups by size/group, or options."""
+        groups = self.config.get("groups", {})
         default_options = self.config.get("options", {})
-        group_options = self.config.get("groups", {}).get(host["group"], {})
-        val = host.get(name) or group_options.get(name) or default_options.get(name)
+        size_options = groups.get(host["size"], {}) if host.get("size") else {}
+        group_options = groups.get(host["group"], {})
+        val = (
+            host.get(name)
+            or size_options.get(name)
+            or group_options.get(name)
+            or default_options.get(name)
+        )
 
         if val is None and name == "flavor" and self.config.get("flavors"):
             val = super()._get_flavor(host)
