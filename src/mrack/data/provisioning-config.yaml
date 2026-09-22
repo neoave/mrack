@@ -96,6 +96,9 @@ aws:  # aws provider config
         ipaserver:
             flavor: t3.medium
             disksize: 40
+        xxlarge:
+            flavor: t3.2xlarge
+            disksize: 120
     spot: True  # request spot EC2 instances, default: False
     resolve_host: False  # resolve hostname from IP on output generation, default: True
 

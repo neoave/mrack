@@ -28,11 +28,13 @@ WIN_2022_USER_DATA = (
 )
 
 
-def _host(name, role, group, os, user_data=None):
+def _host(name, role, group, os, user_data=None, size=None):
     """Create a host metadata dict."""
     host = {"name": f"{name}.{DOMAIN}", "role": role, "group": group, "os": os}
     if user_data is not None:
         host["user_data"] = user_data
+    if size is not None:
+        host["size"] = size
     return host
 
 
@@ -249,6 +251,84 @@ class TestAWSTransformerUserData:
         await transformer.init(config, metadata)
         req = transformer.create_host_requirement(host)
         assert req["disksize"] == 30
+
+    @pytest.mark.asyncio
+    async def test_size_overrides_group_flavor_and_disksize(self):
+        """Host `size` takes precedence over `group` for flavor/disksize."""
+        config = _aws_provisioning_config()
+        config["aws"]["groups"] = {
+            "ipaserver": {"flavor": "t3.medium"},
+            "xxlarge": {"flavor": "t3.2xlarge", "disksize": 120},
+        }
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        baseline = _host("baseline", "master", "ipaserver", "rhel-8.5")
+        sized = _host("sized", "master", "ipaserver", "rhel-8.5", size="xxlarge")
+        metadata = {
+            "domains": [{"name": DOMAIN, "type": "mixed", "hosts": [baseline, sized]}]
+        }
+        await transformer.init(config, metadata)
+
+        baseline_req = transformer.create_host_requirement(baseline)
+        sized_req = transformer.create_host_requirement(sized)
+        assert baseline_req["flavor"] == "t3.medium"
+        assert baseline_req["disksize"] is None
+        assert sized_req["flavor"] == "t3.2xlarge"
+        assert sized_req["disksize"] == 120
+
+    @pytest.mark.asyncio
+    async def test_size_falls_back_to_group_for_undefined_option(self):
+        """An option missing from the `size` entry still falls back to `group`."""
+        config = _aws_provisioning_config()
+        config["aws"]["groups"] = {
+            "ipaserver": {"flavor": "t3.medium", "disksize": 40},
+            "xxlarge": {"flavor": "t3.2xlarge"},  # no disksize of its own
+        }
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        host = _host("sized", "master", "ipaserver", "rhel-8.5", size="xxlarge")
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": [host]}]}
+        await transformer.init(config, metadata)
+
+        req = transformer.create_host_requirement(host)
+        assert req["flavor"] == "t3.2xlarge"
+        assert req["disksize"] == 40
+
+    @pytest.mark.asyncio
+    async def test_size_replaces_groups_own_disksize(self):
+        """A `size` entry's disksize wins even when `group` already defines one."""
+        config = _aws_provisioning_config()
+        config["aws"]["groups"] = {
+            "client": {"flavor": "t3.micro", "disksize": 20},
+            "xxlarge": {"flavor": "t3.2xlarge", "disksize": 120},
+        }
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        host = _host("client", "client", "client", "rhel-8.5", size="xxlarge")
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": [host]}]}
+        await transformer.init(config, metadata)
+
+        req = transformer.create_host_requirement(host)
+        assert req["flavor"] == "t3.2xlarge"
+        assert req["disksize"] == 120
+
+    @pytest.mark.asyncio
+    async def test_host_metadata_overrides_size(self):
+        """Host-level metadata still wins over a `size` group entry."""
+        config = _aws_provisioning_config()
+        config["aws"]["groups"] = {
+            "ipaserver": {"flavor": "t3.medium"},
+            "xxlarge": {"flavor": "t3.2xlarge", "disksize": 120},
+        }
+        providers.register(AWS, AWSProvider)
+        transformer = MockedAWSTransformer()
+        host = _host("sized", "master", "ipaserver", "rhel-8.5", size="xxlarge")
+        host["disksize"] = 200
+        metadata = {"domains": [{"name": DOMAIN, "type": "mixed", "hosts": [host]}]}
+        await transformer.init(config, metadata)
+
+        req = transformer.create_host_requirement(host)
+        assert req["disksize"] == 200
 
     @pytest.mark.asyncio
     async def test_other_fields_unaffected_by_user_data(self):
