@@ -1,5 +1,5 @@
 Name:           mrack
-Version:        1.28.0
+Version:        1.28.1
 Release:        1%{?dist}
 Summary:        Multicloud use-case based multihost async provisioner
 
@@ -185,6 +185,10 @@ rm -r src/%{name}.egg-info
 %{python3_sitelib}/%{name}/providers/utils/{,__pycache__/}testcloud.*
 
 %changelog
+* Fri Sep 25 2026 David Pascual Hernandez <davherna@redhat.com> - 1.28.1-1
+- c435d75 fix(aws): avoid evaluating host size twice (David Pascual)
+- de08228 fix(aws): give size precedence over group for flavor/disksize (David Pascual)
+
 * Tue Jun 23 2026  - 1.28.0-1
 - b36cd7a feat: configure root EBS volume size via disksize(aws) (Rizwan Shaikh)
 
