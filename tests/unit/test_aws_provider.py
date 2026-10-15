@@ -196,3 +196,125 @@ class TestLoadImageSSM:
             Filters=[{"Name": "image-id", "Values": ["ami-direct"]}]
         )
         assert result is mock_ami
+
+
+def _candidates():
+    return ["subnet-a", "subnet-b", "subnet-c"]
+
+
+def _group():
+    return [
+        {"name": "master", "subnet_ids": _candidates()},
+        {"name": "replica", "subnet_ids": _candidates()},
+        {"name": "client", "subnet_ids": _candidates()},
+    ]
+
+
+class _Spread:
+    def __init__(self, value):
+        self.network_spread = value
+
+
+class TestResolveSubnets:
+    """network-spread from mrack.conf is applied once, before the resource check."""
+
+    def test_allow_picks_the_subnet_with_the_most_free_addresses(self, provider):
+        hosts = _group()
+        provider._resolve_subnets(
+            hosts, {"subnet-a": 5, "subnet-b": 20, "subnet-c": 3}, "allow"
+        )
+
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-b"]
+
+    def test_unknown_value_is_treated_as_allow(self, provider):
+        hosts = _group()
+        provider._resolve_subnets(
+            hosts, {"subnet-a": 5, "subnet-b": 20, "subnet-c": 3}, "yes"
+        )
+
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-b"]
+
+    def test_keeps_a_host_that_already_names_one_subnet(self, provider):
+        dedicated = {"name": "ad", "subnet_ids": ["subnet-a"]}
+        shared = [
+            {"name": "master", "subnet_ids": ["subnet-a", "subnet-b"]},
+            {"name": "replica", "subnet_ids": ["subnet-a", "subnet-b"]},
+        ]
+        provider._resolve_subnets(
+            [dedicated] + shared, {"subnet-a": 1, "subnet-b": 10}, "allow"
+        )
+
+        assert dedicated["subnet_ids"] == ["subnet-a"]
+        for host in shared:
+            assert host["subnet_ids"] == ["subnet-b"]
+
+    def test_allow_keeps_the_list_when_no_subnet_can_hold_the_group(self, provider):
+        hosts = _group()
+        for host in hosts:
+            host["subnet_ids"] = ["subnet-a", "subnet-b"]
+        provider._resolve_subnets(hosts, {"subnet-a": 2, "subnet-b": 2}, "allow")
+
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-a", "subnet-b"]
+
+    def test_no_fails_when_no_subnet_can_hold_the_group(self, provider):
+        hosts = _group()
+        for host in hosts:
+            host["subnet_ids"] = ["subnet-a", "subnet-b"]
+        with pytest.raises(ValidationError):
+            provider._resolve_subnets(hosts, {"subnet-a": 2, "subnet-b": 2}, "no")
+
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-a", "subnet-b"]
+
+    def test_force_keeps_the_candidate_list(self, provider):
+        hosts = _group()
+        provider._resolve_subnets(
+            hosts, {"subnet-a": 5, "subnet-b": 20, "subnet-c": 3}, "force"
+        )
+
+        for host in hosts:
+            assert host["subnet_ids"] == _candidates()
+
+    @pytest.mark.asyncio
+    async def test_validate_hosts_resolves_once(self, provider, monkeypatch):
+        monkeypatch.setattr(
+            "mrack.providers.aws.global_context.mrack_conf", _Spread("allow")
+        )
+        calls = []
+
+        async def available(subnet_id, _log):
+            calls.append(subnet_id)
+            return {"subnet-a": 5, "subnet-b": 20, "subnet-c": 3}[subnet_id]
+
+        provider.get_subnet_available_ips = available
+        hosts = _group()
+        await provider.validate_hosts(hosts)
+
+        assert sorted(calls) == ["subnet-a", "subnet-b", "subnet-c"]
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-b"]
+
+        calls.clear()
+        assert await provider.can_provision(hosts) is True
+        assert calls == ["subnet-b"]
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-b"]
+
+    @pytest.mark.asyncio
+    async def test_can_provision_checks_capacity_without_choosing(self, provider):
+        async def available(subnet_id, _log):
+            return {"subnet-a": 1, "subnet-b": 1}[subnet_id]
+
+        provider.get_subnet_available_ips = available
+        hosts = [
+            {"name": "master", "subnet_ids": ["subnet-a", "subnet-b"]},
+            {"name": "replica", "subnet_ids": ["subnet-a", "subnet-b"]},
+            {"name": "client", "subnet_ids": ["subnet-a", "subnet-b"]},
+        ]
+
+        assert await provider.can_provision(hosts) is False
+        for host in hosts:
+            assert host["subnet_ids"] == ["subnet-a", "subnet-b"]

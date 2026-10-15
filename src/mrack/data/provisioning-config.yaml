@@ -75,7 +75,13 @@ aws:  # aws provider config
         - sg-0ad1bab3a850e70fb
     # Note: security_group and security_groups can be combined but at least 1 is required
 
-    subnet_id: subnet-0ad1bab3a850e70fb  # subnet to use if default is not good
+    subnet_id: subnet-0ad1bab3a850e70fb  # single subnet; ignored when subnet_ids is set
+    # Preferred over subnet_id. Subnets should share a VPC.
+    # Hosts that share this list follow mrack.conf network-spread
+    # (no, allow, force), the same setting OpenStack uses.
+    subnet_ids:
+        - subnet-0ad1bab3a850e70fb
+        - subnet-0ad1bab3a850e70fc
 
     credentials_file: aws.key  # file containing the credentials
     profile: default  # credentials profile to use

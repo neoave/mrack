@@ -174,5 +174,7 @@ class MrackConfig:
         - no: disable network spreading feature
         - allow: allow network spreading feature (default)
         - force: always use network spreading feature
+
+        OpenStack and AWS both read this value.
         """
         return self.get("network-spread", default="allow").lower()

@@ -25,6 +25,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, NoRegionError
 from dateutil import parser
 
+from mrack.context import global_context
 from mrack.errors import NotAuthenticatedError, ProvisioningError, ValidationError
 from mrack.host import STATUS_ACTIVE, STATUS_DELETED, STATUS_ERROR, STATUS_PROVISIONING
 from mrack.providers.provider import STRATEGY_ABORT, Provider
@@ -247,8 +248,92 @@ class AWSProvider(Provider):
         return bool(reqs)
 
     async def validate_hosts(self, reqs):
-        """Validate that host requirements are well specified."""
-        return
+        """Resolve subnet placement before resources are checked.
+
+        Uses ``network-spread`` from mrack.conf, the same setting
+        OpenStack uses. The choice is written onto each requirement
+        once; later resource checks do not pick again.
+        """
+        if not any(len(req.get("subnet_ids") or []) > 1 for req in reqs):
+            return
+
+        capacities = await self._subnet_capacities(reqs)
+        self._resolve_subnets(reqs, capacities, global_context.CONFIG.network_spread)
+
+    async def _subnet_capacities(self, hosts):
+        """Return free address counts for the subnets named by hosts."""
+        subnet_ids = []
+        for host in hosts:
+            for subnet_id in host.get("subnet_ids") or []:
+                if subnet_id not in subnet_ids:
+                    subnet_ids.append(subnet_id)
+        if not subnet_ids:
+            return {}
+
+        counts = await asyncio.gather(
+            *(
+                self.get_subnet_available_ips(subnet_id, self.dsp_name)
+                for subnet_id in subnet_ids
+            )
+        )
+        return dict(zip(subnet_ids, counts))
+
+    def _resolve_subnets(self, hosts, capacities, spread):
+        """Apply network-spread to hosts that share a candidate list.
+
+        ``no`` and ``allow`` pick one subnet when one can hold the group.
+        ``allow`` keeps the list when none can. ``no`` fails in that case.
+        ``force`` keeps the list. Any other value is treated as ``allow``.
+        """
+        if spread not in ("no", "force"):
+            spread = "allow"
+
+        remaining = dict(capacities)
+        groups = {}
+        for host in hosts:
+            subnet_ids = tuple(host.get("subnet_ids") or ())
+            if len(subnet_ids) == 1:
+                subnet_id = subnet_ids[0]
+                remaining[subnet_id] = remaining.get(subnet_id, 0) - 1
+            elif subnet_ids:
+                groups.setdefault(subnet_ids, []).append(host)
+
+        for subnet_ids, group in groups.items():
+            count = len(group)
+            if spread == "force":
+                logger.info(
+                    f"{self.dsp_name} network-spread is 'force'; "
+                    f"spreading {count} host(s) across {list(subnet_ids)}"
+                )
+                continue
+
+            fitting = [
+                subnet_id
+                for subnet_id in subnet_ids
+                if remaining.get(subnet_id, 0) >= count
+            ]
+            if fitting:
+                chosen = max(fitting, key=lambda subnet_id: remaining[subnet_id])
+                logger.info(
+                    f"{self.dsp_name} Placing {count} host(s) in subnet {chosen}"
+                )
+                for host in group:
+                    host["subnet_ids"] = [chosen]
+                remaining[chosen] -= count
+                continue
+
+            if spread == "allow":
+                logger.info(
+                    f"{self.dsp_name} No single subnet can hold {count} "
+                    f"host(s); spreading across {list(subnet_ids)}"
+                )
+                continue
+
+            raise ValidationError(
+                f"{self.dsp_name} Can not satisfy request for {count} "
+                "host(s) on one subnet. Change the 'network-spread' in "
+                "mrack.conf or try provisioning again later"
+            )
 
     async def get_subnet_available_ips(self, subnet_id, log_msg_start):
         """Get number of IPs available in a subnet."""
@@ -267,63 +352,47 @@ class AWSProvider(Provider):
 
         return subnet.available_ip_address_count
 
-    async def can_provision(self, hosts):  # pylint: disable=too-many-branches
+    async def can_provision(self, hosts):
         """Check that all host can be provisioned.
 
         Checks:
         * Available IPv4 addresses are enough
+
+        Subnet choice is already recorded on each host by validate_hosts.
         """
         log_msg_start = self.dsp_name
+        single_subnet_prov = []
+        mult_subnets_prov = []
 
-        ip_availabilities = {}  # Dict for storing available IPs in every subnet
-        single_subnet_prov = []  # List for storing provided single subnets
-        mult_subnets_prov = []  # List for storing lists of provided multiple subnets
-
-        # For all hosts, get subnets in dict (with no repetitions) and list of
-        # provided single & multiple subnets
         for host in hosts:
             subnet_ids = host.get("subnet_ids")
-            if subnet_ids:
-                if len(subnet_ids) == 1:
-                    single_subnet_prov.append(subnet_ids[0])
-                    if subnet_ids[0] not in ip_availabilities:
-                        ip_availabilities[subnet_ids[0]] = 0
-                else:
-                    mult_subnets_prov.append(subnet_ids)
-                    for subnet_id in subnet_ids:
-                        if subnet_id not in ip_availabilities:
-                            ip_availabilities[subnet_id] = 0
-            else:
+            if not subnet_ids:
                 logger.debug(
                     f"{log_msg_start} No subnet/s specified for host {host['name']}."
                 )
+                continue
+            if len(subnet_ids) == 1:
+                single_subnet_prov.append(subnet_ids[0])
+            else:
+                mult_subnets_prov.append(subnet_ids)
 
-        # Get available IPs from AWS for every subnet
         logger.info(f"{log_msg_start} Checking IP availability")
-        ips_count_wait = [
-            self.get_subnet_available_ips(subnet_id, log_msg_start)
-            for subnet_id in ip_availabilities
-        ]
-        ips_count_result = await asyncio.gather(*ips_count_wait)
-        ip_availabilities = dict(zip(ip_availabilities, ips_count_result))
-
+        ip_availabilities = await self._subnet_capacities(hosts)
         self.subnets_capacity = ip_availabilities.copy()
 
-        # Discount hosts with single subnet specified from available IPs
         for subnet_id in single_subnet_prov:
-            if ip_availabilities[subnet_id] > 0:
+            if ip_availabilities.get(subnet_id, 0) > 0:
                 ip_availabilities[subnet_id] -= 1
-            else:
-                logger.info(
-                    f"{log_msg_start} Not enougn IP addresses available "
-                    f"in subnet: {subnet_id}"
-                )
-                return False
+                continue
+            logger.info(
+                f"{log_msg_start} Not enougn IP addresses available "
+                f"in subnet: {subnet_id}"
+            )
+            return False
 
-        # Discount hosts with multiple subnets specified from available IPs
         for subnet_ids in mult_subnets_prov:
             for subnet_id in subnet_ids:
-                if ip_availabilities[subnet_id] > 0:
+                if ip_availabilities.get(subnet_id, 0) > 0:
                     ip_availabilities[subnet_id] -= 1
                     break
             else:
