@@ -19,6 +19,7 @@ import logging
 import secrets
 from copy import deepcopy
 from datetime import datetime
+from ipaddress import ip_network
 from random import shuffle
 
 import boto3
@@ -33,6 +34,7 @@ from mrack.utils import object2json
 logger = logging.getLogger(__name__)
 
 PROVISIONER_KEY = "aws"
+RESERVED_IPS = 5  # AWS reserves 5 addresses in every subnet
 
 
 class AWSProvider(Provider):
@@ -247,8 +249,30 @@ class AWSProvider(Provider):
         return bool(reqs)
 
     async def validate_hosts(self, reqs):
-        """Validate that host requirements are well specified."""
-        return
+        """Place hosts with multiple subnet candidates on a single subnet each.
+
+        Hosts sharing a candidate list are grouped on one subnet or spread
+        based on `network-spread` in mrack.conf, like OpenStack networks.
+        Placed hosts keep a single subnet so retries keep their placement.
+        """
+        groups = {}
+        for req in reqs:
+            subnet_ids = req.get("subnet_ids") or []
+            if len(subnet_ids) > 1:
+                groups.setdefault(tuple(sorted(subnet_ids)), []).append(req)
+
+        for subnet_ids, group in groups.items():
+            networks = []
+            for subnet_id in subnet_ids:
+                subnet = self.ec2.Subnet(subnet_id)
+                total = ip_network(subnet.cidr_block).num_addresses - RESERVED_IPS
+                networks.append((subnet_id, total, subnet.available_ip_address_count))
+
+            usable = self._select_networks(networks, len(group), "subnet_ids")
+            weights = self._get_weights_from_usable(usable)
+            for index, req in enumerate(group):
+                subnet_id = self._pick_network(req["name"], index / len(group), weights)
+                req["subnet_ids"] = [subnet_id]
 
     async def get_subnet_available_ips(self, subnet_id, log_msg_start):
         """Get number of IPs available in a subnet."""
