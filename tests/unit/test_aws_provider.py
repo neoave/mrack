@@ -1,10 +1,13 @@
-"""Tests for AWS Provider - SSM parameter image resolution."""
+"""Tests for AWS Provider - SSM image resolution and subnet placement."""
 
+import os
+from collections import Counter
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mrack.errors import ValidationError
+from mrack.context import global_context
+from mrack.errors import ProviderNotExists, ValidationError
 from mrack.providers.aws import AWSProvider
 
 
@@ -196,3 +199,213 @@ class TestLoadImageSSM:
             Filters=[{"Name": "image-id", "Values": ["ami-direct"]}]
         )
         assert result is mock_ami
+
+
+def init_spread_config(mrack_conf):
+    """Load mrack.conf variant selecting the network-spread mode."""
+    conf_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "conf")
+    try:
+        global_context.init(
+            os.path.join(conf_dir, mrack_conf),
+            os.path.join(conf_dir, "provisioning-config.yaml"),
+        )
+    except ProviderNotExists:
+        assert global_context.CONFIG is not None
+
+
+def mock_subnets(provider, availabilities, cidrs=None):
+    """Mock ec2.Subnet with given available IP counts, /24 unless in cidrs."""
+    cidrs = cidrs or {}
+
+    def subnet(subnet_id):
+        return MagicMock(
+            cidr_block=cidrs.get(subnet_id, "10.0.0.0/24"),
+            available_ip_address_count=availabilities[subnet_id],
+        )
+
+    provider.ec2.Subnet = MagicMock(side_effect=subnet)
+
+
+def subnet_reqs(names, subnet_ids):
+    return [{"name": name, "subnet_ids": list(subnet_ids)} for name in names]
+
+
+class TestValidateHostsSubnetPlacement:
+    """Test subnet placement in validate_hosts based on network-spread."""
+
+    @pytest.mark.asyncio
+    async def test_allow_groups_hosts_on_one_subnet(self, provider):
+        init_spread_config("mrack.conf")
+        # s3 has 241/251 IPs used, over the default 95% threshold
+        mock_subnets(provider, {"s1": 200, "s2": 200, "s3": 10})
+        reqs = subnet_reqs("AB", ["s1", "s2", "s3"])
+        reqs += subnet_reqs("C", ["s3", "s2", "s1"])  # same candidates, other order
+
+        await provider.validate_hosts(reqs)
+
+        placed = {req["subnet_ids"][0] for req in reqs}
+        assert all(len(req["subnet_ids"]) == 1 for req in reqs)
+        assert len(placed) == 1
+        assert placed <= {"s1", "s2"}
+
+    @pytest.mark.asyncio
+    async def test_force_spreads_hosts(self, provider):
+        init_spread_config("mrack_force_spread.conf")
+        mock_subnets(provider, {"s1": 200, "s2": 190, "s3": 180})
+        reqs = subnet_reqs("ABCDE", ["s1", "s2", "s3"])
+
+        await provider.validate_hosts(reqs)
+
+        assert [req["subnet_ids"] for req in reqs] == [
+            ["s1"],
+            ["s1"],
+            ["s2"],
+            ["s2"],
+            ["s3"],
+        ]
+
+    @pytest.mark.asyncio
+    async def test_no_spread_fails_when_no_subnet_fits(self, provider):
+        init_spread_config("mrack_no_spread.conf")
+        mock_subnets(provider, {"s1": 2, "s2": 2})
+        reqs = subnet_reqs("ABC", ["s1", "s2"])
+
+        with pytest.raises(ValidationError):
+            await provider.validate_hosts(reqs)
+
+    @pytest.mark.asyncio
+    async def test_single_or_no_subnet_untouched(self, provider):
+        init_spread_config("mrack.conf")
+        mock_subnets(provider, {})
+        reqs = subnet_reqs("A", ["s9"]) + subnet_reqs("B", []) + [{"name": "C"}]
+
+        await provider.validate_hosts(reqs)
+
+        assert [req.get("subnet_ids") for req in reqs] == [["s9"], [], None]
+        provider.ec2.Subnet.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_candidate_lists_placed_independently(self, provider):
+        init_spread_config("mrack.conf")
+        mock_subnets(provider, {"s1": 200, "s2": 200, "s3": 200, "s4": 200})
+        reqs = subnet_reqs("AB", ["s1", "s2"]) + subnet_reqs("CD", ["s3", "s4"])
+
+        await provider.validate_hosts(reqs)
+
+        assert {reqs[0]["subnet_ids"][0], reqs[1]["subnet_ids"][0]} < {"s1", "s2"}
+        assert {reqs[2]["subnet_ids"][0], reqs[3]["subnet_ids"][0]} < {"s3", "s4"}
+
+    @pytest.mark.asyncio
+    async def test_retry_keeps_placement(self, provider):
+        init_spread_config("mrack.conf")
+        mock_subnets(provider, {"s1": 200, "s2": 190})
+        reqs = subnet_reqs("ABC", ["s1", "s2"])
+        await provider.validate_hosts(reqs)
+        placed = [req["subnet_ids"] for req in reqs]
+
+        # retry gets the same req objects for the hosts which failed
+        provider.ec2.Subnet.reset_mock()
+        await provider.validate_hosts(reqs[2:])
+        await provider.validate_hosts(reqs)  # all hosts deleted and retried
+
+        assert [req["subnet_ids"] for req in reqs] == placed
+        provider.ec2.Subnet.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_force_skips_subnets_over_threshold(self, provider):
+        init_spread_config("mrack_force_spread.conf")
+        mock_subnets(provider, {"s1": 200, "s2": 200, "s3": 10})
+        reqs = subnet_reqs("ABC", ["s1", "s2", "s3"])
+
+        await provider.validate_hosts(reqs)
+
+        placed = [req["subnet_ids"][0] for req in reqs]
+        assert len(set(placed)) == 2
+        assert "s3" not in placed
+
+    @pytest.mark.asyncio
+    async def test_allow_spreads_when_all_subnets_over_threshold(self, provider):
+        init_spread_config("mrack.conf")
+        # both over 95% used, together they still fit the job
+        mock_subnets(provider, {"s1": 10, "s2": 10})
+        reqs = subnet_reqs("ABC", ["s1", "s2"])
+
+        await provider.validate_hosts(reqs)
+
+        assert {req["subnet_ids"][0] for req in reqs} == {"s1", "s2"}
+
+    @pytest.mark.asyncio
+    async def test_allow_spreads_job_bigger_than_any_subnet(self, provider):
+        init_spread_config("mrack.conf")
+        cidrs = {"s1": "10.0.0.0/27", "s2": "10.0.0.32/27"}  # 27 usable IPs each
+        mock_subnets(provider, {"s1": 10, "s2": 10}, cidrs)
+        reqs = subnet_reqs([f"h{i}" for i in range(12)], ["s1", "s2"])
+
+        await provider.validate_hosts(reqs)
+
+        placed = [req["subnet_ids"][0] for req in reqs]
+        assert sorted(Counter(placed).values()) == [6, 6]
+
+    @pytest.mark.asyncio
+    async def test_fails_when_no_subnet_has_free_ips(self, provider):
+        init_spread_config("mrack.conf")
+        mock_subnets(provider, {"s1": 0, "s2": 0})
+        reqs = subnet_reqs("AB", ["s1", "s2"])
+
+        with pytest.raises(ValidationError, match="No available networks"):
+            await provider.validate_hosts(reqs)
+
+    @pytest.mark.asyncio
+    async def test_full_subnet_never_picked(self, provider):
+        init_spread_config("mrack.conf")
+        mock_subnets(provider, {"s1": 0, "s2": 200, "s3": 200})
+        reqs = subnet_reqs("AB", ["s1", "s2", "s3"])
+
+        await provider.validate_hosts(reqs)
+
+        placed = {req["subnet_ids"][0] for req in reqs}
+        assert len(placed) == 1
+        assert placed <= {"s2", "s3"}
+
+    @pytest.mark.asyncio
+    async def test_threshold_uses_subnet_size(self, provider):
+        init_spread_config("mrack.conf")
+        # same free IPs: 15/27 used in the /27, 239/251 used in the /24
+        mock_subnets(provider, {"small": 12, "big": 12}, {"small": "10.0.0.0/27"})
+        reqs = subnet_reqs("AB", ["small", "big"])
+
+        await provider.validate_hosts(reqs)
+
+        assert [req["subnet_ids"] for req in reqs] == [["small"], ["small"]]
+
+    @pytest.mark.asyncio
+    async def test_threshold_read_from_mrack_conf(self, provider):
+        init_spread_config("mrack_low_threshold.conf")
+        # 151/251 used is over the configured 50% threshold
+        mock_subnets(provider, {"used": 100, "fresh": 200})
+        reqs = subnet_reqs("AB", ["used", "fresh"])
+
+        await provider.validate_hosts(reqs)
+
+        assert [req["subnet_ids"] for req in reqs] == [["fresh"], ["fresh"]]
+
+    @pytest.mark.asyncio
+    async def test_unknown_spread_value_behaves_as_allow(self, provider):
+        init_spread_config("mrack_unknown_spread.conf")
+        mock_subnets(provider, {"s1": 200, "s2": 200})
+        reqs = subnet_reqs("ABC", ["s1", "s2"])
+
+        await provider.validate_hosts(reqs)
+
+        assert len({req["subnet_ids"][0] for req in reqs}) == 1
+
+    @pytest.mark.asyncio
+    async def test_single_subnet_must_hold_the_job(self, provider):
+        init_spread_config("mrack.conf")
+        # both under threshold, only s1 can hold all 14 hosts
+        mock_subnets(provider, {"s1": 200, "s2": 13})
+        reqs = subnet_reqs([f"h{i}" for i in range(14)], ["s1", "s2"])
+
+        await provider.validate_hosts(reqs)
+
+        assert {req["subnet_ids"][0] for req in reqs} == {"s1"}

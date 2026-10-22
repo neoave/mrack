@@ -76,6 +76,11 @@ aws:  # aws provider config
     # Note: security_group and security_groups can be combined but at least 1 is required
 
     subnet_id: subnet-0ad1bab3a850e70fb  # subnet to use if default is not good
+    # subnet_ids:  # candidate subnets, preferred over subnet_id
+    #     - subnet-0ad1bab3a850e70fb
+    #     - subnet-0ad1bab3a850e70fc
+    # Hosts sharing the list are grouped on one subnet or spread based on
+    # `network-spread` and `usable-network-threshold` in mrack.conf.
 
     credentials_file: aws.key  # file containing the credentials
     profile: default  # credentials profile to use
